@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# oss-edition/smoke-test.sh — a DESTRUCTIVE CI/dev boot check.
+# smoke-test.sh — a DESTRUCTIVE CI/dev boot check.
 #
 # WARNING: runs `docker compose down -v` at start AND on exit, WIPING all volumes
 # (database + storage). It validates a FRESH boot from scratch — it is NOT a
