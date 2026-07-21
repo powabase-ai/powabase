@@ -1,0 +1,843 @@
+# Kong Configuration for Project: default
+# Routes: auth, rest, storage, meta, project-api, dashboard
+_format_version: '2.1'
+_transform: true
+
+consumers:
+  - username: DASHBOARD
+  - username: anon
+    keyauth_credentials:
+      - key: ${SUPABASE_ANON_KEY}
+  - username: service_role
+    keyauth_credentials:
+      - key: ${SUPABASE_SERVICE_KEY}
+
+acls:
+  - consumer: anon
+    group: anon
+  - consumer: service_role
+    group: admin
+
+basicauth_credentials:
+  - consumer: DASHBOARD
+    username: ${DASHBOARD_USERNAME}
+    password: ${DASHBOARD_PASSWORD}
+
+services:
+  # Auth service routes
+  - name: auth-v1-verify
+    url: http://auth:9999/verify
+    routes:
+      - name: auth-v1-verify-route
+        paths:
+          - /auth/v1/verify
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - '${CORS_ALLOW_ORIGIN}'
+          methods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+            - OPTIONS
+          headers:
+            - Accept
+            - Authorization
+            - Content-Type
+            - X-Requested-With
+            - apikey
+            - x-supabase-api-version
+            - x-client-info
+            - accept-profile
+            - content-profile
+            - prefer
+            - Range
+          exposed_headers:
+            - Content-Length
+            - Content-Range
+          credentials: true
+          max_age: 3600
+
+  - name: auth-v1
+    url: http://auth:9999
+    routes:
+      - name: auth-v1-route
+        paths:
+          - /auth/v1
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - '${CORS_ALLOW_ORIGIN}'
+          methods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+            - OPTIONS
+          headers:
+            - Accept
+            - Authorization
+            - Content-Type
+            - X-Requested-With
+            - apikey
+            - x-supabase-api-version
+            - x-client-info
+          exposed_headers:
+            - Content-Length
+            - Content-Range
+          credentials: true
+          max_age: 3600
+      - name: key-auth
+        config:
+          hide_credentials: true
+      - name: acl
+        config:
+          hide_groups_header: true
+          allow:
+            - admin
+            - anon
+
+  - name: auth-v1-admin
+    url: http://auth:9999/admin
+    routes:
+      - name: auth-v1-admin-route
+        paths:
+          - /auth/v1/admin
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - '${CORS_ALLOW_ORIGIN}'
+          methods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+            - OPTIONS
+          headers:
+            - Accept
+            - Authorization
+            - Content-Type
+            - apikey
+          exposed_headers:
+            - Content-Length
+            - Content-Range
+          credentials: true
+          max_age: 3600
+      - name: key-auth
+        config:
+          hide_credentials: true
+      - name: acl
+        config:
+          hide_groups_header: true
+          allow:
+            - admin
+
+  # REST (PostgREST) service routes
+  - name: rest-v1
+    url: http://rest:3000
+    routes:
+      - name: rest-v1-route
+        paths:
+          - /rest/v1
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - '${CORS_ALLOW_ORIGIN}'
+          methods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+            - OPTIONS
+          headers:
+            - Accept
+            - Authorization
+            - Content-Type
+            - X-Requested-With
+            - apikey
+            - x-supabase-api-version
+            - x-client-info
+            - accept-profile
+            - content-profile
+            - prefer
+            - Range
+          exposed_headers:
+            - Content-Length
+            - Content-Range
+            - Content-Profile
+          credentials: true
+          max_age: 3600
+      - name: key-auth
+        config:
+          hide_credentials: true
+      - name: acl
+        config:
+          hide_groups_header: true
+          allow:
+            - admin
+            - anon
+
+  # Storage service routes
+  - name: storage-v1
+    url: http://storage:5000
+    routes:
+      - name: storage-v1-route
+        paths:
+          - /storage/v1
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - '${CORS_ALLOW_ORIGIN}'
+          methods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+            - OPTIONS
+          headers:
+            - Accept
+            - Authorization
+            - Content-Type
+            - X-Requested-With
+            - apikey
+            - x-supabase-api-version
+            - x-client-info
+            - x-upsert
+          exposed_headers:
+            - Content-Length
+            - Content-Range
+          credentials: true
+          max_age: 3600
+
+  # pg-meta service routes (for dashboard database management)
+  - name: meta
+    url: http://meta:8080
+    routes:
+      - name: meta-route
+        paths:
+          - /pg
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - '${CORS_ALLOW_ORIGIN}'
+          methods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+            - OPTIONS
+          headers:
+            - Accept
+            - Authorization
+            - Content-Type
+            - apikey
+            - x-supabase-api-version
+            - x-client-info
+          exposed_headers:
+            - Content-Length
+            - Content-Range
+          credentials: true
+          max_age: 3600
+      - name: key-auth
+        config:
+          hide_credentials: true
+      - name: acl
+        config:
+          hide_groups_header: true
+          allow:
+            - admin
+
+  ## Realtime (WebSocket)
+  ## Note: host must be "realtime-dev.supabase-realtime" because the Realtime service
+  ## parses tenant_id from the Host header subdomain (before first dot = "realtime-dev")
+  - name: realtime-v1-ws
+    host: realtime-dev.supabase-realtime
+    port: 4000
+    path: /socket
+    routes:
+      - name: realtime-v1-ws
+        strip_path: true
+        paths:
+          - /realtime/v1/
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - '${CORS_ALLOW_ORIGIN}'
+      - name: key-auth
+        config:
+          hide_credentials: false
+      - name: acl
+        config:
+          hide_groups_header: true
+          allow:
+            - admin
+            - anon
+
+  ## Realtime (REST API)
+  - name: realtime-v1-rest
+    host: realtime-dev.supabase-realtime
+    port: 4000
+    path: /api
+    routes:
+      - name: realtime-v1-rest
+        strip_path: true
+        paths:
+          - /realtime/v1/api
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - '${CORS_ALLOW_ORIGIN}'
+      - name: key-auth
+        config:
+          hide_credentials: false
+      - name: acl
+        config:
+          hide_groups_header: true
+          allow:
+            - admin
+            - anon
+
+  # =============================================================================
+  # Project Service API routes (AI features)
+  # =============================================================================
+
+  # Sources API - file uploads and extraction
+  - name: project-api-sources
+    url: http://project-api:5000/api/sources
+    routes:
+      - name: project-api-sources-route
+        paths:
+          - /api/sources
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - '${CORS_ALLOW_ORIGIN}'
+          methods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+            - OPTIONS
+          headers:
+            - Accept
+            - Authorization
+            - Content-Type
+            - X-Requested-With
+            - apikey
+          exposed_headers:
+            - Content-Length
+            - Content-Range
+          credentials: true
+          max_age: 3600
+      - name: key-auth
+        config:
+          hide_credentials: false
+
+  # Internal API - service-role only (CP billing drain → GET /api/internal/mau-count).
+  # Server-to-server; mirrors the sibling PS routes — key-auth validates the apikey
+  # (the drain sends the service_role_key) and the PS handler enforces is_service_role.
+  - name: project-api-internal
+    url: http://project-api:5000/api/internal
+    routes:
+      - name: project-api-internal-route
+        paths:
+          - /api/internal
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - '${CORS_ALLOW_ORIGIN}'
+          methods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+            - OPTIONS
+          headers:
+            - Accept
+            - Authorization
+            - Content-Type
+            - X-Requested-With
+            - apikey
+          exposed_headers:
+            - Content-Length
+            - Content-Range
+          credentials: true
+          max_age: 3600
+      - name: key-auth
+        config:
+          hide_credentials: false
+
+  # Knowledge Bases API - RAG configuration and search
+  - name: project-api-knowledge-bases
+    url: http://project-api:5000/api/knowledge-bases
+    routes:
+      - name: project-api-knowledge-bases-route
+        paths:
+          - /api/knowledge-bases
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - '${CORS_ALLOW_ORIGIN}'
+          methods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+            - OPTIONS
+          headers:
+            - Accept
+            - Authorization
+            - Content-Type
+            - X-Requested-With
+            - apikey
+          exposed_headers:
+            - Content-Length
+            - Content-Range
+          credentials: true
+          max_age: 3600
+      - name: key-auth
+        config:
+          hide_credentials: false
+
+  # Agents API - agent configuration and execution
+  - name: project-api-agents
+    url: http://project-api:5000/api/agents
+    routes:
+      - name: project-api-agents-route
+        paths:
+          - /api/agents
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - '${CORS_ALLOW_ORIGIN}'
+          methods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+            - OPTIONS
+          headers:
+            - Accept
+            - Authorization
+            - Content-Type
+            - X-Requested-With
+            - apikey
+          exposed_headers:
+            - Content-Length
+            - Content-Range
+          credentials: true
+          max_age: 3600
+      - name: key-auth
+        config:
+          hide_credentials: false
+
+  # Context Handlers API - semantic search and context assembly
+  - name: project-api-context-handlers
+    url: http://project-api:5000/api/context-handlers
+    routes:
+      - name: project-api-context-handlers-route
+        paths:
+          - /api/context-handlers
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - '${CORS_ALLOW_ORIGIN}'
+          methods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+            - OPTIONS
+          headers:
+            - Accept
+            - Authorization
+            - Content-Type
+            - X-Requested-With
+            - apikey
+          exposed_headers:
+            - Content-Length
+            - Content-Range
+          credentials: true
+          max_age: 3600
+      - name: key-auth
+        config:
+          hide_credentials: false
+
+  # AI Provider Keys API - per-project LLM provider key storage
+  - name: project-api-ai-provider-keys
+    url: http://project-api:5000/api/ai-provider-keys
+    routes:
+      - name: project-api-ai-provider-keys-route
+        paths:
+          - /api/ai-provider-keys
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - '${CORS_ALLOW_ORIGIN}'
+          methods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+            - OPTIONS
+          headers:
+            - Accept
+            - Authorization
+            - Content-Type
+            - X-Requested-With
+            - apikey
+          exposed_headers:
+            - Content-Length
+            - Content-Range
+          credentials: true
+          max_age: 3600
+      - name: key-auth
+        config:
+          hide_credentials: false
+
+  # Sessions API - session and message management
+  - name: project-api-sessions
+    url: http://project-api:5000/api/sessions
+    routes:
+      - name: project-api-sessions-route
+        paths:
+          - /api/sessions
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - '${CORS_ALLOW_ORIGIN}'
+          methods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+            - OPTIONS
+          headers:
+            - Accept
+            - Authorization
+            - Content-Type
+            - X-Requested-With
+            - apikey
+          exposed_headers:
+            - Content-Length
+            - Content-Range
+          credentials: true
+          max_age: 3600
+      - name: key-auth
+        config:
+          hide_credentials: false
+
+  # Workflows API - workflow management and execution
+  - name: project-api-workflows
+    url: http://project-api:5000/api/workflows
+    routes:
+      - name: project-api-workflows-route
+        paths:
+          - /api/workflows
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - '${CORS_ALLOW_ORIGIN}'
+          methods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+            - OPTIONS
+          headers:
+            - Accept
+            - Authorization
+            - Content-Type
+            - X-Requested-With
+            - apikey
+          exposed_headers:
+            - Content-Length
+            - Content-Range
+          credentials: true
+          max_age: 3600
+      - name: key-auth
+        config:
+          hide_credentials: false
+
+  # Copilot API - copilot sessions, messages, and chat
+  - name: project-api-copilot
+    url: http://project-api:5000/api/copilot
+    routes:
+      - name: project-api-copilot-route
+        paths:
+          - /api/copilot
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - '${CORS_ALLOW_ORIGIN}'
+          methods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+            - OPTIONS
+          headers:
+            - Accept
+            - Authorization
+            - Content-Type
+            - X-Requested-With
+            - apikey
+          exposed_headers:
+            - Content-Length
+            - Content-Range
+          credentials: true
+          max_age: 3600
+      - name: key-auth
+        config:
+          hide_credentials: false
+
+  # Tools API - custom tool CRUD
+  - name: project-api-tools
+    url: http://project-api:5000/api/tools
+    routes:
+      - name: project-api-tools-route
+        paths:
+          - /api/tools
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - '${CORS_ALLOW_ORIGIN}'
+          methods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+            - OPTIONS
+          headers:
+            - Accept
+            - Authorization
+            - Content-Type
+            - X-Requested-With
+            - apikey
+          exposed_headers:
+            - Content-Length
+            - Content-Range
+          credentials: true
+          max_age: 3600
+      - name: key-auth
+        config:
+          hide_credentials: false
+
+  # Orchestrations API - multi-agent orchestration management
+  - name: project-api-orchestrations
+    url: http://project-api:5000/api/orchestrations
+    routes:
+      - name: project-api-orchestrations-route
+        paths:
+          - /api/orchestrations
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - '${CORS_ALLOW_ORIGIN}'
+          methods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+            - OPTIONS
+          headers:
+            - Accept
+            - Authorization
+            - Content-Type
+            - X-Requested-With
+            - apikey
+          exposed_headers:
+            - Content-Length
+            - Content-Range
+          credentials: true
+          max_age: 3600
+      - name: key-auth
+        config:
+          hide_credentials: false
+
+  # Settings API - project-level AI configuration
+  - name: project-api-settings
+    url: http://project-api:5000/api/settings
+    routes:
+      - name: project-api-settings-route
+        paths:
+          - /api/settings
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - '${CORS_ALLOW_ORIGIN}'
+          methods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+            - OPTIONS
+          headers:
+            - Accept
+            - Authorization
+            - Content-Type
+            - X-Requested-With
+            - apikey
+          exposed_headers:
+            - Content-Length
+            - Content-Range
+          credentials: true
+          max_age: 3600
+      - name: key-auth
+        config:
+          hide_credentials: false
+
+  # Config API (kb-defaults etc.)
+  - name: project-api-config
+    url: http://project-api:5000/api/config
+    routes:
+      - name: project-api-config-route
+        paths:
+          - /api/config
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - '${CORS_ALLOW_ORIGIN}'
+          methods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+            - OPTIONS
+          headers:
+            - Accept
+            - Authorization
+            - Content-Type
+            - X-Requested-With
+            - apikey
+          exposed_headers:
+            - Content-Length
+            - Content-Range
+          credentials: true
+          max_age: 3600
+      - name: key-auth
+        config:
+          hide_credentials: false
+
+  # Database meta API (tables, openapi)
+  - name: project-api-database
+    url: http://project-api:5000/api/database
+    routes:
+      - name: project-api-database-route
+        paths:
+          - /api/database
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - '${CORS_ALLOW_ORIGIN}'
+          methods:
+            - GET
+            - OPTIONS
+          headers:
+            - Accept
+            - Authorization
+            - Content-Type
+            - X-Requested-With
+            - apikey
+          exposed_headers:
+            - Content-Length
+          credentials: true
+          max_age: 3600
+      - name: key-auth
+        config:
+          hide_credentials: false
+
+  # Webhooks API - unauthenticated webhook triggers for workflows
+  - name: project-api-webhooks
+    url: http://project-api:5000/api/webhooks
+    routes:
+      - name: project-api-webhooks-route
+        paths:
+          - /api/webhooks
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - '*'
+          methods:
+            - POST
+            - OPTIONS
+          headers:
+            - Accept
+            - Authorization
+            - Content-Type
+          exposed_headers:
+            - Content-Length
+          max_age: 3600
+  # Project Service Health endpoint
+  - name: project-api-health
+    url: http://project-api:5000/health
+    routes:
+      - name: project-api-health-route
+        paths:
+          - /api/health
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - '${CORS_ALLOW_ORIGIN}'
+          credentials: true
+
+  # Studio dashboard - catch-all route for everything not matched above,
+  # gated by HTTP basic-auth (DASHBOARD consumer + credential above).
+  # NOTE: studio:3001, not the upstream Supabase default of :3000 — this
+  # fork's apps/studio/Dockerfile (production target) EXPOSEs/binds 3001.
+  - name: dashboard
+    url: http://studio:3001/
+    routes:
+      - name: dashboard-all
+        strip_path: true
+        paths:
+          - /
+    plugins:
+      - name: cors
+      - name: basic-auth
+        config:
+          hide_credentials: true

@@ -1,0 +1,7 @@
+node_modules/
+.next
+
+# Runtime-generated E2E fixtures (sources-dedup.spec.ts beforeAll writes
+# salted variants of sources-crud-sample.txt; afterAll unlinks them, but if
+# the process crashes the file leaks and shouldn't be accidentally committed).
+apps/studio/tests/e2e/fixtures/dedup-ui-salted-*.txt

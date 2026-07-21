@@ -1,0 +1,11 @@
+Powabase Studio
+Copyright (c) Powabase AI
+
+This product includes software developed by Supabase, Inc.
+(https://github.com/supabase/supabase), licensed under the Apache License,
+Version 2.0. Powabase Studio is a fork of Supabase Studio with modifications,
+including a self-hosted single-project build (NEXT_PUBLIC_IS_PLATFORM=false)
+and removal of hosted-platform-only surfaces.
+
+The Apache License, Version 2.0 text is in the LICENSE file at the repository
+root.

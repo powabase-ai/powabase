@@ -1,0 +1,22 @@
+{
+  "name": "agentic-frontend",
+  "private": true,
+  "packageManager": "pnpm@10.24.0",
+  "engines": {
+    "pnpm": "10.24",
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "eslint": "^9.0.0",
+    "prettier": "^3.8.0",
+    "rimraf": "^6.0.0",
+    "sass": "^1.72.0",
+    "supports-color": "^8.0.0",
+    "tailwindcss": "catalog:",
+    "tsx": "catalog:",
+    "turbo": "2.9.6",
+    "typescript": "catalog:",
+    "zod": "catalog:"
+  }
+}

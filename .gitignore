@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+.env
+
+# Node (frontend has its own too)
+node_modules/
+.next/
+dist/
+build/

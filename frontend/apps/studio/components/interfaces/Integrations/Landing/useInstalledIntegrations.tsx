@@ -1,0 +1,110 @@
+import { useMemo } from 'react'
+import { parseSchemaComment } from 'stripe-experiment-sync/supabase'
+
+import { wrapperMetaComparator } from '../Wrappers/Wrappers.utils'
+import { INTEGRATIONS } from './Integrations.constants'
+import {
+  isInstalled as checkIsInstalled,
+  findStripeSchema,
+} from '@/components/interfaces/Integrations/templates/StripeSyncEngine/stripe-sync-status'
+import { useDatabaseExtensionsQuery } from '@/data/database-extensions/database-extensions-query'
+import { useSchemasQuery } from '@/data/database/schemas-query'
+import { useFDWsQuery } from '@/data/fdw/fdws-query'
+import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
+import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
+import { EMPTY_ARR } from '@/lib/void'
+
+export const useInstalledIntegrations = () => {
+  const { data: project } = useSelectedProjectQuery()
+  const { integrationsWrappers } = useIsFeatureEnabled(['integrations:wrappers'])
+
+  const allIntegrations = useMemo(() => {
+    return INTEGRATIONS.filter((integration) => {
+      if (
+        !integrationsWrappers &&
+        (integration.type === 'wrapper' || integration.id.endsWith('_wrapper'))
+      ) {
+        return false
+      }
+      return true
+    })
+  }, [integrationsWrappers])
+
+  const {
+    data,
+    error: fdwError,
+    isError: isErrorFDWs,
+    isPending: isFDWLoading,
+    isSuccess: isSuccessFDWs,
+  } = useFDWsQuery({
+    projectRef: project?.ref,
+    connectionString: project?.connectionString,
+  })
+  const {
+    data: extensions,
+    error: extensionsError,
+    isError: isErrorExtensions,
+    isPending: isExtensionsLoading,
+    isSuccess: isSuccessExtensions,
+  } = useDatabaseExtensionsQuery({
+    projectRef: project?.ref,
+    connectionString: project?.connectionString,
+  })
+
+  const {
+    data: schemas,
+    error: schemasError,
+    isError: isErrorSchemas,
+    isPending: isSchemasLoading,
+    isSuccess: isSuccessSchemas,
+  } = useSchemasQuery({
+    projectRef: project?.ref,
+    connectionString: project?.connectionString,
+  })
+
+  const isHooksEnabled = schemas?.some((schema) => schema.name === 'supabase_functions')
+  const wrappers = useMemo(() => data ?? EMPTY_ARR, [data])
+
+  const installedIntegrations = useMemo(() => {
+    return allIntegrations
+      .filter((integration) => {
+        // special handling for supabase webhooks
+        if (integration.id === 'webhooks') {
+          return isHooksEnabled
+        }
+        if (integration.id === 'data_api') {
+          return true
+        }
+        if (integration.id === 'stripe_sync_engine') {
+          const stripeSchema = findStripeSchema(schemas)
+          const parsedSchema = parseSchemaComment(stripeSchema?.comment)
+          return checkIsInstalled(parsedSchema.status)
+        }
+        if (integration.type === 'wrapper') {
+          return wrappers.find((w) => wrapperMetaComparator(integration.meta, w))
+        }
+        if (integration.type === 'postgres_extension') {
+          return integration.requiredExtensions.every((extName) => {
+            const foundExtension = (extensions ?? []).find((ext) => ext.name === extName)
+            return !!foundExtension?.installed_version
+          })
+        }
+        return false
+      })
+      .sort((a, b) => a.name.localeCompare(b.name))
+  }, [allIntegrations, wrappers, extensions, schemas, isHooksEnabled])
+
+  const error = fdwError || extensionsError || schemasError
+  const isLoading = isSchemasLoading || isFDWLoading || isExtensionsLoading
+  const isError = isErrorFDWs || isErrorExtensions || isErrorSchemas
+  const isSuccess = isSuccessFDWs && isSuccessExtensions && isSuccessSchemas
+
+  return {
+    // show all integrations at once instead of showing partial results
+    installedIntegrations: isLoading ? EMPTY_ARR : installedIntegrations,
+    error,
+    isError,
+    isLoading,
+    isSuccess,
+  }
+}

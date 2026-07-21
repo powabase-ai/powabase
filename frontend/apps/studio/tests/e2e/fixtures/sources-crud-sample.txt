@@ -1,0 +1,5 @@
+Sample text document for sources CRUD smoke.
+
+This file is intentionally small so extraction completes in 1-2 seconds
+against the txt extractor. Content is not meaningful — the CRUD test only
+cares that extraction_status transitions pending -> extracted.

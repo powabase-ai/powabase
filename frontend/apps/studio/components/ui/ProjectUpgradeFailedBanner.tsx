@@ -1,0 +1,80 @@
+import { SupportCategories } from '@supabase/shared-types/out/constants'
+import { DatabaseUpgradeStatus } from '@supabase/shared-types/out/events'
+import { useParams } from 'common'
+import dayjs from 'dayjs'
+import { X } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Alert, Button } from 'ui'
+
+import { SupportLink } from '@/components/interfaces/Support/SupportLink'
+import { useProjectUpgradingStatusQuery } from '@/data/config/project-upgrade-status-query'
+import { IS_PLATFORM } from '@/lib/constants'
+import { guessLocalTimezone } from '@/lib/dayjs'
+
+// [Joshen] Think twice about the category though - it doesn't correspond
+
+export const ProjectUpgradeFailedBanner = () => {
+  const { ref } = useParams()
+  const { data } = useProjectUpgradingStatusQuery({ projectRef: ref }, { enabled: IS_PLATFORM })
+  const { status, initiated_at, error } = data?.databaseUpgradeStatus ?? {}
+
+  const key = `supabase-upgrade-${ref}-${initiated_at}`
+
+  const [hasDismissed, setHasDismissed] = useState(false)
+  useEffect(() => {
+    setHasDismissed(localStorage?.getItem(key) === 'true')
+  }, [key])
+
+  const isFailed = status === DatabaseUpgradeStatus.Failed
+  const initiatedAt = dayjs
+    .utc(initiated_at ?? 0)
+    .tz(guessLocalTimezone())
+    .format('DD MMM YYYY HH:mm:ss')
+
+  const subject = 'Upgrade%20failed%20for%20project'
+  const message = `Upgrade information:%0A• Initiated at: ${initiated_at}%0A• Error: ${error}`
+
+  const acknowledgeMessage = () => {
+    setHasDismissed(true)
+    localStorage.setItem(key, 'true')
+  }
+
+  if (!isFailed || hasDismissed) return null
+
+  return (
+    <div className="max-w-7xl">
+      <Alert
+        withIcon
+        variant={'warning'}
+        title={`Postgres version upgrade was not successful (Initiated at ${initiatedAt})`}
+        actions={
+          <div className="flex items-center h-full space-x-4">
+            <Button asChild type="default">
+              <SupportLink
+                queryParams={{
+                  category: SupportCategories.DATABASE_UNRESPONSIVE,
+                  projectRef: ref,
+                  subject,
+                  message,
+                }}
+              >
+                Contact support
+              </SupportLink>
+            </Button>
+            <Button
+              type="text"
+              className="px-1"
+              icon={<X size={16} strokeWidth={1.5} />}
+              onClick={() => acknowledgeMessage()}
+            />
+          </div>
+        }
+      >
+        <div>
+          Your project and its data are not affected. Please reach out to us via our support form
+          for assistance with the upgrade.
+        </div>
+      </Alert>
+    </div>
+  )
+}

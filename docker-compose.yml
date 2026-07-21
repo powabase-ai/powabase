@@ -1,0 +1,574 @@
+# Powabase OSS — single-project data-plane stack. This is the final artifact
+# (docker compose up), NOT a template to copy or render.
+# Quickstart: cp .env.example .env && python gen-keys.py && docker compose up -d
+# Secrets come from gen-keys.py; bring your own LLM key(s) in .env. See README.md.
+
+name: default
+
+services:
+
+  # =============================================================================
+  # Project Service - AI Features (Sources, Knowledge Bases, Agents)
+  # =============================================================================
+
+  project-api:
+    container_name: default-project-api
+    image: ghcr.io/powabase-ai/powabase-ai:0.1.0rc1
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - default_sparse-indexes:/data/sparse_indexes:z
+    environment:
+      DATABASE_URL: postgres://supabase_admin:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      JWT_SECRET: ${JWT_SECRET}
+      SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
+      SUPABASE_URL: http://kong:8000
+      STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL:-}
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      SPARSE_INDEX_PATH: /data/sparse_indexes
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?set OPENAI_API_KEY in .env (required for embeddings)}
+      # BYOK LLM provider keys — you supply your own in .env (see .env.example).
+      # Optional; each resolves to empty unless you set it.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      MISTRAL_API_KEY: ${MISTRAL_API_KEY}
+      EXA_API_KEY: ${EXA_API_KEY}
+      FIRECRAWL_API_KEY: ${FIRECRAWL_API_KEY}
+      PADDLEOCR_API_KEY: ${PADDLEOCR_API_KEY}
+      PADDLEOCR_BASE_URL: ${PADDLEOCR_BASE_URL}
+      LIGHTON_API_KEY: ${LIGHTON_API_KEY}
+      LIGHTON_BASE_URL: ${LIGHTON_BASE_URL}
+      LLAMAPARSE_API_KEY: ${LLAMAPARSE_API_KEY}
+      ZEROENTROPY_API_KEY: ${ZEROENTROPY_API_KEY}
+      COHERE_API_KEY: ${COHERE_API_KEY}
+      JINA_API_KEY: ${JINA_API_KEY}
+      VOYAGE_API_KEY: ${VOYAGE_API_KEY}
+      API_KEY_ENCRYPTION_KEY: ${API_KEY_ENCRYPTION_KEY}
+      # Fixed identity for this single-project stack.
+      PROJECT_ID: default
+      # Inert in the OSS edition (no billing); kept as empty passthroughs.
+      BILLING_ORG_ID: ${BILLING_ORG_ID:-}
+      BILLING_PLAN_TIER: ${BILLING_PLAN_TIER:-free}
+      BILLING_SERVICE_URL: ${BILLING_SERVICE_URL:-http://host.docker.internal:5100}
+      BILLING_JWT_PRIVATE_KEY_PEM: ${BILLING_JWT_PRIVATE_KEY_PEM:-}
+      BILLING_JWT_KID: ${BILLING_JWT_KID:-}
+      # Inert in the OSS edition (no billing); kept as empty passthroughs.
+      BILLING_LLM_MARKUP_MULTIPLIER: ${BILLING_LLM_MARKUP_MULTIPLIER:-}
+      BILLING_AI_ON_US_ENABLED: ${BILLING_AI_ON_US_ENABLED:-}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  project-worker:
+    container_name: default-project-worker
+    image: ghcr.io/powabase-ai/powabase-ai:0.1.0rc1
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - default_sparse-indexes:/data/sparse_indexes:z
+    environment:
+      DATABASE_URL: postgres://supabase_admin:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      JWT_SECRET: ${JWT_SECRET}
+      SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
+      SUPABASE_URL: http://kong:8000
+      STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL:-}
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      SPARSE_INDEX_PATH: /data/sparse_indexes
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?set OPENAI_API_KEY in .env (required for embeddings)}
+      # BYOK LLM provider keys — you supply your own in .env (see .env.example).
+      # Optional; each resolves to empty unless you set it.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      MISTRAL_API_KEY: ${MISTRAL_API_KEY}
+      EXA_API_KEY: ${EXA_API_KEY}
+      FIRECRAWL_API_KEY: ${FIRECRAWL_API_KEY}
+      PADDLEOCR_API_KEY: ${PADDLEOCR_API_KEY}
+      PADDLEOCR_BASE_URL: ${PADDLEOCR_BASE_URL}
+      LIGHTON_API_KEY: ${LIGHTON_API_KEY}
+      LIGHTON_BASE_URL: ${LIGHTON_BASE_URL}
+      LLAMAPARSE_API_KEY: ${LLAMAPARSE_API_KEY}
+      ZEROENTROPY_API_KEY: ${ZEROENTROPY_API_KEY}
+      COHERE_API_KEY: ${COHERE_API_KEY}
+      JINA_API_KEY: ${JINA_API_KEY}
+      VOYAGE_API_KEY: ${VOYAGE_API_KEY}
+      API_KEY_ENCRYPTION_KEY: ${API_KEY_ENCRYPTION_KEY}
+      CELERY_TASK_TIME_LIMIT: ${CELERY_TASK_TIME_LIMIT:-}
+      # Fixed identity for this single-project stack.
+      PROJECT_ID: default
+      # Inert in the OSS edition (no billing); kept as empty passthroughs.
+      BILLING_ORG_ID: ${BILLING_ORG_ID:-}
+      BILLING_PLAN_TIER: ${BILLING_PLAN_TIER:-free}
+      BILLING_SERVICE_URL: ${BILLING_SERVICE_URL:-http://host.docker.internal:5100}
+      BILLING_JWT_PRIVATE_KEY_PEM: ${BILLING_JWT_PRIVATE_KEY_PEM:-}
+      BILLING_JWT_KID: ${BILLING_JWT_KID:-}
+      # Inert in the OSS edition (no billing); kept as empty passthroughs.
+      BILLING_LLM_MARKUP_MULTIPLIER: ${BILLING_LLM_MARKUP_MULTIPLIER:-}
+      BILLING_AI_ON_US_ENABLED: ${BILLING_AI_ON_US_ENABLED:-}
+    command: ["celery", "-A", "agentic_project_service.celery:celery_app", "worker", "--loglevel=info", "--pool=threads", "--concurrency=4"]
+    healthcheck:
+      test: ["CMD", "celery", "-A", "agentic_project_service.celery:celery_app", "inspect", "ping", "--timeout=5"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  redis:
+    container_name: default-redis
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # =============================================================================
+  # Supabase Core Services
+  # =============================================================================
+
+  kong:
+    container_name: default-kong
+    image: kong:2.8.1
+    restart: unless-stopped
+    ports:
+      - "${KONG_HTTP_PORT}:8000/tcp"
+      - "${KONG_HTTPS_PORT}:8443/tcp"
+    volumes:
+      - ./volumes/api/kong.yml:/home/kong/temp.yml:ro,z
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /home/kong/kong.yml
+      KONG_DNS_ORDER: LAST,A,CNAME
+      KONG_PLUGINS: request-transformer,cors,key-auth,acl,basic-auth,rate-limiting
+      KONG_NGINX_PROXY_PROXY_BUFFER_SIZE: 160k
+      KONG_NGINX_PROXY_PROXY_BUFFERS: 64 160k
+      SUPABASE_ANON_KEY: ${ANON_KEY}
+      SUPABASE_SERVICE_KEY: ${SERVICE_ROLE_KEY}
+      DASHBOARD_USERNAME: ${DASHBOARD_USERNAME}
+      DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD}
+      CORS_ALLOW_ORIGIN: ${CORS_ALLOW_ORIGIN}
+    entrypoint: bash -c 'eval "echo \"$$(cat ~/temp.yml)\"" > ~/kong.yml && /docker-entrypoint.sh kong docker-start'
+
+  # Studio dashboard — reachable ONLY through the Kong `dashboard` route
+  # (volumes/api/kong.yml), never on a host port directly.
+  studio:
+    container_name: default-studio
+    restart: unless-stopped
+    # Published self-host image. The build-time NEXT_PUBLIC_* args that used to
+    # live here (IS_PLATFORM=false, SITE_URL, DISABLED_FEATURES) are baked into
+    # this image by .github/workflows/oss-publish.yml — see its studio build-args.
+    image: ghcr.io/powabase-ai/powabase-studio:0.1.0rc1
+    environment:
+      NEXT_PUBLIC_IS_PLATFORM: "false"
+      # Inert at runtime — see the build.args comment above; kept here only
+      # for parity with NEXT_PUBLIC_IS_PLATFORM's pattern.
+      NEXT_PUBLIC_DISABLED_FEATURES: "billing:all,billing:plan_picker,credits:enabled"
+      NEXT_PUBLIC_SUPABASE_URL: "http://kong:8000"
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${ANON_KEY}
+      NEXT_PUBLIC_GOTRUE_URL: "http://kong:8000/auth/v1"
+      # Self-hosted Studio (IS_PLATFORM=false) proxies Postgres/Auth/Storage
+      # server-side via these NON-public vars (lib/api/self-hosted/*,
+      # pages/api/platform/*) — the NEXT_PUBLIC_* siblings above are inert
+      # at runtime (baked at build time) and kept only for parity.
+      SUPABASE_URL: http://kong:8000
+      SUPABASE_PUBLIC_URL: ${API_EXTERNAL_URL}
+      SUPABASE_ANON_KEY: ${ANON_KEY}
+      SUPABASE_SERVICE_KEY: ${SERVICE_ROLE_KEY}     # server-side only
+      STUDIO_PG_META_URL: http://meta:8080
+      # lib/api/self-hosted/{constants,query}.ts builds the pg-meta connection
+      # string (POSTGRES_*) and encrypts it with PG_META_CRYPTO_KEY for every
+      # /query call (SQL Editor + Table Editor). Without these, both fall back
+      # to literals ('postgres' password, 'SAMPLE_KEY' crypto key) that don't
+      # match `db`/`meta`'s real generated secrets, and pg-meta rejects every
+      # query. POSTGRES_HOST/PORT are left on their correct built-in defaults
+      # ('db'/5432, matching the internal container port — NOT the host-exposed
+      # ${POSTGRES_PORT} mapping, which can differ from it).
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PG_META_CRYPTO_KEY: ${PG_META_CRYPTO_KEY}
+    depends_on:
+      kong:
+        condition: service_started
+      meta:
+        condition: service_started
+      auth:
+        condition: service_healthy
+    # NO ports: — reachable only via the Kong dashboard route above.
+
+  auth:
+    container_name: default-auth
+    image: supabase/gotrue:v2.184.0
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://127.0.0.1:9999/health"
+        ]
+      timeout: 5s
+      interval: 5s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      API_EXTERNAL_URL: ${API_EXTERNAL_URL}
+
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+
+      GOTRUE_SITE_URL: ${SITE_URL}
+      GOTRUE_URI_ALLOW_LIST: ${ADDITIONAL_REDIRECT_URLS}
+      GOTRUE_DISABLE_SIGNUP: ${DISABLE_SIGNUP}
+
+      GOTRUE_JWT_ADMIN_ROLES: service_role
+      GOTRUE_JWT_AUD: authenticated
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_JWT_EXP: ${JWT_EXPIRY}
+      GOTRUE_JWT_SECRET: ${JWT_SECRET}
+
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: ${ENABLE_EMAIL_SIGNUP}
+      GOTRUE_EXTERNAL_ANONYMOUS_USERS_ENABLED: ${ENABLE_ANONYMOUS_USERS}
+      GOTRUE_MAILER_AUTOCONFIRM: ${ENABLE_EMAIL_AUTOCONFIRM}
+
+      GOTRUE_SMTP_ADMIN_EMAIL: ${SMTP_ADMIN_EMAIL}
+      GOTRUE_SMTP_HOST: ${SMTP_HOST}
+      GOTRUE_SMTP_PORT: ${SMTP_PORT}
+      GOTRUE_SMTP_USER: ${SMTP_USER}
+      GOTRUE_SMTP_PASS: ${SMTP_PASS}
+      GOTRUE_SMTP_SENDER_NAME: ${SMTP_SENDER_NAME}
+      GOTRUE_MAILER_URLPATHS_INVITE: "/auth/v1/verify"
+      GOTRUE_MAILER_URLPATHS_CONFIRMATION: "/auth/v1/verify"
+      GOTRUE_MAILER_URLPATHS_RECOVERY: "/auth/v1/verify"
+      GOTRUE_MAILER_URLPATHS_EMAIL_CHANGE: "/auth/v1/verify"
+
+      GOTRUE_EXTERNAL_PHONE_ENABLED: ${GOTRUE_EXTERNAL_PHONE_ENABLED:-false}
+      GOTRUE_SMS_AUTOCONFIRM: false
+
+      # --- Rate limits (configurable via auth config API) ---
+      GOTRUE_RATE_LIMIT_EMAIL_SENT: ${GOTRUE_RATE_LIMIT_EMAIL_SENT:-30}
+      GOTRUE_RATE_LIMIT_SMS_SENT: ${GOTRUE_RATE_LIMIT_SMS_SENT:-30}
+      GOTRUE_RATE_LIMIT_TOKEN_REFRESH: ${GOTRUE_RATE_LIMIT_TOKEN_REFRESH:-150}
+      GOTRUE_RATE_LIMIT_VERIFY: ${GOTRUE_RATE_LIMIT_VERIFY:-30}
+      GOTRUE_RATE_LIMIT_ANONYMOUS_USERS: ${GOTRUE_RATE_LIMIT_ANONYMOUS_USERS:-30}
+      GOTRUE_RATE_LIMIT_OTP: ${GOTRUE_RATE_LIMIT_OTP:-30}
+
+      # --- Sessions ---
+      # NOTE: GOTRUE_SESSIONS_TIMEBOX and GOTRUE_SESSIONS_INACTIVITY_TIMEOUT
+      # must NOT be set to 0 or empty — GoTrue crashes. Only set them via
+      # auth config API when a positive duration value is provided.
+      GOTRUE_SESSIONS_SINGLE_PER_USER: ${GOTRUE_SESSIONS_SINGLE_PER_USER:-false}
+      GOTRUE_SECURITY_REFRESH_TOKEN_REUSE_INTERVAL: ${GOTRUE_SECURITY_REFRESH_TOKEN_REUSE_INTERVAL:-10}
+      GOTRUE_SECURITY_REFRESH_TOKEN_ROTATION_ENABLED: ${GOTRUE_SECURITY_REFRESH_TOKEN_ROTATION_ENABLED:-true}
+
+      # --- MFA ---
+      GOTRUE_MFA_TOTP_ENROLL_ENABLED: ${GOTRUE_MFA_TOTP_ENROLL_ENABLED:-true}
+      GOTRUE_MFA_TOTP_VERIFY_ENABLED: ${GOTRUE_MFA_TOTP_VERIFY_ENABLED:-true}
+      GOTRUE_MFA_PHONE_ENROLL_ENABLED: ${GOTRUE_MFA_PHONE_ENROLL_ENABLED:-false}
+      GOTRUE_MFA_PHONE_VERIFY_ENABLED: ${GOTRUE_MFA_PHONE_VERIFY_ENABLED:-false}
+      GOTRUE_MFA_PHONE_OTP_LENGTH: ${GOTRUE_MFA_PHONE_OTP_LENGTH:-6}
+      GOTRUE_MFA_MAX_ENROLLED_FACTORS: ${GOTRUE_MFA_MAX_ENROLLED_FACTORS:-10}
+
+      # --- Security / Attack protection ---
+      GOTRUE_SECURITY_CAPTCHA_ENABLED: ${GOTRUE_SECURITY_CAPTCHA_ENABLED:-false}
+      GOTRUE_SECURITY_CAPTCHA_PROVIDER: ${GOTRUE_SECURITY_CAPTCHA_PROVIDER:-hcaptcha}
+      GOTRUE_SECURITY_CAPTCHA_SECRET: ${GOTRUE_SECURITY_CAPTCHA_SECRET:-}
+      GOTRUE_SECURITY_MANUAL_LINKING_ENABLED: ${GOTRUE_SECURITY_MANUAL_LINKING_ENABLED:-false}
+      GOTRUE_SECURITY_UPDATE_PASSWORD_REQUIRE_REAUTHENTICATION: ${GOTRUE_SECURITY_UPDATE_PASSWORD_REQUIRE_REAUTHENTICATION:-false}
+
+      # --- OAuth providers (configurable via auth config API) ---
+      GOTRUE_EXTERNAL_APPLE_ENABLED: ${GOTRUE_EXTERNAL_APPLE_ENABLED:-false}
+      GOTRUE_EXTERNAL_APPLE_CLIENT_ID: ${GOTRUE_EXTERNAL_APPLE_CLIENT_ID:-}
+      GOTRUE_EXTERNAL_APPLE_SECRET: ${GOTRUE_EXTERNAL_APPLE_SECRET:-}
+      GOTRUE_EXTERNAL_AZURE_ENABLED: ${GOTRUE_EXTERNAL_AZURE_ENABLED:-false}
+      GOTRUE_EXTERNAL_AZURE_CLIENT_ID: ${GOTRUE_EXTERNAL_AZURE_CLIENT_ID:-}
+      GOTRUE_EXTERNAL_AZURE_SECRET: ${GOTRUE_EXTERNAL_AZURE_SECRET:-}
+      GOTRUE_EXTERNAL_AZURE_URL: ${GOTRUE_EXTERNAL_AZURE_URL:-}
+      GOTRUE_EXTERNAL_BITBUCKET_ENABLED: ${GOTRUE_EXTERNAL_BITBUCKET_ENABLED:-false}
+      GOTRUE_EXTERNAL_BITBUCKET_CLIENT_ID: ${GOTRUE_EXTERNAL_BITBUCKET_CLIENT_ID:-}
+      GOTRUE_EXTERNAL_BITBUCKET_SECRET: ${GOTRUE_EXTERNAL_BITBUCKET_SECRET:-}
+      GOTRUE_EXTERNAL_DISCORD_ENABLED: ${GOTRUE_EXTERNAL_DISCORD_ENABLED:-false}
+      GOTRUE_EXTERNAL_DISCORD_CLIENT_ID: ${GOTRUE_EXTERNAL_DISCORD_CLIENT_ID:-}
+      GOTRUE_EXTERNAL_DISCORD_SECRET: ${GOTRUE_EXTERNAL_DISCORD_SECRET:-}
+      GOTRUE_EXTERNAL_FACEBOOK_ENABLED: ${GOTRUE_EXTERNAL_FACEBOOK_ENABLED:-false}
+      GOTRUE_EXTERNAL_FACEBOOK_CLIENT_ID: ${GOTRUE_EXTERNAL_FACEBOOK_CLIENT_ID:-}
+      GOTRUE_EXTERNAL_FACEBOOK_SECRET: ${GOTRUE_EXTERNAL_FACEBOOK_SECRET:-}
+      GOTRUE_EXTERNAL_FIGMA_ENABLED: ${GOTRUE_EXTERNAL_FIGMA_ENABLED:-false}
+      GOTRUE_EXTERNAL_FIGMA_CLIENT_ID: ${GOTRUE_EXTERNAL_FIGMA_CLIENT_ID:-}
+      GOTRUE_EXTERNAL_FIGMA_SECRET: ${GOTRUE_EXTERNAL_FIGMA_SECRET:-}
+      GOTRUE_EXTERNAL_GITHUB_ENABLED: ${GOTRUE_EXTERNAL_GITHUB_ENABLED:-false}
+      GOTRUE_EXTERNAL_GITHUB_CLIENT_ID: ${GOTRUE_EXTERNAL_GITHUB_CLIENT_ID:-}
+      GOTRUE_EXTERNAL_GITHUB_SECRET: ${GOTRUE_EXTERNAL_GITHUB_SECRET:-}
+      GOTRUE_EXTERNAL_GITLAB_ENABLED: ${GOTRUE_EXTERNAL_GITLAB_ENABLED:-false}
+      GOTRUE_EXTERNAL_GITLAB_CLIENT_ID: ${GOTRUE_EXTERNAL_GITLAB_CLIENT_ID:-}
+      GOTRUE_EXTERNAL_GITLAB_SECRET: ${GOTRUE_EXTERNAL_GITLAB_SECRET:-}
+      GOTRUE_EXTERNAL_GITLAB_URL: ${GOTRUE_EXTERNAL_GITLAB_URL:-}
+      GOTRUE_EXTERNAL_GOOGLE_ENABLED: ${GOTRUE_EXTERNAL_GOOGLE_ENABLED:-false}
+      GOTRUE_EXTERNAL_GOOGLE_CLIENT_ID: ${GOTRUE_EXTERNAL_GOOGLE_CLIENT_ID:-}
+      GOTRUE_EXTERNAL_GOOGLE_SECRET: ${GOTRUE_EXTERNAL_GOOGLE_SECRET:-}
+      GOTRUE_EXTERNAL_KAKAO_ENABLED: ${GOTRUE_EXTERNAL_KAKAO_ENABLED:-false}
+      GOTRUE_EXTERNAL_KAKAO_CLIENT_ID: ${GOTRUE_EXTERNAL_KAKAO_CLIENT_ID:-}
+      GOTRUE_EXTERNAL_KAKAO_SECRET: ${GOTRUE_EXTERNAL_KAKAO_SECRET:-}
+      GOTRUE_EXTERNAL_KEYCLOAK_ENABLED: ${GOTRUE_EXTERNAL_KEYCLOAK_ENABLED:-false}
+      GOTRUE_EXTERNAL_KEYCLOAK_CLIENT_ID: ${GOTRUE_EXTERNAL_KEYCLOAK_CLIENT_ID:-}
+      GOTRUE_EXTERNAL_KEYCLOAK_SECRET: ${GOTRUE_EXTERNAL_KEYCLOAK_SECRET:-}
+      GOTRUE_EXTERNAL_KEYCLOAK_URL: ${GOTRUE_EXTERNAL_KEYCLOAK_URL:-}
+      GOTRUE_EXTERNAL_LINKEDIN_OIDC_ENABLED: ${GOTRUE_EXTERNAL_LINKEDIN_OIDC_ENABLED:-false}
+      GOTRUE_EXTERNAL_LINKEDIN_OIDC_CLIENT_ID: ${GOTRUE_EXTERNAL_LINKEDIN_OIDC_CLIENT_ID:-}
+      GOTRUE_EXTERNAL_LINKEDIN_OIDC_SECRET: ${GOTRUE_EXTERNAL_LINKEDIN_OIDC_SECRET:-}
+      GOTRUE_EXTERNAL_NOTION_ENABLED: ${GOTRUE_EXTERNAL_NOTION_ENABLED:-false}
+      GOTRUE_EXTERNAL_NOTION_CLIENT_ID: ${GOTRUE_EXTERNAL_NOTION_CLIENT_ID:-}
+      GOTRUE_EXTERNAL_NOTION_SECRET: ${GOTRUE_EXTERNAL_NOTION_SECRET:-}
+      GOTRUE_EXTERNAL_SLACK_ENABLED: ${GOTRUE_EXTERNAL_SLACK_ENABLED:-false}
+      GOTRUE_EXTERNAL_SLACK_CLIENT_ID: ${GOTRUE_EXTERNAL_SLACK_CLIENT_ID:-}
+      GOTRUE_EXTERNAL_SLACK_SECRET: ${GOTRUE_EXTERNAL_SLACK_SECRET:-}
+      GOTRUE_EXTERNAL_SLACK_OIDC_ENABLED: ${GOTRUE_EXTERNAL_SLACK_OIDC_ENABLED:-false}
+      GOTRUE_EXTERNAL_SLACK_OIDC_CLIENT_ID: ${GOTRUE_EXTERNAL_SLACK_OIDC_CLIENT_ID:-}
+      GOTRUE_EXTERNAL_SLACK_OIDC_SECRET: ${GOTRUE_EXTERNAL_SLACK_OIDC_SECRET:-}
+      GOTRUE_EXTERNAL_SPOTIFY_ENABLED: ${GOTRUE_EXTERNAL_SPOTIFY_ENABLED:-false}
+      GOTRUE_EXTERNAL_SPOTIFY_CLIENT_ID: ${GOTRUE_EXTERNAL_SPOTIFY_CLIENT_ID:-}
+      GOTRUE_EXTERNAL_SPOTIFY_SECRET: ${GOTRUE_EXTERNAL_SPOTIFY_SECRET:-}
+      GOTRUE_EXTERNAL_TWITCH_ENABLED: ${GOTRUE_EXTERNAL_TWITCH_ENABLED:-false}
+      GOTRUE_EXTERNAL_TWITCH_CLIENT_ID: ${GOTRUE_EXTERNAL_TWITCH_CLIENT_ID:-}
+      GOTRUE_EXTERNAL_TWITCH_SECRET: ${GOTRUE_EXTERNAL_TWITCH_SECRET:-}
+      GOTRUE_EXTERNAL_TWITTER_ENABLED: ${GOTRUE_EXTERNAL_TWITTER_ENABLED:-false}
+      GOTRUE_EXTERNAL_TWITTER_CLIENT_ID: ${GOTRUE_EXTERNAL_TWITTER_CLIENT_ID:-}
+      GOTRUE_EXTERNAL_TWITTER_SECRET: ${GOTRUE_EXTERNAL_TWITTER_SECRET:-}
+      GOTRUE_EXTERNAL_WORKOS_ENABLED: ${GOTRUE_EXTERNAL_WORKOS_ENABLED:-false}
+      GOTRUE_EXTERNAL_WORKOS_CLIENT_ID: ${GOTRUE_EXTERNAL_WORKOS_CLIENT_ID:-}
+      GOTRUE_EXTERNAL_WORKOS_SECRET: ${GOTRUE_EXTERNAL_WORKOS_SECRET:-}
+      GOTRUE_EXTERNAL_WORKOS_URL: ${GOTRUE_EXTERNAL_WORKOS_URL:-}
+      GOTRUE_EXTERNAL_ZOOM_ENABLED: ${GOTRUE_EXTERNAL_ZOOM_ENABLED:-false}
+      GOTRUE_EXTERNAL_ZOOM_CLIENT_ID: ${GOTRUE_EXTERNAL_ZOOM_CLIENT_ID:-}
+      GOTRUE_EXTERNAL_ZOOM_SECRET: ${GOTRUE_EXTERNAL_ZOOM_SECRET:-}
+
+      # --- Phone / SMS ---
+      GOTRUE_SMS_PROVIDER: ${GOTRUE_SMS_PROVIDER:-}
+      GOTRUE_SMS_TWILIO_ACCOUNT_SID: ${GOTRUE_SMS_TWILIO_ACCOUNT_SID:-}
+      GOTRUE_SMS_TWILIO_AUTH_TOKEN: ${GOTRUE_SMS_TWILIO_AUTH_TOKEN:-}
+      GOTRUE_SMS_TWILIO_MESSAGE_SERVICE_SID: ${GOTRUE_SMS_TWILIO_MESSAGE_SERVICE_SID:-}
+
+  rest:
+    container_name: default-rest
+    image: postgrest/postgrest:v14.1
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "postgrest", "--ready"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    environment:
+      PGRST_DB_URI: postgres://authenticator:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      PGRST_DB_SCHEMAS: ${PGRST_DB_SCHEMAS}
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+      PGRST_APP_SETTINGS_JWT_SECRET: ${JWT_SECRET}
+      PGRST_APP_SETTINGS_JWT_EXP: ${JWT_EXPIRY}
+      PGRST_ADMIN_SERVER_PORT: 3001
+      PGRST_SERVER_HOST: 0.0.0.0
+    command: ["postgrest"]
+
+  storage:
+    container_name: default-storage
+    image: supabase/storage-api:v1.33.0
+    restart: unless-stopped
+    volumes:
+      - ./volumes/storage:/var/lib/storage:z
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://127.0.0.1:5000/status"
+        ]
+      timeout: 5s
+      interval: 5s
+      retries: 6
+      start_period: 45s
+    depends_on:
+      db:
+        condition: service_healthy
+      rest:
+        condition: service_healthy
+      imgproxy:
+        condition: service_started
+    environment:
+      ANON_KEY: ${ANON_KEY}
+      SERVICE_KEY: ${SERVICE_ROLE_KEY}
+      POSTGREST_URL: http://rest:3000
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: postgres://supabase_storage_admin:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      REQUEST_ALLOW_X_FORWARDED_PATH: "true"
+      FILE_SIZE_LIMIT: 52428800
+      STORAGE_BACKEND: file
+      FILE_STORAGE_BACKEND_PATH: /var/lib/storage
+      TENANT_ID: stub
+      REGION: stub
+      GLOBAL_S3_BUCKET: stub
+      ENABLE_IMAGE_TRANSFORMATION: "true"
+      IMGPROXY_URL: http://imgproxy:5001
+
+  imgproxy:
+    container_name: default-imgproxy
+    image: darthsim/imgproxy:v3.30.1
+    restart: unless-stopped
+    volumes:
+      - ./volumes/storage:/var/lib/storage:z
+    healthcheck:
+      test: ["CMD", "imgproxy", "health"]
+      timeout: 5s
+      interval: 5s
+      retries: 3
+    environment:
+      IMGPROXY_BIND: ":5001"
+      IMGPROXY_LOCAL_FILESYSTEM_ROOT: /
+      IMGPROXY_USE_ETAG: "true"
+      IMGPROXY_ENABLE_WEBP_DETECTION: "true"
+      IMGPROXY_MAX_SRC_RESOLUTION: 16.8
+
+  meta:
+    container_name: default-meta
+    image: supabase/postgres-meta:v0.95.1
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PG_META_PORT: 8080
+      PG_META_DB_HOST: db
+      PG_META_DB_PORT: 5432
+      PG_META_DB_NAME: ${POSTGRES_DB}
+      PG_META_DB_USER: supabase_admin
+      PG_META_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      CRYPTO_KEY: ${PG_META_CRYPTO_KEY}
+
+  realtime:
+    container_name: default-realtime
+    image: supabase/realtime:v2.65.3
+    restart: unless-stopped
+    networks:
+      default:
+        aliases:
+          - realtime-dev.supabase-realtime
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-sSfL",
+          "--head",
+          "-o",
+          "/dev/null",
+          "-H",
+          "Authorization: Bearer ${ANON_KEY}",
+          "http://localhost:4000/api/tenants/realtime-dev/health"
+        ]
+      timeout: 5s
+      interval: 5s
+      retries: 3
+    environment:
+      PORT: 4000
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: supabase_admin
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_NAME: postgres
+      DB_AFTER_CONNECT_QUERY: 'SET search_path TO _realtime'
+      DB_ENC_KEY: subabaserealtime
+      API_JWT_SECRET: ${JWT_SECRET}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      ERL_AFLAGS: -proto_dist inet_tcp
+      DNS_NODES: "''"
+      RLIMIT_NOFILE: "10000"
+      APP_NAME: realtime
+      SEED_SELF_HOST: "true"
+      RUN_JANITOR: "true"
+
+  db:
+    container_name: default-db
+    image: supabase/postgres:15.8.1.085
+    restart: unless-stopped
+    mem_limit: ${POSTGRES_MEM_LIMIT}
+    cpus: "${POSTGRES_CPUS}"
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT}:5432"
+    volumes:
+      - ./volumes/db/realtime.sql:/docker-entrypoint-initdb.d/migrations/99-realtime.sql:Z
+      - ./volumes/db/webhooks.sql:/docker-entrypoint-initdb.d/init-scripts/098-webhooks.sql:Z
+      - ./volumes/db/roles.sql:/docker-entrypoint-initdb.d/init-scripts/099-roles.sql:Z
+      - ./volumes/db/jwt.sql:/docker-entrypoint-initdb.d/init-scripts/099-jwt.sql:Z
+      - ./volumes/db/ai_schema.sql:/docker-entrypoint-initdb.d/init-scripts/100-ai-schema.sql:Z
+      - ./volumes/db/mark-ready.sql:/docker-entrypoint-initdb.d/init-scripts/999-mark-ready.sql:Z
+      - default_db-data:/var/lib/postgresql/data
+      - default_db-config:/etc/postgresql-custom
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /var/lib/postgresql/data/.init_complete && pg_isready -U postgres -h localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    environment:
+      POSTGRES_HOST: /var/run/postgresql
+      PGPORT: 5432
+      POSTGRES_PORT: 5432
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB}
+      POSTGRES_DB: ${POSTGRES_DB}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXP: ${JWT_EXPIRY}
+    command:
+      [
+        "postgres",
+        "-c",
+        "config_file=/etc/postgresql/postgresql.conf",
+        "-c",
+        "log_min_messages=fatal"
+      ]
+
+volumes:
+  default_db-data:
+  default_db-config:
+  default_sparse-indexes:
+
+networks:
+  default:
+    name: default-network

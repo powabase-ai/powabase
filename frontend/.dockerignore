@@ -1,0 +1,7 @@
+**/node_modules
+**/.next
+**/.turbo
+**/coverage
+**/test-results
+**/playwright-report
+**/*.tsbuildinfo

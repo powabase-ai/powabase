@@ -1,0 +1,101 @@
+name: Publish
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "image tag, e.g. 0.1.0rc1"
+        required: true
+        type: string
+      dry_run:
+        description: "Build only; push nothing"
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  packages: write        # ghcr image push via GITHUB_TOKEN
+
+env:
+  IMAGE: ghcr.io/powabase-ai/powabase-studio
+
+jobs:
+  # Studio is a Node build — QEMU cross-build SIGILLs, so build each arch on a
+  # NATIVE runner (push by digest), then assemble a multi-arch manifest.
+  build:
+    name: powabase-studio → ghcr (${{ matrix.arch }} native)
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+            platform: linux/amd64
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            platform: linux/arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Login to ghcr
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build self-host Studio (IS_PLATFORM=false; push BY DIGEST on real run)
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          file: frontend/apps/studio/Dockerfile
+          # NEXT_PUBLIC_* are inlined at build time — must be baked here (billing UI
+          # off). Kept in sync with docker-compose.yml's former build.args.
+          build-args: |
+            NEXT_PUBLIC_IS_PLATFORM=false
+            NEXT_PUBLIC_SITE_URL=http://localhost:8000
+            NEXT_PUBLIC_DISABLED_FEATURES=billing:all,billing:plan_picker,credits:enabled
+          platforms: ${{ matrix.platform }}
+          outputs: ${{ inputs.dry_run == false && format('type=image,name={0},push-by-digest=true,name-canonical=true,push=true', env.IMAGE) || 'type=cacheonly' }}
+      - name: Export digest (real run only)
+        if: ${{ inputs.dry_run == false }}
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
+      - name: Upload digest (real run only)
+        if: ${{ inputs.dry_run == false }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ matrix.arch }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  manifest:
+    name: powabase-studio manifest merge
+    needs: build
+    if: ${{ inputs.dry_run == false }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/digests
+          pattern: digests-*
+          merge-multiple: true
+      - name: Login to ghcr
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@v3
+      - name: Create + push the multi-arch manifest list
+        run: |
+          set -euo pipefail
+          cd /tmp/digests
+          docker buildx imagetools create -t "${{ env.IMAGE }}:${{ inputs.version }}" \
+            $(printf "${{ env.IMAGE }}@sha256:%s " *)
+          docker buildx imagetools inspect "${{ env.IMAGE }}:${{ inputs.version }}" | head -20
