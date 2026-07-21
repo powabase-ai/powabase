@@ -17,7 +17,7 @@ import { millicentsToUsd } from '@/lib/billing-units'
 export function WalletBalanceBanner() {
   const { data: org } = useSelectedOrganizationQuery()
   const billingUiEnabled = useIsBillingUiEnabled(org)
-  const { data: wallet } = useOrgWalletQuery(org?.slug)
+  const { data: wallet } = useOrgWalletQuery(org?.slug, { enabled: billingUiEnabled })
 
   if (!org || !billingUiEnabled || !wallet) return null
 

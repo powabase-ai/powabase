@@ -81,7 +81,9 @@ const MetaFaviconsPagesRouter = ({
       {includeRssXmlFeed && (
         <link rel="alternate" type="application/rss+xml" href={`${basePath}/feed.xml`} />
       )}
-      {includeManifest && <link rel="manifest" href={`${basePath}${route}/manifest.json`} />}
+      {includeManifest && (
+        <link rel="manifest" href={`${basePath}${route}/manifest.json`} crossOrigin="use-credentials" />
+      )}
       {includeMsApplicationConfig && (
         <meta name="msapplication-config" content={`${basePath}${route}/browserconfig.xml`} />
       )}

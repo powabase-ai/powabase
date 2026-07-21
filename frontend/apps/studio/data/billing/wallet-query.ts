@@ -28,10 +28,13 @@ export async function getWallet(slug: string): Promise<WalletResponse> {
   return (await res.json()) as WalletResponse
 }
 
-export const useOrgWalletQuery = (slug: string | undefined) =>
+export const useOrgWalletQuery = (
+  slug: string | undefined,
+  { enabled = true }: { enabled?: boolean } = {}
+) =>
   useQuery({
     queryKey: billingKeys.wallet(slug),
     queryFn: () => getWallet(slug!),
-    enabled: !!slug,
+    enabled: enabled && !!slug,
     refetchInterval: 60_000,
   })

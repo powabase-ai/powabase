@@ -30,7 +30,7 @@ export function CreditBar() {
   // Using two queries (balance + limits) is duplicate fetching with
   // a real drift surface (the two cache entries can disagree if a
   // charge lands between their polls).
-  const { data: limits, isError } = useCreditsLimitsQuery(slug)
+  const { data: limits, isError } = useCreditsLimitsQuery(slug, { enabled })
 
   if (!enabled) return null
   if (!slug) return null
