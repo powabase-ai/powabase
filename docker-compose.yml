@@ -206,6 +206,10 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       PG_META_CRYPTO_KEY: ${PG_META_CRYPTO_KEY}
+    volumes:
+      # SQL Editor saved queries (SNIPPETS_MANAGEMENT_FOLDER=/app/snippets, baked
+      # into the image) — a named volume so they survive recreate / image bumps.
+      - default_studio-snippets:/app/snippets
     depends_on:
       kong:
         condition: service_started
@@ -568,6 +572,7 @@ volumes:
   default_db-data:
   default_db-config:
   default_sparse-indexes:
+  default_studio-snippets:
 
 networks:
   default:

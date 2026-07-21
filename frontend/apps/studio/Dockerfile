@@ -121,11 +121,18 @@ COPY --from=builder /app/apps/studio/public ./apps/studio/public
 COPY --from=builder /app/apps/studio/.next/standalone ./
 COPY --from=builder /app/apps/studio/.next/static ./apps/studio/.next/static
 
+# SQL Editor saved queries persist to the filesystem (SNIPPETS_MANAGEMENT_FOLDER).
+# Pre-create the dir so the chown below makes it writable by the runtime user; a
+# named volume mounted here then inherits that ownership on first mount (a fresh
+# volume would otherwise be root-owned → EACCES / 500 on the first save).
+RUN mkdir -p /app/snippets
+
 RUN chown -R nextjs:nodejs /app
 USER nextjs
 
 EXPOSE 3001
 ENV HOSTNAME="0.0.0.0"
 ENV PORT=3001
+ENV SNIPPETS_MANAGEMENT_FOLDER=/app/snippets
 HEALTHCHECK --interval=5s --timeout=5s --retries=3 CMD node -e "fetch('http://localhost:3001/api/platform/profile').then((r) => {if (r.status !== 200) throw new Error(r.status)})"
 CMD ["node", "apps/studio/server.js"]

@@ -1,0 +1,4 @@
+# Keeps ./volumes/storage in the repo. docker-compose.yml's storage service
+# bind-mounts this path; without it in the repo, Docker auto-creates it
+# root-owned on first `up`. Tracking it means it's created with your user's
+# ownership on clone instead.

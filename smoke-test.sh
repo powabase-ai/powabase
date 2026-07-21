@@ -68,4 +68,19 @@ NOAUTH_STATUS="$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:${KONG
 curl -fsS -u "${DASHBOARD_USERNAME}:${DASHBOARD_PASSWORD}" "http://localhost:${KONG_PORT}/project/default" >/dev/null \
   || { echo "FAIL: dashboard route with basic-auth credentials did not return 200"; docker compose logs kong studio | tail -40; exit 1; }
 
+# Client-surface check: the HTML shell (200 above) can be green while Studio's own
+# XHR endpoints fail. Assert the SQL-Editor snippets API does not 5xx — it reads
+# SNIPPETS_MANAGEMENT_FOLDER at request time and 500s if unset/unwritable, so the
+# SQL Editor silently can't save. (Browser-only defects — a build-baked API URL, an
+# anonymous manifest fetch — can't be caught by server-side curl; they need the
+# Playwright E2E wired in CI.)
+echo "==> asserting the SQL-Editor snippets API does not 5xx (SNIPPETS_MANAGEMENT_FOLDER)"
+SNIP_CODE="$(curl -s -o /dev/null -w '%{http_code}' \
+  -u "${DASHBOARD_USERNAME}:${DASHBOARD_PASSWORD}" \
+  "http://localhost:${KONG_PORT}/api/platform/projects/default/content/count")"
+case "$SNIP_CODE" in
+  5??) echo "FAIL: snippets API 5xx ($SNIP_CODE) — SNIPPETS_MANAGEMENT_FOLDER unset/unwritable"; docker compose logs studio | tail -30; exit 1 ;;
+  *)   echo "   snippets API reachable (non-5xx: $SNIP_CODE)" ;;
+esac
+
 echo "PASS: OSS single-project stack is up and healthy."

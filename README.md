@@ -61,14 +61,14 @@ Supabase is a trademark of Supabase, Inc. Powabase is an independent project, **
 
 ## Prerequisites
 - Docker + Docker Compose
-- Python 3.11+ with `pyjwt` and `cryptography` (`pip install pyjwt cryptography`) — only to run `gen-keys.py` once. If your system's interpreter is `python3`, use `python3 gen-keys.py` below.
+- Python 3.11+ with `pyjwt` and `cryptography` (`pip install pyjwt cryptography`) — only to run `gen-keys.py` once (the Quickstart uses `python3`; if your system only has `python`, drop the `3`).
 
 No image build is needed — `docker compose up` pulls the published images from GitHub Container Registry (ghcr.io).
 
 ## Quickstart
 ```bash
 cp .env.example .env        # 1. config with sane localhost defaults
-python gen-keys.py          # 2. generate per-deployment secrets into .env
+python3 gen-keys.py         # 2. generate per-deployment secrets into .env
 ```
 **3. Set your LLM key — required.** Open `.env` and set `OPENAI_API_KEY` to your own key (BYOK). **The stack will not start without it** — the AI backend hard-requires an embeddings key, so `docker compose up` fails fast if it's unset. Add other providers (`ANTHROPIC_API_KEY`, etc.) the same way.
 ```bash
