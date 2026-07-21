@@ -1,86 +1,19 @@
-# Supabase Studio
+# Powabase Studio
 
-A dashboard for managing your self-hosted Supabase project, and used on our [hosted platform](https://supabase.com/dashboard). Built with:
+The dashboard for the [Powabase](https://github.com/powabase-ai/powabase) OSS edition — a fork of [Supabase Studio](https://github.com/supabase/supabase/tree/master/apps/studio), adapted for single-project self-hosting.
 
-- [Next.js](https://nextjs.org/)
-- [Tailwind](https://tailwindcss.com/)
+Built with [Next.js](https://nextjs.org/) and [Tailwind](https://tailwindcss.com/).
 
-## What's included
+## How it's deployed
 
-Studio is designed to work with existing deployments - either the local hosted, docker setup, or our CLI. It is not intended for managing the deployment and administration of projects - that's out of scope.
+Studio is built in **self-hosted mode** (`NEXT_PUBLIC_IS_PLATFORM=false`) and published as the container image `ghcr.io/powabase-ai/powabase-studio` (by the [powabase](https://github.com/powabase-ai/powabase) repo's `.github/workflows/publish.yml`). You don't run it standalone — the Powabase stack pulls this image and serves it through the Kong gateway on `:8000`. See the [stack architecture](https://github.com/powabase-ai/powabase#architecture) for how it fits.
 
-As such, the features exposed on Studio for existing deployments are limited to those which manage your database:
+It exposes the Supabase database-management surface (table & SQL editors, policies, roles, extensions) plus Powabase's AI features (sources, knowledge bases, agents).
 
-- Table & SQL editors
-  - Saved queries are unavailable
-- Database management
-  - Policies, roles, extensions, replication
-- API documentation
+## Running it
 
-## Managing Project Settings
+To use the dashboard, run the full stack — one `docker compose up` in the [Powabase stack repo](https://github.com/powabase-ai/powabase). Studio is a standard Next.js app; local development follows the same workflow as upstream Supabase Studio.
 
-Project settings are managed outside of the Dashboard. If you use docker compose, you should manage the settings in your docker-compose file. If you're deploying Supabase to your own cloud, you should store your secrets and env vars in a vault or secrets manager.
+## Upstream & attribution
 
-## How to contribute?
-
-- Branch from `master` and name your branches with the following structure
-  - `{type}/{branch_name}`
-    - Type: `chore | fix | feature`
-    - The branch name is arbitrary — just make sure it summarizes the work.
-- When you send a PR to `master`, it will automatically tag members of the frontend team for review.
-- Review the [contributing checklists](contributing/contributing-checklists.md) to help test your feature before sending a PR.
-- The Dashboard is under active development. You should run `git pull` frequently to make sure you're up to date.
-
-### Developer Quickstart
-
-> [!NOTE]  
-> **Supabase internal use:** To develop on Studio locally with the backend services, see the instructions in the [internal `infrastructure` repo](https://github.com/supabase/platform/blob/develop/docs/contributing.md).
-
-```bash
-# You'll need to be on Node v20
-# in /studio
-
-## For external contributors
-pnpm install # install dependencies
-pnpm run dev # start dev server
-
-## For internal contributors
-## First clone the private supabase/platform repo and follow instructions for setting up mise
-mise studio  # Run from supabase/platform alongside `mise infra`
-
-## For all
-pnpm run test # run tests
-pnpm run test -- --watch # run tests in watch mode
-```
-
-## Running within a self-hosted environment
-
-Follow the [self-hosting guide](https://supabase.com/docs/guides/hosting/docker) to get started.
-
-```
-cd ..
-cd docker
-docker compose -f docker-compose.yml -f ./dev/docker-compose.dev.yml up
-```
-
-Once you've got that set up, update `.env` in the studio folder with the corresponding values.
-
-```
-POSTGRES_PASSWORD=
-SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_KEY=
-```
-
-Then run the following commands to install dependencies and start the dashboard.
-
-```
-npm install
-npm run dev
-```
-
-If you would like to configure different defaults for "Default Organization" and "Default Project", you will need to update the `.env` in the studio folder with the corresponding values.
-
-```
-DEFAULT_ORGANIZATION_NAME=
-DEFAULT_PROJECT_NAME=
-```
+Powabase Studio is derived from [Supabase Studio](https://github.com/supabase/supabase), used under the [Apache-2.0 license](../../../LICENSE) (see [`NOTICE`](NOTICE) for attribution). Powabase is an independent project, **not affiliated with or endorsed by Supabase, Inc.** — "Supabase" is a trademark of Supabase, Inc.

@@ -53,6 +53,12 @@ flowchart TD
 
 </details>
 
+## Built on Supabase
+
+Powabase's data plane **is** the upstream [Supabase](https://supabase.com) self-hosted stack — GoTrue, PostgREST, Storage, Realtime, postgres-meta, and Postgres — running the official images unchanged. We didn't reinvent the backend: we added a single-project deployment model and the Powabase AI service (knowledge bases, agents, workflows) on top, and forked Studio only to surface those AI features. That's the whole point of open-sourcing this — you can verify exactly what we changed and what we didn't.
+
+Supabase is a trademark of Supabase, Inc. Powabase is an independent project, **not affiliated with or endorsed by Supabase**. Supabase components are used under their respective open-source licenses (Apache-2.0); attribution for the forked Studio is in [`frontend/apps/studio/NOTICE`](frontend/apps/studio/NOTICE).
+
 ## Prerequisites
 - Docker + Docker Compose
 - Python 3.11+ with `pyjwt` and `cryptography` (`pip install pyjwt cryptography`) — only to run `gen-keys.py` once. If your system's interpreter is `python3`, use `python3 gen-keys.py` below.
