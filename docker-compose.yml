@@ -177,7 +177,7 @@ services:
     # Published self-host image. The build-time NEXT_PUBLIC_* args that used to
     # live here (IS_PLATFORM=false, SITE_URL, DISABLED_FEATURES) are baked into
     # this image by .github/workflows/oss-publish.yml — see its studio build-args.
-    image: ghcr.io/powabase-ai/powabase-studio:0.1.0rc1
+    image: ghcr.io/powabase-ai/powabase-studio:0.1.0rc2
     environment:
       NEXT_PUBLIC_IS_PLATFORM: "false"
       # Inert at runtime — see the build.args comment above; kept here only
