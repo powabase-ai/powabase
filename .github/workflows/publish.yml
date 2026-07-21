@@ -98,4 +98,6 @@ jobs:
           cd /tmp/digests
           docker buildx imagetools create -t "${{ env.IMAGE }}:${{ inputs.version }}" \
             $(printf "${{ env.IMAGE }}@sha256:%s " *)
-          docker buildx imagetools inspect "${{ env.IMAGE }}:${{ inputs.version }}" | head -20
+          # No `| head` here: under `set -o pipefail`, head closing the pipe early
+          # sends SIGPIPE to inspect → non-zero → the step fails AFTER a successful push.
+          docker buildx imagetools inspect "${{ env.IMAGE }}:${{ inputs.version }}"
