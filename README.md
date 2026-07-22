@@ -96,11 +96,13 @@ Sign in with those credentials from your app or the API. To allow open signup in
 - `/rest/v1` and `/auth/v1` require the project `apikey` header (anon or service_role key) as of this edition — RLS then differentiates the two roles.
 
 ## Updating
-Image versions are pinned by tag in `docker-compose.yml` (e.g. `:0.1.0rc1`). To move to a newer release, bump those tags, then:
+Image versions are **pinned by tag** in `docker-compose.yml` (e.g. `:0.1.0rc3`) — a running stack never updates itself. To move to a newer release:
 ```bash
+git pull                # get the new docker-compose.yml pins
 docker compose pull     # fetch the new images
 docker compose up -d    # recreate only the changed services
 ```
+See [`CHANGELOG.md`](CHANGELOG.md) for what changed in each release, and whether it needs more than an image bump. Running a service on a version other than the one pinned here is untested — the pins are validated together.
 
 ## Notes
 - Secrets in `.env` are generated locally and never committed. `.env` is git-ignored.
