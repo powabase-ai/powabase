@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useProjectSupabaseClient } from "@/hooks/ai/useProjectSupabaseClient";
+import { hasAiAuth } from "@/lib/ai-api";
 import { modelsApi, type ModelInfo } from "@/lib/ai-api/models-api";
 
 /**
@@ -26,7 +27,17 @@ export function useLLMModels() {
       setIsLoading(false);
       return;
     }
-    if (!token || !orgSlug) return;
+    // Gate on hasAiAuth, NOT raw `!token`: self-host has no GoTrue session so
+    // token is '' permanently (see useProjectSupabaseClient), but hasAiAuth('')
+    // is true off-platform because the same-origin proxy injects service_role
+    // server-side. Gating on raw !token early-returned forever on self-host and
+    // — because it returned BEFORE the .finally below — left isLoading stuck
+    // true, freezing every model dropdown on a disabled "Loading models…".
+    // Clear isLoading here so a genuinely un-authed (platform) render settles.
+    if (!hasAiAuth(token) || !orgSlug) {
+      setIsLoading(false);
+      return;
+    }
 
     let cancelled = false;
     setIsLoading(true);

@@ -1,6 +1,6 @@
 
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface KeyValuePair {
   key: string;
@@ -14,33 +14,65 @@ interface KeyValueEditorProps {
   valuePlaceholder?: string;
 }
 
+function pairsToObj(pairs: KeyValuePair[]): Record<string, string> {
+  const obj: Record<string, string> = {};
+  for (const p of pairs) {
+    if (p.key.trim()) obj[p.key.trim()] = p.value;
+  }
+  return obj;
+}
+
+function objToPairs(value: Record<string, string>): KeyValuePair[] {
+  return Object.entries(value).map(([k, v]) => ({ key: k, value: v }));
+}
+
+function sameObj(a: Record<string, string>, b: Record<string, string>): boolean {
+  const ak = Object.keys(a);
+  const bk = Object.keys(b);
+  return ak.length === bk.length && ak.every((k) => a[k] === b[k]);
+}
+
 export function KeyValueEditor({
   value,
   onChange,
   keyPlaceholder = "Key",
   valuePlaceholder = "Value",
 }: KeyValueEditorProps) {
-  const pairs: KeyValuePair[] = Object.entries(value).map(([k, v]) => ({ key: k, value: v }));
+  // Hold row state LOCALLY. Deriving rows purely from `value` (as this component
+  // used to) makes "+ Add pair" a permanent no-op: a freshly-added {key:'', ...}
+  // row has an empty key, so it is filtered out of the emitted object before it
+  // can ever render — the user can never get a blank row to type into, and no
+  // header/token can ever be entered. Local state lets a transient blank/half-
+  // typed row exist; we commit the filtered object to the parent on every edit.
+  const [pairs, setPairs] = useState<KeyValuePair[]>(() => objToPairs(value));
 
-  const updatePairs = (newPairs: KeyValuePair[]) => {
-    const obj: Record<string, string> = {};
-    for (const p of newPairs) {
-      if (p.key.trim()) obj[p.key.trim()] = p.value;
+  // Resync ONLY on EXTERNAL value changes (e.g. loading a different record).
+  // Our own commits set `value` to exactly pairsToObj(pairs), so this is a
+  // no-op after them and does not clobber an in-progress blank row.
+  useEffect(() => {
+    if (!sameObj(pairsToObj(pairs), value)) {
+      setPairs(objToPairs(value));
     }
-    onChange(obj);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  const commit = (next: KeyValuePair[]) => {
+    setPairs(next);
+    onChange(pairsToObj(next));
   };
 
+  // Add a blank row LOCALLY only — do not commit (it would be filtered out).
+  // It becomes real, and is committed, as soon as the user types a key.
   const addPair = () => {
-    updatePairs([...pairs, { key: "", value: "" }]);
+    setPairs([...pairs, { key: "", value: "" }]);
   };
 
   const removePair = (index: number) => {
-    updatePairs(pairs.filter((_, i) => i !== index));
+    commit(pairs.filter((_, i) => i !== index));
   };
 
   const updatePair = (index: number, field: "key" | "value", val: string) => {
-    const updated = pairs.map((p, i) => (i === index ? { ...p, [field]: val } : p));
-    updatePairs(updated);
+    commit(pairs.map((p, i) => (i === index ? { ...p, [field]: val } : p)));
   };
 
   return (
