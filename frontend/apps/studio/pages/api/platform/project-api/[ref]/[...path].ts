@@ -103,6 +103,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const subpath = joined
   const search = new URL(req.url ?? '', 'http://internal').search
   const targetUrl = `${supabaseUrl}/api/${subpath}${search}`
+  // Defence in depth: posix.normalize above does NOT treat '\' as a separator,
+  // but the WHATWG URL parser that fetch() uses DOES fold '\' into '/' for http
+  // URLs — so a segment like `..\auth/v1/admin/users` passes the posix guard yet
+  // resolves, at fetch time, to `/auth/...`, escaping `/api/` and aiming the
+  // server-injected service_role at any Kong service. Validate the ACTUAL path
+  // fetch will use: re-parse targetUrl and require its pathname to stay under
+  // `/api/`. This catches backslashes, encoded backslashes, and any other parser
+  // quirk regardless of how the segment was smuggled in.
+  if (!new URL(targetUrl).pathname.startsWith('/api/')) {
+    res.status(400).json({ error: { message: 'Invalid path' } })
+    return
+  }
 
   const method = req.method ?? 'GET'
   const headers: Record<string, string> = {

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useProjectSupabaseClient } from "@/hooks/ai/useProjectSupabaseClient";
+import { hasAiAuth } from "@/lib/ai-api";
 import { modelsApi, type ModelInfo } from "@/lib/ai-api/models-api";
 import { useLLMProviderKeysQuery } from "@/data/llm-provider-keys/llm-provider-keys-query";
 import { useLLMPlatformSupportedQuery } from "@/data/llm-provider-keys/llm-platform-supported-query";
@@ -85,7 +86,15 @@ export function ModelSelector({
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!token || !orgSlug) return;
+    // Gate on hasAiAuth, NOT raw `!token` (see useLLMModels for the full
+    // rationale): self-host has token='' but hasAiAuth('')===true, so the old
+    // guard early-returned forever and left isLoading stuck true, freezing this
+    // <select> on a disabled "Loading models…". Clear isLoading on the un-authed
+    // (platform) path so the control settles instead of hanging.
+    if (!hasAiAuth(token) || !orgSlug) {
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     modelsApi
       .list(token, orgSlug)

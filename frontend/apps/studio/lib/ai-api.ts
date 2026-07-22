@@ -181,9 +181,16 @@ export async function api<T>(url: string, options: ApiOptions = {}): Promise<T> 
   if (!response.ok) {
     const dupErr = tryParseDuplicateError(response.status, data)
     if (dupErr) throw dupErr
-    // `error` is a machine code; prefer `message` for the human banner.
+    // `error` may be a machine code string OR a nested object {message}: the
+    // self-host proxy and Next apiWrapper emit `{error:{message}}` (503
+    // backend-unreachable, 400 invalid-path) and `{error:{}}` (500 catch-all).
+    // Stringifying an object gives the user the literal "[object Object]", so
+    // dig out a string message from every shape. Prefer top-level `message`.
+    const err = data.error as { message?: string } | string | undefined
     throw new Error(
-      (data.message as string) || (data.error as string) || 'API request failed'
+      (data.message as string) ||
+        (typeof err === 'string' ? err : err?.message) ||
+        'API request failed'
     )
   }
 

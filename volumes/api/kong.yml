@@ -760,6 +760,45 @@ services:
         config:
           hide_credentials: false
 
+  # Observability API - run/tool-call monitoring for the /observability dashboard.
+  # project-api implements the full /api/observability/* family (health,
+  # agent-runs, tool-calls, filter-options, ...) and requires a service_role
+  # bearer, which the Studio self-host proxy injects. Without this route the
+  # calls fall through to the dashboard basic-auth catch-all and 401, surfacing
+  # a bogus persistent "Session expired" prompt on the project home + dashboard.
+  - name: project-api-observability
+    url: http://project-api:5000/api/observability
+    routes:
+      - name: project-api-observability-route
+        paths:
+          - /api/observability
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - '${CORS_ALLOW_ORIGIN}'
+          methods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+            - OPTIONS
+          headers:
+            - Accept
+            - Authorization
+            - Content-Type
+            - X-Requested-With
+            - apikey
+          exposed_headers:
+            - Content-Length
+            - Content-Range
+          credentials: true
+          max_age: 3600
+      - name: key-auth
+        config:
+          hide_credentials: false
+
   # Database meta API (tables, openapi)
   - name: project-api-database
     url: http://project-api:5000/api/database

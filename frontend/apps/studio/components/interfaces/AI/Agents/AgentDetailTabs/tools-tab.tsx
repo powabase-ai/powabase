@@ -204,6 +204,9 @@ export function ToolsTab({ agentId }: ToolsTabProps) {
     timeout: 30,
   });
   const [isCreating, setIsCreating] = useState(false);
+  // Blocks Create while the tool's Input Schema editor holds invalid JSON —
+  // otherwise the last VALID schema is silently submitted instead of the edit.
+  const [toolSchemaValid, setToolSchemaValid] = useState(true);
 
   const fetchData = async (showLoading = false) => {
     if (!isReady || !hasAiAuth(token)) return;
@@ -777,13 +780,14 @@ export function ToolsTab({ agentId }: ToolsTabProps) {
               <JsonSchemaEditor
                 value={newTool.input_schema}
                 onChange={(s) => setNewTool({ ...newTool, input_schema: s })}
+                onValidityChange={setToolSchemaValid}
               />
             </div>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={handleCreateTool}
-                disabled={isCreating || !newTool.name.trim()}
+                disabled={isCreating || !newTool.name.trim() || !toolSchemaValid}
                 className="px-4 py-2 bg-brand-400 hover:bg-brand-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground-muted focus-visible:ring-offset-2"
               >
                 {isCreating ? "Creating..." : "Create"}
