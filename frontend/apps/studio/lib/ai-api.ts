@@ -43,6 +43,26 @@ export function hasAiAuth(token: string | null | undefined): boolean {
   return IS_PLATFORM ? !!token : true
 }
 
+/**
+ * Authorization header for AI API calls — OMITTED when there is no real token.
+ *
+ * Self-host has no GoTrue session (see hasAiAuth), so `token` is '' and a
+ * template literal would send `Authorization: Bearer `. Studio is reached
+ * through Kong's `dashboard` catch-all route, which carries the `basic-auth`
+ * plugin: the browser attaches `Authorization: Basic <creds>` automatically,
+ * but an EXPLICIT Authorization header on a fetch REPLACES it, so Kong 401s
+ * the request (verified: any Bearer value 401s here — even a valid
+ * service_role — because the route requires Basic). The client then maps that
+ * 401 to SessionExpiredError, surfacing a bogus "Session expired" toast.
+ *
+ * Mirrors upstream's data/fetchers.ts:constructHeaders, which guards the same
+ * way (`if (!headers.has('Authorization'))` + `if (accessToken)`) and is why
+ * every inherited Supabase feature already works self-hosted.
+ */
+export function aiAuthHeader(token: string | null | undefined): Record<string, string> {
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
 /** Build a full project-api URL (useful for raw fetch calls like blob downloads). */
 export function projectApiUrl(ref: string, endpoint: string): string {
   return `${getProjectApiBaseUrl(ref)}${endpoint}`
@@ -218,7 +238,7 @@ export async function projectApiUpload<T>(
   formData: FormData
 ): Promise<T> {
   const headers: Record<string, string> = {
-    Authorization: `Bearer ${token}`,
+    ...aiAuthHeader(token),
   }
   const response = await fetch(projectApiUrl(ref, endpoint), {
     method: 'POST',
@@ -369,7 +389,7 @@ export async function streamAgentRun(
 ): Promise<void> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${token}`,
+    ...aiAuthHeader(token),
   }
   const response = await fetch(
     projectApiUrl(ref, `/agents/${agentId}/run/stream`),
@@ -559,7 +579,7 @@ export const sourcesApi = {
   getSourcePageImage: async (token: string, ref: string, sourceId: string, pageIndex: number): Promise<string | null> => {
     const url = projectApiUrl(ref, `/sources/${sourceId}/derivatives/image/download?index=${pageIndex}`)
     const response = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: aiAuthHeader(token),
     })
     if (response.status === 401) throw new SessionExpiredError()
     if (!response.ok) return null
@@ -571,7 +591,7 @@ export const sourcesApi = {
     for (const derivType of ['markdown', 'text']) {
       const url = projectApiUrl(ref, `/sources/${sourceId}/derivatives/${derivType}/download?index=0`)
       const response = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: aiAuthHeader(token),
       })
       if (response.status === 401) throw new SessionExpiredError()
       if (response.ok) {
@@ -1436,7 +1456,7 @@ export async function streamCopilotChat(
 ): Promise<void> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${token}`,
+    ...aiAuthHeader(token),
   }
   const response = await fetch(
     projectApiUrl(ref, `/copilot/sessions/${sessionId}/chat`),
