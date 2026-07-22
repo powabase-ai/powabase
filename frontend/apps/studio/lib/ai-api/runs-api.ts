@@ -1,4 +1,4 @@
-import { projectApi, projectApiUrl, SessionExpiredError } from '../ai-api'
+import { aiAuthHeader, projectApi, projectApiUrl, SessionExpiredError } from '../ai-api'
 import type { StreamRunEvent } from '../ai-api'
 
 /**
@@ -106,7 +106,7 @@ export async function streamOrchestrationRun(
 ): Promise<void> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${token}`,
+    ...aiAuthHeader(token),
   }
   const response = await fetch(
     projectApiUrl(ref, `/orchestrations/${orchId}/run/stream`),
