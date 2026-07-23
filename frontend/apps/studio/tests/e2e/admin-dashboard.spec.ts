@@ -5,7 +5,7 @@ import { test, expect } from '@playwright/test'
 // as must be in PLATFORM_ADMIN_EMAILS (set in the test env).
 //
 // Smoke goal: prove the v1 admin dashboard renders end-to-end. Deeper
-// per-page assertions live in the backend pytest suite (test_admin_browse.py).
+// per-page assertions live in the backend's pytest suite.
 
 test.describe('admin dashboard v1', () => {
   test('landing renders KPI tiles', async ({ page }) => {

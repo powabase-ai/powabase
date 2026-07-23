@@ -47,7 +47,7 @@ const AgentDetailPage: NextPageWithLayout = () => {
   }, [isReady, token, ref, agentId]);
 
   // Agent stats deferred: /agents/:id/stats is not yet implemented in
-  // agentic-project-service. Legacy called agentsApi.getStats and passed
+  // the project-service backend. Legacy called agentsApi.getStats and passed
   // the result as `stats` to OverviewTab; we pass `stats={null}` instead
   // and the tab renders placeholders. Tracked as audit F2. Restore when
   // the endpoint lands.

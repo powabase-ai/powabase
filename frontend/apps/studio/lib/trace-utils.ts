@@ -319,7 +319,7 @@ interface TraceEventLike {
  *   order — see ReasoningStep.toolNames docstring for why this matters
  *   under nested delegations)
  * - step_reset events: clear the step's reasoningText and toolName, mark live
- *   (issued by agent.py on retry paths — model_fallback, reactive_compact, output_recovery)
+ *   (issued by the backend on retry paths — model_fallback, reactive_compact, output_recovery)
  * - complete events: flip all steps' isLive false
  *
  * Accepts both `type` and legacy `event` field for the discriminator (v1 routes

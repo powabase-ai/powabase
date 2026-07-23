@@ -19,7 +19,7 @@ interface AgentRunRow {
   created_at: string | null
   started_at: string | null
   completed_at: string | null
-  /** Failure message captured by services/session.py when status=='failed'.
+  /** Failure message captured by the backend when status=='failed'.
    *  Pulled into the SELECT so the recent-failures table renders the actual
    *  error text instead of the literal string "failed". */
   error: string | null

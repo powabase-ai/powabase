@@ -6,7 +6,7 @@ import { useEffect } from 'react'
  *
  * The pre-Studio frontend had a single settings page at
  * `/settings/agents-tools` that rendered `<SettingsForm category="agents-tools" />`.
- * The backend `settings_registry.py` never had an `agents-tools` category —
+ * The backend's settings registry never had an `agents-tools` category —
  * only separate `agents` and `tools` categories — so the legacy page rendered
  * an empty form against real projects.
  *

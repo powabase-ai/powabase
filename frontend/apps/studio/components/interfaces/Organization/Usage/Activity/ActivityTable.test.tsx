@@ -9,9 +9,8 @@ import { ActivityTable } from './ActivityTable'
 // Used by Set B tests: an llm_call row carries the model identifier in its
 // metadata blob (shaped by the billing service's `metadata_` JSONB column).
 // PR 416 C5: the model id is the STRIPPED form because LiteLLM removes the
-// `<provider>/` prefix before dispatching the callback. Ground truth:
-// agentic-platform/packages/agentic-project-service/tests/integration/
-// test_billing_e2e_ai_on_us.py asserts metadata["model"] == "claude-haiku-4-5".
+// `<provider>/` prefix before dispatching the callback. Ground truth: the
+// backend billing integration tests assert metadata["model"] == "claude-haiku-4-5".
 const llmCallRow: LedgerRow = {
   id: '4',
   action: 'llm_call',

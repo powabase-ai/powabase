@@ -87,7 +87,7 @@ export function McpTab({ agentId }: McpTabProps) {
   const handleDiscover = async (serverId: string) => {
     if (!hasAiAuth(token)) return;
     // MCP tool discovery deferred: /agents/:id/mcp-servers/:serverId/tools is
-    // not implemented in agentic-project-service/routes/agents.py. The call
+    // not implemented in the project-service backend's agent routes. The call
     // is guarded below so the UI shows "Discovery failed" rather than crash.
     // Pre-existing gap in both legacy and ported frontends — the port
     // faithfully preserved the call. Tracked as audit F5. Restore/enable the

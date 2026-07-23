@@ -10,8 +10,8 @@ import { expect, test } from '@playwright/test'
 // complete the 5-question wizard, land on /new) because the studio's
 // Playwright harness shares a single authenticated user across all specs.
 // That path is covered by:
-//   - pytest tests in test_signup_survey_routes.py (state machine)
-//   - pytest tests in test_signup_survey_org_hook.py (org-create stamp)
+//   - backend pytest tests for the survey state machine
+//   - backend pytest tests for the org-create stamp hook
 //   - manual smoke verification before merge
 
 test.describe('signup-survey gate (shared E2E user)', () => {

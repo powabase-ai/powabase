@@ -1,9 +1,10 @@
 import { projectApi } from '../ai-api'
 
 /**
- * Client for routes/observability.py — the /observability dashboard's data
- * source now that direct ai-schema PostgREST access is gone (C2.1). Every
- * function is a thin proxy over a bounded, filtered SELECT; the six
+ * Client for the backend's observability routes — the /observability
+ * dashboard's data source now that direct ai-schema PostgREST access is
+ * gone (C2.1). Every function is a thin proxy over a bounded, filtered
+ * SELECT; the six
  * data/observability/*.ts hooks keep doing their own client-side
  * bucketing/percentile/tally aggregation on the returned rows unchanged.
  */

@@ -326,7 +326,7 @@ CREATE TABLE IF NOT EXISTS ai.workflow_block_logs (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     agent_run_id UUID,
     -- Typed token + model columns for block_type='agent'. Populated by
-    -- persist_block_logs (routes/_workflow_helpers.py); queried directly
+    -- the backend's workflow-log persistence helper; queried directly
     -- by the observability dashboard for fast aggregation.
     model VARCHAR(128),
     prompt_tokens INT,
@@ -408,7 +408,7 @@ CREATE TABLE IF NOT EXISTS ai.agent_runs (
     reasoning_steps JSONB,
     parent_workflow_execution_id UUID,
     -- Denormalized identity + typed token/tool-call cols populated by
-    -- services/session.py; queried directly by the observability dashboard.
+    -- the backend; queried directly by the observability dashboard.
     -- Replaces the previous `usage` and `tool_calls` JSONB columns.
     agent_id UUID,
     model VARCHAR(128),
@@ -568,7 +568,7 @@ CREATE TABLE IF NOT EXISTS ai.orchestration_runs (
     started_at TIMESTAMPTZ,
     completed_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    -- Typed token + model cols populated by services/orchestration.py.
+    -- Typed token + model cols populated by the backend.
     -- Replaces the previous `usage` JSONB column.
     model VARCHAR(128),
     prompt_tokens INT,

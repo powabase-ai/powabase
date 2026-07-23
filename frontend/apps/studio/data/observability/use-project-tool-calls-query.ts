@@ -13,7 +13,7 @@ import type {
 } from "./types"
 
 // Reads ai.tool_call_events (populated at agent-run write time by
-// services/session.py) and rolls up per-tool stats for the dashboard's
+// the backend) and rolls up per-tool stats for the dashboard's
 // tool-call panels. Client-side aggregation to stay consistent with the
 // tokens query path.
 

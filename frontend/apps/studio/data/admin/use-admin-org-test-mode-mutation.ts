@@ -37,7 +37,7 @@ export function useAdminOrgTestModeMutation() {
         let msg = `test-mode toggle failed: ${res.status}`
         try {
           const body = await res.json()
-          // The CP's test-mode endpoint (routes/admin_browse.py:567) returns
+          // The CP's test-mode endpoint returns
           // BOTH `error` (a programmatic code like `"one_way"` or
           // `"stripe_state_present"`) AND `message` (operator-friendly text
           // explaining the constraint + teardown path). Prefer `message`

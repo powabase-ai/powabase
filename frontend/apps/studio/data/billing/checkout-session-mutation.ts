@@ -12,8 +12,8 @@ export type CheckoutSessionVariables = {
 // Two MUTUALLY EXCLUSIVE response shapes from POST /billing/checkout-session:
 //  - Free->Paid: Stripe Checkout session => { url } (open in a new tab).
 //  - Paid->Paid (e.g. self-serve -> Scale): in-place subscription.modify =>
-//    { status: 'upgraded', subscription_id } and NO url (see routes/billing.py
-//    create_checkout_session, ~L521). The old code did `window.location.href =
+//    { status: 'upgraded', subscription_id } and NO url (see the backend's
+//    checkout-session creation). The old code did `window.location.href =
 //    data.url` unconditionally, so the paid->paid branch navigated to
 //    `/undefined` -> 404 even though the upgrade had already succeeded.
 //

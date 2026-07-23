@@ -762,7 +762,7 @@ const RunsPage: NextPageWithLayout = () => {
     setIsLoadingAgents(true);
     setError(null);
     try {
-      // Backend page size ceiling (services/list_params.py clamps limit to
+      // Backend page size ceiling (list endpoints clamp limit to
       // [1, 100]) — same tradeoff as the KB-picker dropdowns elsewhere. A
       // project with more than 100 agents (realistic on prod; unlikely on a
       // single-project self-host) will only see the first page here — this
@@ -1385,7 +1385,11 @@ const RunsPage: NextPageWithLayout = () => {
                 : "";
             next[next.length - 1] = {
               ...last,
-              content: (event.content || last.content || "") + failureSuffix,
+              // `??` not `||`: a PreResponse hook may redact the answer to "",
+              // and `||` would treat that as "server sent nothing" and fall back
+              // to the accumulated pre-redaction text — rendering the unredacted
+              // answer while the DB row and audit record say it was withheld.
+              content: (event.content ?? last.content ?? "") + failureSuffix,
               run_id: event.run_id,
               citations: event.citations,
               activityItems: finalItems.length > 0 ? finalItems : undefined,

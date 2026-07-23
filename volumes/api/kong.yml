@@ -214,9 +214,31 @@ services:
             - x-supabase-api-version
             - x-client-info
             - x-upsert
+            # tus resumable-upload REQUEST headers the storage explorer sends
+            # (x-source is the explorer's marker, not part of the tus protocol).
+            # NOTE: the tus client also READS Location/Upload-* back — see
+            # exposed_headers below; allow-headers alone does not make uploads work.
+            - tus-resumable
+            - upload-length
+            - upload-metadata
+            - upload-offset
+            - upload-defer-length
+            - upload-concat
+            - x-source
           exposed_headers:
             - Content-Length
             - Content-Range
+            # tus resumable-upload RESPONSE headers (browser tus client reads
+            # Location from the create-POST, Upload-Offset/Upload-Length on resume)
+            - Location
+            - Tus-Resumable
+            - Tus-Version
+            - Tus-Extension
+            - Tus-Max-Size
+            - Upload-Offset
+            - Upload-Length
+            - Upload-Expires
+            - Upload-Metadata
           credentials: true
           max_age: 3600
 

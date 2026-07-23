@@ -24,7 +24,7 @@ export function useConnectionInfoQuery(options?: { enabled?: boolean }) {
       // URL precedence: externally-callable URL (docker dev) > restUrl > kong_url >
       // app_config.protocol + "://" + app_config.endpoint.
       // Key source: service_api_keys array from /platform/projects/{ref}
-      // (see build_project_detail in agentic_control_plane/.../platform_helpers.py).
+      // (built server-side by the control plane's project-detail endpoint).
       const p = project as any
       const appConfig = (p.app_config ?? {}) as { endpoint?: string; protocol?: string; external_api_url?: string }
       const protocol = appConfig.protocol ?? 'http'

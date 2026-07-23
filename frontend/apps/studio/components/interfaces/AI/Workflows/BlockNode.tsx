@@ -25,7 +25,7 @@ import { useWorkflowState } from "./WorkflowContext";
 import { useProjectSupabaseClient } from "@/hooks/ai/useProjectSupabaseClient";
 import { agentsApi, hasAiAuth, knowledgeBasesApi } from "@/lib/ai-api";
 
-// Backend page size ceiling (services/list_params.py clamps limit to [1, 100]).
+// Backend page size ceiling (list endpoints clamp limit to [1, 100]).
 // See kb-tab.tsx for the same tradeoff on the "assign KB" picker.
 const MAX_KBS_FOR_PICKER = 100;
 

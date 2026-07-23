@@ -8,7 +8,7 @@ import type { ProjectFilterOptions } from "./types"
 
 // Populates the model + agent dropdowns on the observability filter bar.
 // Distinct models from agent_runs + all agents, resolved server-side
-// (routes/observability.py get_observability_filter_options).
+// by the backend's observability filter-options endpoint.
 
 export function useProjectFilterOptionsQuery(
   { enabled = true }: { enabled?: boolean } = {},

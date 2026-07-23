@@ -39,7 +39,7 @@ test('nav never emits observability, regardless of platform or reports flag', ()
   // self-contained AI-observability dashboard was later built at
   // pages/project/[ref]/observability/index.tsx, but re-linking it into nav
   // is a separate product decision — the page, its data/observability/*
-  // hooks, and the observability.py backend routes stay in place, unlinked.
+  // hooks, and the backend's observability routes stay in place, unlinked.
   for (const isPlatform of [true, false]) {
     for (const showReports of [true, false]) {
       const routes = generateOtherRoutes(REF, ACTIVE_PROJECT, { isPlatform, showReports })
@@ -70,7 +70,7 @@ test('Advisors and Logs source trees are fully deleted (proper Bucket-1 deletion
 test('Observability page and data hooks stay retained (built, nav-unlinked — not a Bucket-1 delete)', () => {
   // Unlike Advisors/Logs/Integrations (dead stubs, no backend), Observability
   // is a real, self-contained AI-observability dashboard with a live backend
-  // (agentic_project_service/routes/observability.py) — removing it from nav
+  // (the project-service's observability routes) — removing it from nav
   // is a nav-only decision, not a reason to delete the feature.
   const studioRoot = path.join(__dirname, '../..')
 

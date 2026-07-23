@@ -2,12 +2,11 @@ import { describe, expect, it } from 'vitest'
 
 import { displayModelName } from './model-display'
 
-// Ground truth: agentic-platform/packages/agentic-project-service/tests/
-//   integration/test_billing_e2e_ai_on_us.py asserts
+// Ground truth: the backend billing integration tests assert
 //   `metadata["model"] == "claude-haiku-4-5"` (stripped form). LiteLLM
-//   strips the `<provider>/` prefix before the callback dispatch — see
-//   billing_litellm.py:120 — so the ledger row carries the stripped
-//   model id. Lookups MUST use the stripped form. PR 416 C5.
+//   strips the `<provider>/` prefix before the callback dispatch, so the
+//   ledger row carries the stripped model id. Lookups MUST use the
+//   stripped form. PR 416 C5.
 
 describe('displayModelName — stripped-key lookup (PR 416 C5)', () => {
   it('returns "Claude Sonnet 4.6" for "claude-sonnet-4-6"', () => {

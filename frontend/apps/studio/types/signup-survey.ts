@@ -1,6 +1,6 @@
 // Mirrors the API response shape from
 // /api/platform/signup-survey/schema  and  /me
-// (Python source of truth: agentic_control_plane/signup_survey/definition.py)
+// (source of truth: the control plane's signup survey definition)
 
 export interface SignupSurveyOption {
   id: string

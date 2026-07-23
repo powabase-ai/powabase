@@ -180,10 +180,8 @@ const AdminObservabilityPage: NextPageWithLayout = () => {
               query={celeryFail}
             />
             <div className="text-xs text-foreground-muted">
-              PromQL access is allowlisted server-side; see
-              <code className="font-mono mx-1">_ALLOWED_PROM_METRICS</code>
-              in <code className="font-mono">routes/observability.py</code> for the current list.
-              For richer dashboards, hit your Grafana instance directly.
+              PromQL access is allowlisted server-side to a fixed set of
+              metrics. For richer dashboards, hit your Grafana instance directly.
             </div>
           </TabsContent>
         </Tabs>

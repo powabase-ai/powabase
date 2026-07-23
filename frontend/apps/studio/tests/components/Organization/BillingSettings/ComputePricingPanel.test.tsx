@@ -13,7 +13,7 @@ const SIZES = [
     total_vcpu_millicores: 1000,
     total_ram_mib: 2048,
     bundles: { egress_gb: 5, s3_storage_gb: 1, ebs_storage_gb: 2, regular_mau: 50000 },
-    // cogs 2470 m¢/hr × plan bp, floor /10000 (control-plane compute_pricing.py)
+    // cogs 2470 m¢/hr × plan bp, floor /10000 (backend compute pricing calc)
     prices_by_plan: { free: 3458, 'self-serve': 2964, scale: 2717 },
   },
   {

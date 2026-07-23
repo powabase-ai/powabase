@@ -11,7 +11,7 @@ vi.mock('@/hooks/misc/useSelectedOrganization', () => ({
   useSelectedOrganizationQuery: () => ({ data: { slug: 'acme' } }),
 }))
 
-// cogs 2470 m¢/hr × plan bp, floor /10000 (control-plane compute_pricing.py) —
+// cogs 2470 m¢/hr × plan bp, floor /10000 (backend compute pricing calc) —
 // same fixture values as ComputePricingPanel.test.tsx, so the two components'
 // price displays are pinned to the same server-computed source of truth.
 let sizes: unknown = [

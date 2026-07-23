@@ -32,10 +32,10 @@ describe('isDisposableEmail', () => {
   })
 
   it('loads the generated blocklist with the expected canaries', () => {
-    // The blocklist is generated from scripts/disposable-email/blocklist.txt
-    // and embedded server-side in migration 0011 via the same source. We
-    // don't pin the size here — it grows on every quarterly refresh — but
-    // a few well-known entries pin that the codegen actually ran.
+    // The blocklist is generated from a shared blocklist source and
+    // embedded server-side via the same source. We don't pin the size
+    // here — it grows on every quarterly refresh — but a few well-known
+    // entries pin that the codegen actually ran.
     expect(DISPOSABLE_EMAIL_DOMAINS.size).toBeGreaterThan(1000)
     expect(DISPOSABLE_EMAIL_DOMAINS.has('mailinator.com')).toBe(true)
     expect(DISPOSABLE_EMAIL_DOMAINS.has('guerrillamail.com')).toBe(true)

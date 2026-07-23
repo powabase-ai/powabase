@@ -893,8 +893,8 @@ export interface ChunksListResponse {
     chunk_index: number | null
     start_char: number | null
     end_char: number | null
-    // Not selected by the chunks route (routes/knowledge_bases.py
-    // list_chunks_for_indexed_source) — only `meta` is. Kept optional
+    // Not selected by the chunks route on the backend's indexed-source
+    // listing — only `meta` is. Kept optional
     // rather than removed; see PageIndexNodeItem comment below.
     metadata?: Record<string, unknown>
     tokens?: number
@@ -908,10 +908,10 @@ export interface ChunksListResponse {
 
 // `summary`/`content`/`level`/`parent_id`/`page_start`/`page_end` were never
 // actually selected by either the pre-migration `.select('*')` PostgREST call
-// or the project-service route that replaced it (routes/knowledge_bases.py
-// _fetch_index_nodes) — the KB detail page only ever reads node_id/title/
-// depth/text/meta/id. Marked optional (not removed) to keep the interface an
-// honest superset without deleting a pre-existing declaration outright.
+// or the project-service route that replaced it — the KB detail page only
+// ever reads node_id/title/depth/text/meta/id. Marked optional (not removed)
+// to keep the interface an honest superset without deleting a pre-existing
+// declaration outright.
 export interface PageIndexNodeItem {
   node_id: string
   title: string
@@ -1096,10 +1096,10 @@ export interface EnrichmentConfig {
 
 /**
  * The /api/database/tables endpoint returns a flat array of table-name strings
- * (see routes/database.py:list_tables — `jsonify({"tables": tables})` where
- * `tables = [row[0] for row in ...]`). Prior typed-as-object was a pre-port
- * mismatch that caused api-docs to render `/rest/v1/undefined` for every table.
- * Callers that need richer metadata must use pg-meta via databaseMetaApi.
+ * (`{"tables": tables}` where each entry is just the name). Prior typed-as-object
+ * was a pre-port mismatch that caused api-docs to render `/rest/v1/undefined`
+ * for every table. Callers that need richer metadata must use pg-meta via
+ * databaseMetaApi.
  */
 export type TableInfo = string
 

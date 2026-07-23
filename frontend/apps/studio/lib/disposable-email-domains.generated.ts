@@ -1,6 +1,5 @@
 // GENERATED FILE — do not edit by hand.
-// Source: scripts/disposable-email/blocklist.txt + free-subdomain-roots.txt
-// Regenerate: python scripts/disposable-email/build.py
+// Source: a disposable-email blocklist + free-subdomain-roots list.
 export const DISPOSABLE_EMAIL_DOMAINS: ReadonlySet<string> = new Set([
   "0-mail.com",
   "01022.hk",
