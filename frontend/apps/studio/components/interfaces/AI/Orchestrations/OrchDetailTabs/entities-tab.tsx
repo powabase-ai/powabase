@@ -18,7 +18,7 @@ interface EntitiesTabProps {
   orchId: string;
 }
 
-// Backend page size ceiling (services/list_params.py clamps limit to [1, 100]).
+// Backend page size ceiling (list endpoints clamp limit to [1, 100]).
 // See kb-tab.tsx for the same tradeoff on a similar "pick from all N" dropdown.
 const MAX_AGENTS_FOR_PICKER = 100;
 

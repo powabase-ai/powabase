@@ -18,7 +18,7 @@ import { useIsFeatureEnabled } from "@/hooks/misc/useIsFeatureEnabled"
  * migration 0018 and is included in every `/api/platform/organizations`
  * response. Untyped via `as any` because the openapi-fetch types aren't
  * regenerated for the fork's CP extensions; the field is documented in
- * the CP serializer (`models/platform.py::Organization.to_dict`).
+ * the CP's own serializer.
  */
 export function useIsBillingUiEnabled(
   org: { slug?: string } | null | undefined

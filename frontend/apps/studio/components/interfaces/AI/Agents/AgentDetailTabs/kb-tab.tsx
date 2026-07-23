@@ -8,7 +8,7 @@ interface KBTabProps {
   agentId: string;
 }
 
-// Backend page size ceiling (services/list_params.py clamps limit to [1, 100]).
+// Backend page size ceiling (list endpoints clamp limit to [1, 100]).
 // This tab wants "every KB in the project" for the assign-dropdown, so it
 // requests the max page. Projects with >100 KBs will only see the first 100
 // (by the list endpoint's default sort) — acceptable for now; revisit with a

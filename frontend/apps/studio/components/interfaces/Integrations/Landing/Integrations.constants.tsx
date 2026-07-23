@@ -104,7 +104,7 @@ export type IntegrationDefinition = {
 
 const authorSupabase = {
   name: 'Powabase',
-  websiteUrl: 'https://github.com/powabase-ai/agentic-monorepo',
+  websiteUrl: 'https://github.com/powabase-ai/powabase',
 }
 
 const SUPABASE_INTEGRATIONS: Array<IntegrationDefinition> = [

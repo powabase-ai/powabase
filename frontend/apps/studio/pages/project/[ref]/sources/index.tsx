@@ -91,8 +91,8 @@ const SourcesListPage: NextPageWithLayout = () => {
       const start = pageParam as number;
 
       // Server-side substring match on name (case-insensitive), sort by
-      // name asc or created_at desc with an id tiebreak — see
-      // routes/sources.py:list_sources (parse_list_params).
+      // name asc or created_at desc with an id tiebreak — handled by the
+      // backend's sources list endpoint.
       const res = await sourcesApi.list(token, ref as string, {
         limit: PAGE_SIZE,
         offset: start,

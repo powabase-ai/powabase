@@ -4,7 +4,7 @@ import { kbDefaultsApi, KBDefaults } from "@/lib/ai-api";
 
 /**
  * Fallback defaults used while the API hasn't responded yet.
- * Mirrors the Python backend's model_config.py values so the UI works
+ * Mirrors the Python backend's config values so the UI works
  * even if the config endpoint is slow.
  */
 const FALLBACK_DEFAULTS: KBDefaults = {

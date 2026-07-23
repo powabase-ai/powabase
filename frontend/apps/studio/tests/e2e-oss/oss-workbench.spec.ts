@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-// C1.2 — OSS single-project stack (oss-edition/docker-compose.yml), Studio built
+// C1.2 — OSS single-project stack (docker-compose.yml), Studio built
 // NEXT_PUBLIC_IS_PLATFORM=false, reached through Kong's `dashboard` route
 // (basic-auth via playwright.oss.config.ts's httpCredentials — see that file).
 //
@@ -8,7 +8,7 @@ import { test, expect } from '@playwright/test'
 //   PLAYWRIGHT_OSS_BASE_URL=http://localhost:${KONG_HTTP_PORT} \
 //   OSS_DASHBOARD_USERNAME=$DASHBOARD_USERNAME OSS_DASHBOARD_PASSWORD=$DASHBOARD_PASSWORD \
 //   npx playwright test --config=playwright.oss.config.ts
-// (values come from oss-edition/.env, written by gen-keys.py)
+// (values come from .env, written by gen-keys.py)
 //
 // Scope (per the C1.2 brief): verify the NON-AI data paths — Table Editor and
 // SQL Editor, both proxied server-side through lib/api/self-hosted/* to
@@ -183,7 +183,7 @@ test('AI-page mutation round-trips through the self-host project-api proxy (C4.2
   )
   await page.getByRole('button', { name: 'Create', exact: true }).click()
   const createResponse = await createResponsePromise
-  // routes/agents.py create_agent returns 201 on success; a still-blocked
+  // The backend's create-agent endpoint returns 201 on success; a still-blocked
   // guard would mean this request never fires at all (waitForResponse times
   // out) rather than a non-2xx status, so the timeout above is itself part
   // of this assertion.
@@ -247,7 +247,7 @@ test('Runs page loads agents + sessions via the self-host project-api proxy (cov
   // fetchSessions) now round-trips real data through the proxy, the same way
   // the C4.1 test above proves it for the Agents page. It deliberately does
   // NOT exercise handleSend — that streams a real LLM call through whatever
-  // BYOK key is in oss-edition/.env, which this suite avoids invoking.
+  // BYOK key is in .env, which this suite avoids invoking.
   const agentName = `pw-oss-runs-followup-${Date.now()}`
 
   // Create an agent first (metadata-only insert, no LLM call) so the Runs

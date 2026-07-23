@@ -1,13 +1,10 @@
 /**
  * Disposable-email domain blocklist for platform-dashboard signup.
  *
- * Domain data is generated from `scripts/disposable-email/blocklist.txt`
- * (exact-match) and `scripts/disposable-email/free-subdomain-roots.txt`
- * (label-aligned suffix-match). Server-side mirror is the Postgres function
- * `public.is_disposable_email_domain` (migrations 0011 + 0015), loaded from
- * the same generated source `disposable_email_domains_generated.py`.
- *
- * To refresh: see `scripts/disposable-email/README.md`.
+ * Domain data is generated from a blocklist (exact-match) and a
+ * free-subdomain-roots list (label-aligned suffix-match). The control
+ * plane's signup flow mirrors this same blocklist server-side from the
+ * same generated source.
  */
 import {
   DISPOSABLE_EMAIL_DOMAINS,

@@ -6,7 +6,7 @@
  * Keys are the STRIPPED form — LiteLLM removes the `<provider>/` prefix
  * before dispatching to async_log_success_event, so the metadata.model
  * field is e.g. `claude-sonnet-4-6`, NOT `anthropic/claude-sonnet-4-6`.
- * Verified by tests/integration/test_billing_e2e_ai_on_us.py against
+ * Verified by the backend's billing integration tests against
  * litellm==1.83.14. Previously the keys were prefixed and every lookup
  * fell through to the raw string (PR 416 C5).
  *
@@ -22,7 +22,7 @@ const MODEL_DISPLAY: Record<string, string> = {
   // OpenAI
   'gpt-5': 'GPT-5',
   'gpt-5-mini': 'GPT-5 Mini',
-  // Gemini — IDs mirror PS `_LLM_MODEL_CHOICES` (settings_registry.py)
+  // Gemini — IDs mirror the project-service's `_LLM_MODEL_CHOICES` registry
   // with the `gemini/` prefix stripped by LiteLLM.
   'gemini-2.5-pro': 'Gemini 2.5 Pro',
   'gemini-2.5-flash': 'Gemini 2.5 Flash',

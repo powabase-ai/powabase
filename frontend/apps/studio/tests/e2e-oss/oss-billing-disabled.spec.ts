@@ -1,9 +1,9 @@
 import { test, expect } from '@playwright/test'
 
 // C3.1 — NEXT_PUBLIC_DISABLED_FEATURES=billing:all,billing:plan_picker,credits:enabled
-// (oss-edition/docker-compose.yml studio build.args + environment; the value is baked
+// (docker-compose.yml studio build.args + environment; the value is baked
 // into the Next.js bundle at build time via the Dockerfile ARG/ENV pair — see
-// apps/studio/Dockerfile and oss-edition/tests/test_studio_disabled_features.py for the
+// apps/studio/Dockerfile and tests/test_studio_disabled_features.py for the
 // static pin that the build-time wiring, not just the runtime env, is in place).
 //
 // Self-hosted Studio (IS_PLATFORM=false) fabricates a fake logged-in session
@@ -16,7 +16,7 @@ import { test, expect } from '@playwright/test'
 //   PLAYWRIGHT_OSS_BASE_URL=http://localhost:${KONG_HTTP_PORT} \
 //   OSS_DASHBOARD_USERNAME=$DASHBOARD_USERNAME OSS_DASHBOARD_PASSWORD=$DASHBOARD_PASSWORD \
 //   npx playwright test --config=playwright.oss.config.ts oss-billing-disabled.spec.ts
-// (values come from oss-edition/.env, written by gen-keys.py)
+// (values come from .env, written by gen-keys.py)
 
 const ORG_SLUG = 'default-org-slug' // upstream self-host stub, pages/api/platform/organizations/index.ts
 

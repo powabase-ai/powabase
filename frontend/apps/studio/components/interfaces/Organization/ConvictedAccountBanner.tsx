@@ -8,9 +8,9 @@ import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganizati
  * whenever the selected org's `trust_state === 'convicted'` — the same state
  * that makes the T6 provisioning gate return 403 `account_under_review`.
  *
- * `trust_state` and `ticket_url` are threaded onto the org payload by the CP
- * serializer (`routes/platform_helpers.py::build_org_response`); neither is in
- * the upstream OpenAPI spec (`api-types`), so they're read via the same `as`
+ * `trust_state` and `ticket_url` are threaded onto the org payload by the CP's
+ * own serializer; neither is in the upstream OpenAPI spec (`api-types`), so
+ * they're read via the same `as`
  * cast pattern B1 uses for `enabled_features` / `is_test_mode`
  * (`useIsBillingUiEnabled` / `useIsBillingTestMode`). `ticket_url` comes from
  * the CP `FARM_DEFENSE_TICKET_URL` config; the "Contact support" link ALWAYS

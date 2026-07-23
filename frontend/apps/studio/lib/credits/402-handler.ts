@@ -1,8 +1,8 @@
 /**
  * 402 toast handler with defensive parse.
  *
- * Per spec decision #24: in prod K8s, FE may roll ahead of
- * balance_cache.py. During that window, FE-new sees BE-old's
+ * Per spec decision #24: in prod K8s, FE may roll ahead of the
+ * backend. During that window, FE-new sees BE-old's
  * werkzeug text 402 body. Defensive try/catch falls back to
  * generic copy without the refill date — strictly better than
  * a JS parse error.

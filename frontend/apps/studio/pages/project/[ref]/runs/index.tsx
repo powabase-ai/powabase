@@ -762,7 +762,7 @@ const RunsPage: NextPageWithLayout = () => {
     setIsLoadingAgents(true);
     setError(null);
     try {
-      // Backend page size ceiling (services/list_params.py clamps limit to
+      // Backend page size ceiling (list endpoints clamp limit to
       // [1, 100]) — same tradeoff as the KB-picker dropdowns elsewhere. A
       // project with more than 100 agents (realistic on prod; unlikely on a
       // single-project self-host) will only see the first page here — this

@@ -66,7 +66,7 @@ describe('GET/POST /api/platform/project-api/[ref]/[...path] proxy — self-host
     const [, init] = (global.fetch as any).mock.calls[0]
     expect(init.headers.Authorization).toBe('Bearer test-service-role-key')
     expect(init.headers.Authorization).not.toContain('attacker-supplied-token')
-    // Kong's key-auth plugin on every project-api-* route (oss-edition/volumes/api/kong.yml)
+    // Kong's key-auth plugin on every project-api-* route (volumes/api/kong.yml)
     // reads `apikey`, not Authorization — both must carry the service_role key or Kong 401s
     // before the request ever reaches project-service.
     expect(init.headers.apikey).toBe('test-service-role-key')

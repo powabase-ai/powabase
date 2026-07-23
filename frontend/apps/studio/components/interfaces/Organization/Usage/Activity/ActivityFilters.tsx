@@ -46,13 +46,12 @@ export function ActivityFilters({
 
   // Flatten all pages from the infinite query into a flat project list.
   // The Powabase CP returns an internal UUID as `id` on each row alongside
-  // the human-readable `ref` slug (see build_project_list_item in the
-  // control-plane platform_helpers.py); the OrgProject augmentation in
-  // org-projects-infinite-query.ts encodes that. The ledger's project_id
-  // filter expects a UUID, so we send `id`, not `ref`. Rows without an id
-  // are dropped from the filter — the BE always populates it, so this is
-  // defensive against an unexpected response shape rather than an expected
-  // case.
+  // the human-readable `ref` slug (built server-side by the control plane);
+  // the OrgProject augmentation in org-projects-infinite-query.ts encodes
+  // that. The ledger's project_id filter expects a UUID, so we send `id`,
+  // not `ref`. Rows without an id are dropped from the filter — the BE
+  // always populates it, so this is defensive against an unexpected
+  // response shape rather than an expected case.
   const { data: projectsData } = useOrgProjectsInfiniteQuery({ slug: orgSlug })
   const allProjects = (projectsData?.pages.flatMap((p) => p.projects) ?? []) as OrgProject[]
   const projects = allProjects.filter(

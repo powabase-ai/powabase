@@ -84,7 +84,7 @@ export interface AgentRun {
   id: string
   agent_id?: string
   /** Denormalized model string ("gpt-5-mini", "claude-3-7-sonnet", etc.).
-   *  Populated by services/session.py. May be NULL on legacy rows. */
+   *  Populated by the backend. May be NULL on legacy rows. */
   model?: string | null
   session_id: string
   status: string

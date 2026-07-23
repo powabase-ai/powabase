@@ -5,7 +5,7 @@ import { API_URL, api } from "@/lib/ai-api"
 import { observabilityKeys } from "./keys"
 
 // Thin wrapper around the control-plane /admin/prom PromQL passthrough.
-// Server-side enforces the metric allowlist (see observability.py) so there's
+// Server-side enforces the metric allowlist so there's
 // nothing to sanitize client-side — but the UI should only ever call this with
 // metrics we know we've allowlisted.
 

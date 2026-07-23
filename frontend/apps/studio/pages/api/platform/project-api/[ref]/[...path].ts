@@ -14,21 +14,20 @@ import { IS_PLATFORM } from '@/lib/constants'
 // `service_role` credential and talks straight to the local backend — no
 // per-user browser token, no control plane. `[ref]` is accepted only for
 // URL-shape parity with the platform base URL (getProjectApiBaseUrl) and is
-// otherwise ignored: self-host (oss-edition/docker-compose.yml) is always a
+// otherwise ignored: self-host (docker-compose.yml) is always a
 // single-project stack.
 //
 // Target + header shape mirror the control plane's own project-api proxy
-// (agentic-control-plane/src/agentic_control_plane/routes/database.py,
-// `proxy_project_api`, :826-): both route through Kong at `/api/<subpath>`
+// (`proxy_project_api`): both route through Kong at `/api/<subpath>`
 // and send BOTH headers:
-//  - `apikey`: every project-api-* route in oss-edition/volumes/api/kong.yml
+//  - `apikey`: every project-api-* route in volumes/api/kong.yml
 //    carries Kong's key-auth plugin, which (with no `key_in_header`
 //    override) reads the key from `apikey`, NOT from Authorization — omitting
 //    this header makes Kong itself 401 the request before it ever reaches
 //    project-service.
 //  - `Authorization: Bearer <service_role>`: the project-service's own JWT
-//    check (packages/agentic-project-service/.../auth.py:47-48) accepts the
-//    raw SERVICE_ROLE_KEY string as a service-role bearer token.
+//    check accepts the raw SERVICE_ROLE_KEY string as a service-role bearer
+//    token.
 //
 // SECURITY INVARIANT: service_role never reaches the browser. It is read
 // from `process.env.SUPABASE_SERVICE_KEY` here, server-side only, and this
@@ -54,7 +53,7 @@ async function readRawBody(req: NextApiRequest): Promise<Buffer> {
 }
 
 // Bodies are only read for methods the control-plane proxy itself reads a
-// body for (database.py proxy_project_api: `request.method in ["POST",
+// body for (`proxy_project_api`: `request.method in ["POST",
 // "PUT", "PATCH"]`) — matches every ai-api.ts call shape (DELETE/GET never
 // send a body) and avoids attempting to read a body that will never arrive.
 const METHODS_WITH_BODY = new Set(['POST', 'PUT', 'PATCH'])

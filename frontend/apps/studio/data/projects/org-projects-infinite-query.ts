@@ -24,7 +24,7 @@ interface GetOrgProjectsInfiniteVariables {
 export type OrgProjectsResponse = components['schemas']['OrganizationProjectsResponse']
 
 // The Powabase control-plane returns an internal project UUID as `id` on
-// each row (build_project_list_item in platform_helpers.py). The OpenAPI
+// each row (built server-side by the control plane). The OpenAPI
 // schema generated upstream from Supabase's API doesn't model that field,
 // so we augment it here as optional — callers that need a UUID (e.g. the
 // credit-ledger project_id filter, which crashes psycopg2 with
