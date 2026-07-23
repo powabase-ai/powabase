@@ -1385,7 +1385,11 @@ const RunsPage: NextPageWithLayout = () => {
                 : "";
             next[next.length - 1] = {
               ...last,
-              content: (event.content || last.content || "") + failureSuffix,
+              // `??` not `||`: a PreResponse hook may redact the answer to "",
+              // and `||` would treat that as "server sent nothing" and fall back
+              // to the accumulated pre-redaction text — rendering the unredacted
+              // answer while the DB row and audit record say it was withheld.
+              content: (event.content ?? last.content ?? "") + failureSuffix,
               run_id: event.run_id,
               citations: event.citations,
               activityItems: finalItems.length > 0 ? finalItems : undefined,
