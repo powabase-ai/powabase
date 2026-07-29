@@ -10,7 +10,7 @@ const SUPABASE_PROJECTS_URL_WS = 'wss://*.supabase.co'
 
 // Powabase per-project subdomains. Each project is reachable at
 // `<ref>.${PROJECT_DOMAIN_BASE}` (default `p.powabase.ai`; overridden for
-// Judocu BYOC and other forks via the env var). The Realtime client opens
+// BYOC deployments and other forks via the env var). The Realtime client opens
 // a WebSocket directly to that host, so the CSP must allow both the HTTPS
 // origin (REST + storage) and the WSS origin (Realtime); without these
 // entries the WS connection is blocked even when the apikey is valid.

@@ -8,7 +8,7 @@ import { CLARITY_PROJECT_ID } from './constants'
 // project) and, like the website integration, it is NOT consent-gated. It only
 // loads on the real app.powabase.ai host: Studio's Dockerfile bakes
 // NEXT_PUBLIC_IS_PLATFORM=true into every build and the frontend image is
-// replicated to BYOC tenants (e.g. Judocu), so a runtime hostname check — not
+// replicated to BYOC tenants, so a runtime hostname check — not
 // IS_PLATFORM — is what keeps other tenants' session recordings out of our
 // Clarity project.
 //
