@@ -112,7 +112,7 @@ export function SettingsTab({ orchestration, onUpdate }: SettingsTabProps) {
                 </>
               }
             />
-            <ModelSelector value={model} onChange={setModel} />
+            <ModelSelector value={model} onChange={setModel} testId="orch-settings-model" />
           </div>
 
           <div className="ml-5 border-l border-default pl-4">

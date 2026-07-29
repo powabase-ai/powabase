@@ -90,7 +90,7 @@ export function OverviewTab({ agent, stats, onAgentUpdate }: OverviewTabProps) {
             infoTitle="Model selection"
             infoContent={<ModelSelectionInfoBody />}
           />
-          <ModelSelector value={model} onChange={setModel} placeholder="Select a model..." />
+          <ModelSelector value={model} onChange={setModel} placeholder="Select a model..." testId="agent-overview-model" />
         </div>
 
         <div className="ml-5 border-l border-default pl-4">
@@ -147,6 +147,7 @@ export function OverviewTab({ agent, stats, onAgentUpdate }: OverviewTabProps) {
           }
         />
         <textarea
+          data-testid="agent-overview-system-prompt"
           value={systemPrompt}
           onChange={(e) => setSystemPrompt(e.target.value)}
           rows={10}
@@ -158,6 +159,7 @@ export function OverviewTab({ agent, stats, onAgentUpdate }: OverviewTabProps) {
       {/* Save button */}
       <div className="flex items-center gap-3">
         <button
+          data-testid="agent-overview-save"
           type="button"
           onClick={handleSave}
           disabled={isSaving}

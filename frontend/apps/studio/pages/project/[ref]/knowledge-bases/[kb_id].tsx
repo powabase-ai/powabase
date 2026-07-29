@@ -1426,7 +1426,7 @@ const KnowledgeBaseDetailPage: NextPageWithLayout = () => {
             </div>
             <div>
               <dt className="text-sm text-foreground-muted">Retrieval Method</dt>
-              <dd className="text-sm text-foreground-light">{(kb.retrieval_config as { method?: string })?.method ?? "\u2014"}</dd>
+              <dd data-testid="kb-detail-retrieval-method" className="text-sm text-foreground-light">{(kb.retrieval_config as { method?: string })?.method ?? "\u2014"}</dd>
             </div>
             {currentStrategy === "page_index" && (
               <div>
@@ -1667,6 +1667,7 @@ const KnowledgeBaseDetailPage: NextPageWithLayout = () => {
                   return (
                 <div
                   key={is.id}
+                  data-testid={`kb-indexed-source-${is.source_id}`}
                   data-index={vRow.index}
                   ref={rowVirtualizer.measureElement}
                   style={{
@@ -1781,6 +1782,7 @@ const KnowledgeBaseDetailPage: NextPageWithLayout = () => {
           <form onSubmit={handleSearch} className="flex gap-2 mb-4">
             <input
               type="text"
+              data-testid="kb-search-query"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder='Try a question — e.g. "how do I cancel my subscription?"'
@@ -1800,7 +1802,7 @@ const KnowledgeBaseDetailPage: NextPageWithLayout = () => {
                 <p className="text-foreground-muted text-sm">No results found</p>
               ) : (
                 searchResults.map((r, i) => (
-                  <div key={i} className="p-3 bg-surface-200 rounded-lg">
+                  <div key={i} data-testid="kb-search-result" className="p-3 bg-surface-200 rounded-lg">
                     <p className="text-foreground-lighter text-xs mb-1">
                       {r.source_id}
                     </p>
@@ -1864,6 +1866,7 @@ const KnowledgeBaseDetailPage: NextPageWithLayout = () => {
                   {pagedSources.map((s) => (
                     <label
                       key={s.id}
+                      data-testid={`kb-add-source-${s.id}`}
                       className="flex items-center gap-3 px-3 py-2.5 hover:bg-surface-200/60 cursor-pointer select-none transition"
                     >
                       <input

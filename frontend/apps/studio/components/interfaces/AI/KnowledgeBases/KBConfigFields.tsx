@@ -173,6 +173,7 @@ export function KBConfigFields({
         <label className="block text-sm text-foreground-light mb-1.5">Indexing strategy</label>
         <select
           value={indexingStrategy}
+          data-testid="kb-indexing-strategy"
           onChange={(e) => onIndexingStrategyChange(e.target.value)}
           className="w-full px-4 py-2.5 bg-surface-200 border border-default rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-brand-400"
         >
@@ -188,6 +189,7 @@ export function KBConfigFields({
                 type="number"
                 min={1}
                 value={chunkSize}
+                data-testid="kb-chunk-size"
                 onChange={(e) => onChunkSizeChange(e.target.value)}
                 className="w-full px-3 py-2 bg-surface-200 border border-default rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-brand-400"
               />
@@ -199,6 +201,7 @@ export function KBConfigFields({
                 type="number"
                 min={0}
                 value={overlap}
+                data-testid="kb-overlap"
                 onChange={(e) => onOverlapChange(e.target.value)}
                 className="w-full px-3 py-2 bg-surface-200 border border-default rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-brand-400"
               />
@@ -210,6 +213,7 @@ export function KBConfigFields({
           <div className="mt-3">
             <KBModelSelect
               label="LLM model for tree building"
+              testId="kb-page-index-model"
               description="Builds a hierarchical tree from document structure using LLM reasoning"
               value={pageIndexModel}
               onChange={onPageIndexModelChange}
@@ -367,6 +371,7 @@ export function KBConfigFields({
         <label className="block text-sm text-foreground-light mb-1.5">Retrieval method</label>
         <select
           value={retrievalMethod}
+          data-testid="kb-retrieval-method"
           onChange={(e) => onRetrievalMethodChange(e.target.value)}
           className="w-full px-4 py-2.5 bg-surface-200 border border-default rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-brand-400"
         >
@@ -389,6 +394,7 @@ export function KBConfigFields({
           {retrievalMethod === "tree_search" && (
             <KBModelSelect
               label="Retrieval model"
+              testId="kb-retrieval-model"
               description="LLM that walks the tree to select relevant nodes at search time"
               value={retrievalModel}
               onChange={onRetrievalModelChange}
@@ -463,6 +469,7 @@ export function KBConfigFields({
             <input
               type="checkbox"
               checked={rerankerEnabled}
+              data-testid="kb-reranker-enabled"
               onChange={(e) => onRerankerEnabledChange(e.target.checked)}
               className="w-4 h-4 rounded border-default text-brand-600 focus:ring-brand-400 bg-surface-200"
             />

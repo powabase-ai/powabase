@@ -88,6 +88,7 @@ export function BlockPalette({ onAddBlock, existingBlockTypes }: BlockPalettePro
           return (
             <button
               key={blockType.type}
+              data-testid={`block-palette-${blockType.type}`}
               className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm rounded-md text-foreground transition-colors text-left ${disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-surface-300"}`}
               onClick={() =>
                 !disabled && onAddBlock(blockType.type, getDefaultConfig(blockType.type))

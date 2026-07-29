@@ -383,7 +383,7 @@ const SourcesListPage: NextPageWithLayout = () => {
               {/* New Source dropdown - primary action */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button type="button" className="px-4 py-2 bg-brand-400 hover:bg-brand-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground-muted focus-visible:ring-offset-2 flex items-center gap-1.5">
+                  <button type="button" data-testid="sources-new-source" className="px-4 py-2 bg-brand-400 hover:bg-brand-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground-muted focus-visible:ring-offset-2 flex items-center gap-1.5">
                     <Plus size={14} />
                     New Source
                     <ChevronDown size={14} />
@@ -525,6 +525,7 @@ const SourcesListPage: NextPageWithLayout = () => {
                           return (
                             <tr
                               key={source.id}
+                              data-testid={`source-row-${source.id}`}
                               ref={rowVirtualizer.measureElement}
                               data-index={virtualItem.index}
                               className={cn(

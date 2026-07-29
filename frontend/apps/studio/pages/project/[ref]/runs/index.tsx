@@ -367,6 +367,7 @@ function RetrievedItemCard({
       {/* Clickable header — always visible */}
       <button
         type="button"
+        data-testid="retrieved-item-card"
         onClick={() => setExpanded((v) => !v)}
         className="w-full px-3 py-2.5 flex items-center gap-2 text-left hover:bg-surface-300 transition-colors"
       >
@@ -1695,6 +1696,7 @@ const RunsPage: NextPageWithLayout = () => {
             </Link>
           ) : (
             <select
+              data-testid="runs-agent-select"
               value={selectedAgentId ?? ""}
               onChange={(e) => {
                 setSelectedAgentId(e.target.value || null);
@@ -1731,6 +1733,7 @@ const RunsPage: NextPageWithLayout = () => {
             </Link>
           ) : (
             <select
+              data-testid="runs-orchestration-select"
               value={selectedOrchId ?? ""}
               onChange={(e) => {
                 setSelectedOrchId(e.target.value || null);
@@ -1961,6 +1964,7 @@ const RunsPage: NextPageWithLayout = () => {
               return (
                 <div
                   key={s.session_id}
+                  data-testid="runs-session-row"
                   className={cn(
                     "group flex items-start gap-2 px-3 py-2.5 rounded-md cursor-pointer transition-colors border-l-2",
                     isActive
@@ -2009,7 +2013,7 @@ const RunsPage: NextPageWithLayout = () => {
   return (
     <div className="h-full flex flex-col bg-default">
       {error && (
-        <div className="mx-4 mt-2 p-3 bg-destructive-200 border border-destructive-300 rounded-lg text-destructive-600 text-sm flex items-center justify-between">
+        <div data-testid="runs-error-banner" className="mx-4 mt-2 p-3 bg-destructive-200 border border-destructive-300 rounded-lg text-destructive-600 text-sm flex items-center justify-between">
           <span>{error}</span>
           <button onClick={() => setError(null)} className="underline">
             Dismiss
@@ -2116,6 +2120,7 @@ const RunsPage: NextPageWithLayout = () => {
                           null
                         ) : (
                           <div
+                            data-testid={`run-message-${msg.role}`}
                             className={`max-w-[90%] px-4 py-2.5 ${
                               msg.role === "user"
                                 ? "rounded-2xl rounded-br-md bg-brand-400 text-white shadow-sm"
@@ -2212,7 +2217,7 @@ const RunsPage: NextPageWithLayout = () => {
                         const checked = selectedKbIds.includes(kb.id);
                         const filterCount = kbSourceFilters[kb.id]?.length || 0;
                         return (
-                          <div key={kb.id} className="flex items-center gap-2">
+                          <div key={kb.id} data-testid={`runs-kb-${kb.id}`} className="flex items-center gap-2">
                             <label
                               className="flex items-center gap-2 cursor-pointer text-sm text-foreground hover:text-foreground flex-1 min-w-0"
                             >
@@ -2494,7 +2499,7 @@ const RunsPage: NextPageWithLayout = () => {
                             )}
                             <div className="flex justify-between border-t border-default pt-1 mt-1">
                               <span className="text-foreground-muted">Total tokens</span>
-                              <span className="text-foreground">
+                              <span data-testid="run-detail-total-tokens" className="text-foreground">
                                 {(selectedRun.usage.total_tokens as number)?.toLocaleString() ?? "—"}
                               </span>
                             </div>
@@ -2561,7 +2566,7 @@ const RunsPage: NextPageWithLayout = () => {
                       });
 
                       return (
-                        <section>
+                        <section data-testid="run-detail-retrieved-context">
                           <h3 className="text-foreground font-medium text-sm mb-2">
                             Retrieved context ({itemEntries.length})
                           </h3>
@@ -2589,7 +2594,7 @@ const RunsPage: NextPageWithLayout = () => {
                     )}
 
                     {selectedRun?.run_id && traceMap.has(selectedRun.run_id) && (
-                      <section>
+                      <section data-testid="run-detail-execution-trace">
                         <h3 className="text-foreground font-medium text-sm mb-2">Execution Trace</h3>
                         <ExecutionTrace
                           steps={traceMap.get(selectedRun.run_id)!}
@@ -2805,7 +2810,7 @@ const RunsPage: NextPageWithLayout = () => {
 
                     <section>
                       <h3 className="text-foreground font-medium text-sm mb-2">Run ID</h3>
-                      <p className="font-mono text-sm text-foreground-light break-all select-all">{selectedRun.run_id}</p>
+                      <p data-testid="run-detail-run-id" className="font-mono text-sm text-foreground-light break-all select-all">{selectedRun.run_id}</p>
                     </section>
                   </div>
                 ) : (

@@ -41,6 +41,7 @@ export const DateTimeInput = ({
 
   return (
     <Input
+      data-testid={`${name}-input`}
       layout="horizontal"
       className={cn('w-full [&>div>div>div>input]:pr-10')}
       label={name}

@@ -481,6 +481,7 @@ function RunsStrip({
         {executions.map((exec) => (
           <button
             key={exec.id}
+            data-testid={`workflow-execution-${exec.id}`}
             onClick={() => onSelect(exec.id)}
             className={cn(
               "w-full flex items-center px-1.5 py-1.5 rounded text-left transition-colors",

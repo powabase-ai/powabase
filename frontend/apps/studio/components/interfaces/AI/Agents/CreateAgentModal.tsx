@@ -63,7 +63,7 @@ export function CreateAgentModal({ open, onOpenChange, onSuccess }: CreateAgentM
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+    <div data-testid="create-agent-modal" className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-surface-100 border border-default rounded-xl p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto always-show-scrollbar">
         <h3 className="text-xl font-semibold text-foreground mb-4">Create agent</h3>
 
@@ -102,7 +102,7 @@ export function CreateAgentModal({ open, onOpenChange, onSuccess }: CreateAgentM
                 infoTitle="Model selection"
                 infoContent={<ModelSelectionInfoBody />}
               />
-              <ModelSelector value={createModel} onChange={setCreateModel} />
+              <ModelSelector value={createModel} onChange={setCreateModel} testId="create-agent-model" />
             </div>
             <div>
               <FieldLabel

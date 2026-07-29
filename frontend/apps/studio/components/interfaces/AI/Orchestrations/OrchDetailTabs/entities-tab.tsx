@@ -280,7 +280,7 @@ export function EntitiesTab({ orchId }: EntitiesTabProps) {
       {/* Add buttons */}
       <div className="flex flex-col sm:flex-row gap-4">
         {showAddAgent ? (
-          <div className="flex-1 p-4 bg-surface-100 border border-default rounded-lg space-y-3">
+          <div data-testid="orch-add-agent-panel" className="flex-1 p-4 bg-surface-100 border border-default rounded-lg space-y-3">
             <h4 className="text-sm font-medium text-foreground">Add Agent</h4>
             <select
               value={selectedAgentId}

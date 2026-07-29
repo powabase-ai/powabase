@@ -527,6 +527,7 @@ export function ToolsTab({ agentId }: ToolsTabProps) {
                           <label className="flex items-center gap-2 cursor-pointer">
                             <input
                               type="checkbox"
+                              data-testid={`db-table-${schema.name}.${table.name}`}
                               checked={isSelected}
                               onChange={() => toggleTable(schema.name, table.name)}
                               className="h-3.5 w-3.5 rounded border-default text-brand-600"
@@ -604,6 +605,7 @@ export function ToolsTab({ agentId }: ToolsTabProps) {
                 return (
                   <div
                     key={tool.name}
+                    data-testid={`builtin-tool-${tool.name}`}
                     className={`rounded-lg border bg-surface-100 overflow-hidden transition-colors ${
                       assigned ? "border-default" : "border-muted"
                     }`}

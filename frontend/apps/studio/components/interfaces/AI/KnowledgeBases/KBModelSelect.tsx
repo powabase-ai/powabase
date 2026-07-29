@@ -17,6 +17,7 @@ function effortLabel(effort: string): string {
 
 export interface KBModelSelectProps {
   label: string;
+  testId?: string;
   /** Help text rendered under the model dropdown. */
   description?: string;
   value: string;
@@ -42,6 +43,7 @@ export interface KBModelSelectProps {
  */
 export function KBModelSelect({
   label,
+  testId,
   description,
   value,
   onChange,
@@ -87,6 +89,7 @@ export function KBModelSelect({
       <label className="block text-xs text-foreground-lighter mb-1">{label}</label>
       <select
         value={value}
+        data-testid={testId}
         onChange={(e) => onChange(e.target.value)}
         disabled={isLoading}
         className={INPUT_CLASS}

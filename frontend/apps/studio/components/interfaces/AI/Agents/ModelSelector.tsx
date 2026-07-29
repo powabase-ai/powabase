@@ -24,6 +24,14 @@ interface ModelSelectorProps {
    * When false, the AI-on-us / BYOK-only badges are not rendered (Set A baseline).
    */
   isAiOnUsEnabled?: boolean;
+  /**
+   * Optional stable `data-testid` for end-to-end tests. Purely additive: when
+   * omitted the rendered DOM is byte-identical to before. Needed because two
+   * call sites (agent Overview, orchestration Settings) render a second
+   * <select> for reasoning effort in the same subtree, so `locator("select")`
+   * is ambiguous.
+   */
+  testId?: string;
 }
 
 /**
@@ -68,6 +76,7 @@ export function ModelSelector({
   allowEmpty,
   platformProviders: platformProvidersOverride,
   isAiOnUsEnabled: isAiOnUsEnabledOverride,
+  testId,
 }: ModelSelectorProps) {
   const { token, orgSlug } = useProjectSupabaseClient();
   const { data: projectKeys, isLoading: keysLoading } = useLLMProviderKeysQuery();
@@ -155,6 +164,7 @@ export function ModelSelector({
 
   return (
     <select
+      data-testid={testId}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       disabled={loading}
