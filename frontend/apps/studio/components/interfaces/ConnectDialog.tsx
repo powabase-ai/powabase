@@ -39,7 +39,7 @@ export const ConnectDialog = () => {
   const { projectConnectionShowMcp } = useIsFeatureEnabled(['project_connection:show_mcp'])
   // On the hosted platform, only show the MCP tab when the MCP URL is actually
   // configured for THIS deployment. Powabase bakes NEXT_PUBLIC_MCP_URL; a BYOC
-  // platform build (e.g. judocu) does not, so without this the tab would render
+  // platform build does not, so without this the tab would render
   // pointing at the localhost default. Self-hosted (non-platform) derives the
   // URL from the project apiUrl, so it's unaffected.
   const showMcpTab =
