@@ -23,6 +23,17 @@ untested; the pins are validated together.
 
 ---
 
+## 0.1.0rc5 — 2026-07-31
+
+**AI service** `ghcr.io/powabase-ai/powabase-ai:0.1.0rc3` · **[image]**
+
+- **Rebuilt from current source.** The `rc2` image was built from an earlier commit than
+  the repository head, so two files inside it lagged the source tree. No runtime
+  behaviour changes: the image now also bundles `powabase-agentic 0.1.0rc3`, whose
+  packaged library code is identical to `rc2`.
+
+_No `docker-compose.yml` change beyond the AI service image tag._
+
 ## 0.1.0rc4 — 2026-07-31
 
 This release moves **two** images. Besides the new Studio build, the AI service pin

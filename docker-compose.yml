@@ -13,7 +13,7 @@ services:
 
   project-api:
     container_name: default-project-api
-    image: ghcr.io/powabase-ai/powabase-ai:0.1.0rc2
+    image: ghcr.io/powabase-ai/powabase-ai:0.1.0rc3
     restart: unless-stopped
     depends_on:
       db:
@@ -71,7 +71,7 @@ services:
 
   project-worker:
     container_name: default-project-worker
-    image: ghcr.io/powabase-ai/powabase-ai:0.1.0rc2
+    image: ghcr.io/powabase-ai/powabase-ai:0.1.0rc3
     restart: unless-stopped
     depends_on:
       db:
