@@ -23,13 +23,15 @@ untested; the pins are validated together.
 
 ---
 
-## Unreleased
+## 0.1.0rc4 — 2026-07-31
 
-**These changes are on `main` and are NOT in any published image.** `docker-compose.yml`
-still pins `powabase-studio:0.1.0rc3`, so a `git pull` today picks up the Kong and database
-changes below but **not** the Studio ones. They ship with the next Studio release.
+This release moves **two** images. Besides the new Studio build, the AI service pin
+advances `0.1.0rc1 → 0.1.0rc2` — that image was published on 2026-07-28, but
+`docker-compose.yml` had never been pointed at it, so no self-hosted stack has been
+running it. Everything in the **AI service** section below has been available to pull
+for some time and is only now reachable.
 
-**Studio** · **[image]** — *not yet published*
+**Studio** `ghcr.io/powabase-ai/powabase-studio:0.1.0rc4` · **[image]**
 
 - **Fixed: model dropdowns were permanently disabled on self-host.** Every LLM model
   picker rendered blank and disabled, so an agent could not be created. Two stacked
@@ -48,6 +50,44 @@ changes below but **not** the Studio ones. They ship with the next Studio releas
 - **Fixed:** "+ Add pair" in the headers editor could never add a row; the JSON schema
   editor silently discarded edits when the JSON was invalid, and Save was ungated;
   proxy error bodies rendered as `[object Object]`.
+
+**AI service** `ghcr.io/powabase-ai/powabase-ai:0.1.0rc2` · **[image]**
+
+The pin moves from `0.1.0rc1`, so a stack updating to this release picks up everything
+below at once. The image also carries `powabase-agentic 0.1.0rc2` in place of `rc1`.
+
+- **Fixed: orchestration runs ignored configured hooks.** Supervisor-strategy
+  orchestrations never fired `OnRunStart`, `PreToolUse`, `PostToolUse`, `OnDelegation`,
+  `PreResponse` or `OnRunComplete`, so hooks that worked on a single agent silently did
+  nothing once the same work ran through an orchestration. Runs now emit a `hook_result`
+  event recording each hook's outcome — blocked, modified or allowed — instead of leaving
+  callers to infer it from side effects.
+- **Fixed: a `PreResponse` hook's edit could lose the race against streaming.** A
+  hook-modified answer could reach the stream's `complete` event before the modification
+  was applied to the persisted content, so the caller saw the unedited text. Affected the
+  single-agent path as well.
+- **Fixed: hook CRUD accepted configurations that could never run.** Event and type are
+  now validated, dead or unreachable configs are rejected, orchestration hooks are gated
+  to the supervisor strategy, and execution is ordered by `(position, created_at)` rather
+  than arbitrarily.
+- **Fixed: a second workflow input mapping onto the same field was silently dropped.**
+  The first mapping set the field, then the second hit the "skip if a value already
+  exists" guard that exists for genuine user-typed overrides. Repeat targets now
+  concatenate (newline-joined for strings, last-wins otherwise), while a real pre-set
+  user value still wins over any mapping.
+- **Fixed: model context windows were guessed, not resolved.** A model's real context
+  window is now read from the OpenRouter registry, falling back to
+  `litellm.get_model_info` and only then to a conservative default *with a warning*, so
+  an unresolved model stays visible instead of being silently mis-sized.
+- **Fixed: compaction was effectively inoperative whenever an image was in the history.**
+  Multimodal blocks were sized with a flat proxy weight that undercounted a real base64
+  image payload by roughly three orders of magnitude, so the "are we under target?"
+  postcondition could pass on a still-oversized history. Blocks are now measured by
+  actual payload. Compaction also runs on the same model as the real call — no separately
+  configured model required — and reuses the cached history prefix instead of forcing a
+  cold call.
+- **Removed five obsolete compaction settings** and their now-empty category. None was
+  ever read by a `get_setting()` call.
 
 **Kong** `volumes/api/kong.yml` · **[config]** — picked up by `git pull`
 
