@@ -8,7 +8,7 @@ import AILayout from '@/components/layouts/AILayout/AILayout'
 import type { NextPageWithLayout } from '@/types'
 import Link from "next/link";
 import { Search, Plus, ChevronRight, ChevronDown, FileText, Download, Trash2, Eye, XCircle, Upload, HardDriveDownload, Globe } from "lucide-react";
-import { sourcesApi, projectApiUrl, hasAiAuth, SessionExpiredError, DuplicateSourceError } from "@/lib/ai-api";
+import { sourcesApi, projectApiUrl, hasAiAuth, aiAuthHeader, SessionExpiredError, DuplicateSourceError } from "@/lib/ai-api";
 import type { DuplicateHit } from "@/components/interfaces/Sources/DuplicateSourceDialog";
 import { StorageFilePicker } from "@/components/interfaces/AI/Sources/StorageFilePicker";
 import { DuplicateSourceDialog } from "@/components/interfaces/Sources/DuplicateSourceDialog";
@@ -255,7 +255,7 @@ const SourcesListPage: NextPageWithLayout = () => {
     try {
       const response = await fetch(
         projectApiUrl(ref!, `/sources/${sourceId}/download`),
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: aiAuthHeader(token) }
       );
       if (response.status === 401) throw new SessionExpiredError();
       if (!response.ok) throw new Error("Download failed");

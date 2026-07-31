@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { ChevronRight, Download, ImageOff, RefreshCw, Trash2 } from "lucide-react";
-import { sourcesApi, projectApiUrl, hasAiAuth, SessionExpiredError } from "@/lib/ai-api";
+import { sourcesApi, projectApiUrl, hasAiAuth, aiAuthHeader, SessionExpiredError } from "@/lib/ai-api";
 import DefaultLayout from '@/components/layouts/DefaultLayout'
 import AILayout from '@/components/layouts/AILayout/AILayout'
 import type { NextPageWithLayout } from '@/types'
@@ -134,7 +134,7 @@ const SourceDetailPage: NextPageWithLayout = () => {
         const url = projectApiUrl(ref!,
           `/sources/${sourceId}/derivatives/${derivType}/download?index=0`);
         const response = await fetch(url, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: aiAuthHeader(token),
         });
         if (response.status === 401) throw new SessionExpiredError();
         if (cancelled) return;
@@ -225,7 +225,7 @@ const SourceDetailPage: NextPageWithLayout = () => {
     try {
       const response = await fetch(
         projectApiUrl(ref!, `/sources/${sourceId}/download`),
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: aiAuthHeader(token) }
       );
       if (response.status === 401) throw new SessionExpiredError();
       if (!response.ok) throw new Error("Download failed");

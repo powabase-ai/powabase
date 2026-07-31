@@ -60,6 +60,25 @@ def test_studio_build_args_disable_billing_and_credits():
     )
 
 
+def test_studio_build_arg_forces_is_platform_false():
+    # LOAD-BEARING and previously UNDEFENDED. The Dockerfile ARG default is
+    # NEXT_PUBLIC_IS_PLATFORM=true (the platform build's default), and this var
+    # is inlined at BUILD time — a runtime `environment:` override cannot correct
+    # it. The self-host correctness of the ONLY image this repo publishes rests
+    # entirely on publish.yml passing NEXT_PUBLIC_IS_PLATFORM=false. If that build
+    # arg is ever dropped or typo'd, the published OSS image silently ships in
+    # PLATFORM mode: every AI call routes to the control-plane API_URL
+    # (http://localhost:5000) instead of the same-origin self-host proxy, and the
+    # whole stack breaks with no runtime fix. Pin the invariant so CI catches it.
+    wf = _oss_publish_workflow_text()
+    assert "NEXT_PUBLIC_IS_PLATFORM=false" in wf, (
+        "publish.yml studio build-args MUST set NEXT_PUBLIC_IS_PLATFORM=false -- "
+        "the Dockerfile ARG defaults to true, and this NEXT_PUBLIC_* var is baked "
+        "at build time (a runtime environment: override is inert), so without this "
+        "build arg the published OSS image ships in platform mode and self-host breaks."
+    )
+
+
 def test_studio_environment_carries_the_same_value_for_parity():
     # Inert at runtime (baked at build time, like NEXT_PUBLIC_IS_PLATFORM
     # directly above it in the same block) -- kept only so `docker compose

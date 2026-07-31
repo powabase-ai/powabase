@@ -32,6 +32,10 @@ export function SettingsTab({ agent, onAgentUpdate }: SettingsTabProps) {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  // False while the response-schema editor holds invalid JSON. Save must be
+  // blocked then, or it would silently persist the last VALID schema (the one
+  // the parent still holds) and report success, discarding the user's edit.
+  const [responseSchemaValid, setResponseSchemaValid] = useState(true);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -219,7 +223,11 @@ export function SettingsTab({ agent, onAgentUpdate }: SettingsTabProps) {
           </label>
           {structuredOutput && (
             <div className="mt-3 max-w-lg">
-              <JsonSchemaEditor value={responseSchema} onChange={setResponseSchema} />
+              <JsonSchemaEditor
+                value={responseSchema}
+                onChange={setResponseSchema}
+                onValidityChange={setResponseSchemaValid}
+              />
             </div>
           )}
         </div>
@@ -228,11 +236,14 @@ export function SettingsTab({ agent, onAgentUpdate }: SettingsTabProps) {
           <button
             type="button"
             onClick={handleSave}
-            disabled={isSaving}
+            disabled={isSaving || !responseSchemaValid}
             className="px-4 py-2 bg-brand-400 hover:bg-brand-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground-muted focus-visible:ring-offset-2"
           >
             {isSaving ? "Saving..." : "Save settings"}
           </button>
+          {!responseSchemaValid && (
+            <span className="text-sm text-destructive-600">Fix the response schema JSON to save</span>
+          )}
           {saved && <span className="text-sm text-emerald-300">Saved</span>}
         </div>
       </div>
