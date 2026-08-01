@@ -1,0 +1,64 @@
+name: Test
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  studio:
+    name: Studio unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      # pnpm before setup-node: setup-node's pnpm cache needs pnpm on PATH.
+      # The version comes from the `packageManager` field, not from here.
+      - uses: pnpm/action-setup@v4
+
+      # node-version-file, not a literal. .nvmrc is what a contributor's
+      # `nvm use` reads, so CI and local development cannot drift apart
+      # without the drift being visible in one file.
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: frontend/.nvmrc
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # `|| true` because the suite is not green: this fork carries upstream
+      # tests asserting surfaces it deliberately removed. The ratchet below
+      # decides pass/fail. Without this, the step's own exit code would fail
+      # the job before the ratchet ever runs.
+      - name: Run vitest
+        working-directory: frontend/apps/studio
+        run: |
+          pnpm exec vitest --run --reporter=json --outputFile=vitest-results.json || true
+
+      # This is the gate. It fails when failures rise above the ceiling, and
+      # also when the collected total drops — a shrinking suite would
+      # otherwise look like an improvement.
+      - name: Ratchet
+        working-directory: frontend/apps/studio
+        run: node scripts/vitest-ratchet.mjs vitest-results.json tests/failure-ceiling.json
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vitest-results
+          path: frontend/apps/studio/vitest-results.json
+          if-no-files-found: warn

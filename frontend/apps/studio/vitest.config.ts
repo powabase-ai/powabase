@@ -33,6 +33,11 @@ export default defineConfig({
     exclude: [
       ...configDefaults.exclude,
       `.next/*`,
+      // Playwright specs. vitest cannot run them and collecting them
+      // reported 25 files as failing while contributing zero failing
+      // tests, which made the suite summary unreadable.
+      'tests/e2e/**',
+      'tests/e2e-oss/**',
       'tests/features/reports/storage-report.test.tsx',
     ],
     reporters: [['default']],
