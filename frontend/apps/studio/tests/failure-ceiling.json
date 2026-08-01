@@ -1,0 +1,6 @@
+{
+  "_comment": "Ceiling for scripts/vitest-ratchet.mjs. maxFailedTests may only go DOWN; a rise fails CI. minTotalTests guards the denominator, so removing tests cannot masquerade as fixing them - retiring an obsolete test means lowering this number in the same change, where a reviewer can see it.",
+  "_baseline": "Established by the first CI run on ci/test-workflow-and-node-pin, not measured locally: a container bind mount breaks pnpm's symlinks and under-collected by 123 tests.",
+  "maxFailedTests": 30,
+  "minTotalTests": 2967
+}
