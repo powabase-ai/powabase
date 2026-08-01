@@ -24,8 +24,16 @@ jobs:
       - uses: actions/checkout@v4
 
       # pnpm before setup-node: setup-node's pnpm cache needs pnpm on PATH.
-      # The version comes from the `packageManager` field, not from here.
+      #
+      # package_json_file is required here. The action reads `packageManager`
+      # from the repository root by default, and this repo has no root
+      # package.json — the workspace is under frontend/. `defaults.run
+      # .working-directory` does not apply to `uses:` steps, so the path has to
+      # be given explicitly. Pointing at the file rather than hardcoding a
+      # version keeps `packageManager: pnpm@10.24.0` the single source of truth.
       - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
 
       # node-version-file, not a literal. .nvmrc is what a contributor's
       # `nvm use` reads, so CI and local development cannot drift apart
