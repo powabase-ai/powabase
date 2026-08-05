@@ -1,0 +1,49 @@
+# CANONICAL COPY. powabase-ai and powabase carry byte-identical copies of this
+# file. Change it here and re-copy to both — three drifting variants of one gate
+# is worse than no gate.
+#
+# Why gating the TITLE is sufficient: this repository squashes with
+# `squash_merge_commit_title = PR_TITLE`, so the title checked here is exactly
+# the commit message that lands on the default branch, which is what the
+# release tooling reads.
+#
+# `COMMIT_OR_PR_TITLE` would NOT be sufficient. It "defaults to the commit's
+# title (if only one commit) or the pull request's title (when more than one
+# commit)" — so a single-commit PR would land its commit title, unchecked, and
+# 19 of the 23 PRs merged across these three repositories so far have been
+# single-commit. The setting is the other half of this gate; changing it back
+# silently disables most of it.
+name: PR title
+on:
+  pull_request:
+    # `edited` matters: a contributor whose title is rejected fixes the title in
+    # the UI and this check re-runs green. No new commit, no force-push.
+    types: [opened, edited, reopened, ready_for_review]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  conventional-title:
+    runs-on: ubuntu-latest
+    if: github.actor != 'dependabot[bot]'
+    steps:
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            test
+            ci
+            build
+            refactor
+            perf
+            chore
+            revert
+          requireScope: false
+          subjectPattern: ^(?![A-Z]).+$
+          subjectPatternError: |
+            The subject "{subject}" must start with a lowercase letter.
