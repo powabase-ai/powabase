@@ -30,15 +30,28 @@ jobs:
     outputs:
       version: ${{ steps.v.outputs.version }}
       ref: ${{ steps.v.outputs.ref }}
+      sha: ${{ steps.v.outputs.sha }}
     steps:
       - name: Resolve version
         id: v
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           REF="${{ github.event.release.tag_name || inputs.tag }}"
           test -n "$REF" || { echo "::error::no release tag and no tag input"; exit 1; }
           echo "version=${REF#v}" >> "$GITHUB_OUTPUT"
           echo "ref=${REF}"       >> "$GITHUB_OUTPUT"
+          # Resolve the tag to its commit explicitly rather than trusting
+          # `github.sha`, which on a release event is the head of the ref the
+          # release was created from and not necessarily the tagged commit.
+          # Consumers of this source pin the COMMIT: a tag can be moved with a
+          # force push, and this repository has no tag-protection ruleset, so a
+          # name is not a durable answer to "what source was this built from".
+          SHA=$(gh api "repos/${{ github.repository }}/commits/${REF}" --jq '.sha')
+          test -n "$SHA" || { echo "::error::could not resolve ${REF} to a commit"; exit 1; }
+          echo "sha=${SHA}" >> "$GITHUB_OUTPUT"
+          echo "resolved ${REF} -> ${SHA}"
 
   # Studio is a Node build — QEMU cross-build SIGILLs, so build each arch on a
   # NATIVE runner (push by digest), then assemble a multi-arch manifest.
@@ -126,3 +139,42 @@ jobs:
           # No `| head` here: under `set -o pipefail`, head closing the pipe early
           # sends SIGPIPE to inspect → non-zero → the step fails AFTER a successful push.
           docker buildx imagetools inspect "${{ env.IMAGE }}:${{ needs.resolve.outputs.version }}"
+
+      # Tell the downstream consumer a release exists, so it can update its
+      # reference to this source without anyone watching for it.
+      #
+      # Its own App credential, which can do exactly one thing: write to the
+      # single repository it is installed on. `owner:` with no `repositories:`
+      # scopes the token to that installation, which is also why the destination
+      # is not named here — `vars.DOWNSTREAM_REPO` holds it.
+      #
+      # Last step on purpose. Announcing before the manifest is pushed would send
+      # the consumer after an image that does not exist yet.
+      - uses: actions/create-github-app-token@v3
+        id: dispatch-token
+        with:
+          app-id: ${{ vars.DISPATCH_BOT_APP_ID }}
+          private-key: ${{ secrets.DISPATCH_BOT_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Announce the release downstream
+        env:
+          GH_TOKEN: ${{ steps.dispatch-token.outputs.token }}
+          DOWNSTREAM: ${{ vars.DOWNSTREAM_REPO }}
+          VERSION: ${{ needs.resolve.outputs.version }}
+          REF: ${{ needs.resolve.outputs.ref }}
+          SHA: ${{ needs.resolve.outputs.sha }}
+        run: |
+          set -euo pipefail
+          test -n "${DOWNSTREAM}" || { echo "::error::DOWNSTREAM_REPO is unset; nothing was announced"; exit 1; }
+          test -n "${SHA}"        || { echo "::error::no commit resolved; refusing to announce a name without one"; exit 1; }
+          # Both are sent: the commit is what a consumer should pin, the tag is
+          # what a human reads. Sending only the tag would push the mutability
+          # problem downstream.
+          gh api "repos/${DOWNSTREAM}/dispatches" \
+            -f event_type=oss_release \
+            -f 'client_payload[repo]=powabase' \
+            -f "client_payload[version]=${VERSION}" \
+            -f "client_payload[ref]=${REF}" \
+            -f "client_payload[sha]=${SHA}"
+          echo "announced ${REF} (${SHA})"
