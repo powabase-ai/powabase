@@ -1,5 +1,10 @@
 # Changelog
 
+> **This file is written by hand, for operators.** It is grouped by component
+> and marks each entry `[config]` or `[image]` so you know whether
+> `docker compose pull` is enough. Release tooling does not write here — the
+> commit-derived record lives in `CHANGELOG-RELEASES.md`.
+
 All notable changes to the Powabase OSS self-hosted stack.
 
 Changes are grouped by component rather than by change type, and only changes

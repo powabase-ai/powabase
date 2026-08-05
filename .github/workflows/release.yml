@@ -1,0 +1,40 @@
+name: Release
+on:
+  push:
+    branches: [main]
+
+# Deliberately minimal. Every write below is made with the App token, not with
+# GITHUB_TOKEN — see the comment on the token step for why that distinction is
+# the whole point of this file.
+permissions:
+  contents: read
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      # release-please MUST NOT run under GITHUB_TOKEN.
+      #
+      # Resources created with GITHUB_TOKEN do not start new workflow runs, and
+      # release-please's own README says this of its output: "all resources
+      # created by release-please (release tag or release pull request) will
+      # not trigger future GitHub actions workflows."
+      #
+      # publish.yml listens for `release: published`. Under GITHUB_TOKEN that
+      # event never reaches it — release-please would cut a release and nothing
+      # would publish. Tag present, no image, no error anywhere.
+      #
+      # `token:` is passed explicitly, so there is no fallback path: if the App
+      # token cannot be minted the job FAILS, rather than quietly degrading to
+      # a release nobody ships.
+      - uses: actions/create-github-app-token@v3
+        id: app-token
+        with:
+          app-id: ${{ vars.RELEASE_BOT_APP_ID }}
+          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
+
+      - uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
