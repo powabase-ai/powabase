@@ -18,7 +18,21 @@ on:
   pull_request:
     # `edited` matters: a contributor whose title is rejected fixes the title in
     # the UI and this check re-runs green. No new commit, no force-push.
-    types: [opened, edited, reopened, ready_for_review]
+    #
+    # `synchronize` matters for a different and less obvious reason, and it is
+    # NOT redundant just because a push cannot change a title. GitHub evaluates
+    # a required status check against the HEAD COMMIT. When the head moves, a
+    # result recorded against the old commit no longer counts — the check reads
+    # as MISSING, and a missing required check blocks the pull request forever.
+    #
+    # Release-tooling branches are force-pushed on every update, so without this
+    # every release pull request blocks after its first update and no amount of
+    # waiting fixes it. Observed 2026-08-05: a release PR sat at
+    # MERGEABLE/BLOCKED with its title check recorded only against a superseded
+    # commit.
+    #
+    # Do not remove this to save a run. The run is cheap; the deadlock is not.
+    types: [opened, edited, reopened, ready_for_review, synchronize]
 
 permissions:
   pull-requests: read
