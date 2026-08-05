@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.0](https://github.com/powabase-ai/powabase/compare/v0.1.1...v0.2.0) (2026-08-05)
+
+
+### Features
+
+* add error_code column to ai.sources schema ([c1524a7](https://github.com/powabase-ai/powabase/commit/c1524a7212fe718537a68226053c649f805e3ffd))
+
+
+### Bug Fixes
+
+* **ci:** re-run the title check when the head moves ([#24](https://github.com/powabase-ai/powabase/issues/24)) ([c51c43a](https://github.com/powabase-ai/powabase/commit/c51c43af08f26f74e470f8e454de1582358ad550))
+
 ## [0.1.1](https://github.com/powabase-ai/powabase/compare/v0.1.0...v0.1.1) (2026-08-05)
 
 
