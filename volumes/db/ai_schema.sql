@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS ai.sources (
     metadata JSONB DEFAULT '{}',
     auto_metadata JSONB DEFAULT '{}',
     error_message TEXT,
+    error_code TEXT,
     celery_task_id VARCHAR(255),
     content_hash VARCHAR(64),
     created_at TIMESTAMPTZ DEFAULT NOW(),
