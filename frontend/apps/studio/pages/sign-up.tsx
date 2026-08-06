@@ -1,10 +1,12 @@
 import Link from 'next/link'
 
 import { SignInWithGitHub } from '@/components/interfaces/SignIn/SignInWithGitHub'
+import { SignInWithGoogle } from '@/components/interfaces/SignIn/SignInWithGoogle'
 import { SignUpForm } from '@/components/interfaces/SignIn/SignUpForm'
 import SignInLayout from '@/components/layouts/SignInLayout/SignInLayout'
 import { UnknownInterface } from '@/components/ui/UnknownInterface'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
+import { isGoogleAuthEnabled } from '@/lib/google-auth'
 import type { NextPageWithLayout } from '@/types'
 
 const SignUpPage: NextPageWithLayout = () => {
@@ -12,6 +14,8 @@ const SignUpPage: NextPageWithLayout = () => {
     dashboardAuthSignUp: signUpEnabled,
     dashboardAuthSignInWithGithub: signInWithGithubEnabled,
   } = useIsFeatureEnabled(['dashboard_auth:sign_up', 'dashboard_auth:sign_in_with_github'])
+
+  const googleAuthEnabled = isGoogleAuthEnabled()
 
   if (!signUpEnabled) {
     return <UnknownInterface fullHeight={false} urlBack="/sign-in" />
@@ -35,6 +39,21 @@ const SignUpPage: NextPageWithLayout = () => {
             </div>
           </>
         )} */}
+
+        {googleAuthEnabled && (
+          <>
+            <SignInWithGoogle />
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-strong" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-studio px-2 text-sm text-foreground">or</span>
+              </div>
+            </div>
+          </>
+        )}
 
         <SignUpForm />
       </div>

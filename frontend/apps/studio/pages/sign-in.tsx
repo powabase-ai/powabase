@@ -8,11 +8,13 @@ import { LastSignInWrapper } from '@/components/interfaces/SignIn/LastSignInWrap
 import { SignInForm } from '@/components/interfaces/SignIn/SignInForm'
 import { SignInWithCustom } from '@/components/interfaces/SignIn/SignInWithCustom'
 import { SignInWithGitHub } from '@/components/interfaces/SignIn/SignInWithGitHub'
+import { SignInWithGoogle } from '@/components/interfaces/SignIn/SignInWithGoogle'
 import { AuthenticationLayout } from '@/components/layouts/AuthenticationLayout'
 import SignInLayout from '@/components/layouts/SignInLayout/SignInLayout'
 import { useCustomContent } from '@/hooks/custom-content/useCustomContent'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
 import { IS_PLATFORM } from '@/lib/constants'
+import { isGoogleAuthEnabled } from '@/lib/google-auth'
 import type { NextPageWithLayout } from '@/types'
 
 const SignInPage: NextPageWithLayout = () => {
@@ -34,8 +36,12 @@ const SignInPage: NextPageWithLayout = () => {
     'dashboard_auth:custom_provider',
   ])
 
-  const showOrDivider =
-    (signInWithGithubEnabled || signInWithSsoEnabled || customProvider) && signInWithEmailEnabled
+  const googleAuthEnabled = isGoogleAuthEnabled()
+
+  // Only Google and the email form render today; the GitHub/SSO/custom blocks below
+  // are commented out, so their flags must NOT feed the divider or it appears with
+  // nothing above it.
+  const showOrDivider = googleAuthEnabled && signInWithEmailEnabled
 
   useEffect(() => {
     if (!IS_PLATFORM) {
@@ -70,6 +76,19 @@ const SignInPage: NextPageWithLayout = () => {
             </Button>
           </LastSignInWrapper>
         )} */}
+
+        {googleAuthEnabled && <SignInWithGoogle />}
+
+        {showOrDivider && (
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-strong" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="bg-studio px-2 text-sm text-foreground">or</span>
+            </div>
+          </div>
+        )}
 
         {signInWithEmailEnabled && <SignInForm />}
       </div>
