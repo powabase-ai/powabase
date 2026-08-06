@@ -64,6 +64,11 @@ ARG NEXT_PUBLIC_HCAPTCHA_SITE_KEY=10000000-ffff-ffff-ffff-000000000001
 # Baked at build time (GoTrue reads it at deploy time), so flips are not atomic
 # — order transitions per docs/runbooks/activate-hcaptcha.md. Ships disabled.
 ARG NEXT_PUBLIC_HCAPTCHA_ENABLED=false
+# Whether the FE renders the "Continue with Google" button. Baked at build time
+# while the auth server reads its provider config at deploy time, so flips are
+# not atomic — bring the server config up before turning this on, and turn this
+# off before taking the server config down. Ships disabled.
+ARG NEXT_PUBLIC_GOOGLE_AUTH_ENABLED=false
 ARG NEXT_PUBLIC_MCP_URL=
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ARG NEXT_PUBLIC_GA_MEASUREMENT_ID=
@@ -95,6 +100,7 @@ ENV NEXT_PUBLIC_GOTRUE_URL=$NEXT_PUBLIC_GOTRUE_URL
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 ENV NEXT_PUBLIC_HCAPTCHA_SITE_KEY=$NEXT_PUBLIC_HCAPTCHA_SITE_KEY
 ENV NEXT_PUBLIC_HCAPTCHA_ENABLED=$NEXT_PUBLIC_HCAPTCHA_ENABLED
+ENV NEXT_PUBLIC_GOOGLE_AUTH_ENABLED=$NEXT_PUBLIC_GOOGLE_AUTH_ENABLED
 ENV NEXT_PUBLIC_MCP_URL=$NEXT_PUBLIC_MCP_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NEXT_PUBLIC_GA_MEASUREMENT_ID=$NEXT_PUBLIC_GA_MEASUREMENT_ID
