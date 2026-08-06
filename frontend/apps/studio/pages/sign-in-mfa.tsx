@@ -48,7 +48,7 @@ const SignInMfaPage: NextPageWithLayout = () => {
         if (token) {
           const { data, error } = await auth.mfa.getAuthenticatorAssuranceLevel()
           if (error) {
-            // if there was a problem signing in via the url, don't redirect
+            // The assurance-level check failed after sign-in — surface the error and redirect back to sign-in.
             toast.error(
               `Failed to retrieve assurance level: ${error.message}. Please try signing in again`
             )
