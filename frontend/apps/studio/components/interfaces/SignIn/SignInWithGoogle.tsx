@@ -16,7 +16,9 @@ export const SignInWithGoogle = () => {
     setLoading(true)
 
     try {
-      // redirects to /sign-in to check if the user has MFA setup (handled in SignInLayout.tsx)
+      // Land on /sign-in-mfa, which decides whether an MFA step is actually needed.
+      // NOT SignInLayout — that bails out early when pathname === '/sign-in-mfa'
+      // (SignInLayout.tsx:57-59), so the page's own effect is what runs here.
       const redirectTo = buildPathWithParams(
         `${
           process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview'
