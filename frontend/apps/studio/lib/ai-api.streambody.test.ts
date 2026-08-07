@@ -71,4 +71,28 @@ describe('lib/ai-api — streamAgentRun request body', () => {
     const sentBody = JSON.parse(init.body)
     expect(Object.keys(sentBody).sort()).toEqual(['message', 'runtime_knowledge_bases'])
   })
+
+  it('omits runtime_knowledge_bases from the serialized body when it is undefined', async () => {
+    // The playground clears its KB selection by passing `undefined` here
+    // (buildRuntimeKbEntries returns undefined for an empty selection) —
+    // pin that streamAgentRun doesn't stringify that as a literal `null`
+    // key (JSON.stringify drops undefined-valued object properties, but
+    // that behavior is exactly what a future refactor of the body-building
+    // could accidentally break, e.g. by defaulting the field to `null`).
+    ;(global.fetch as any).mockResolvedValueOnce(mockStreamResponse())
+    const { streamAgentRun } = await import('./ai-api')
+
+    await streamAgentRun(
+      'a-token',
+      'default',
+      'agent_1',
+      { message: 'x', runtime_knowledge_bases: undefined } as any,
+      () => {}
+    )
+
+    const [, init] = (global.fetch as any).mock.calls[0]
+    const sentBody = JSON.parse(init.body)
+    expect(sentBody).not.toHaveProperty('runtime_knowledge_bases')
+    expect(Object.keys(sentBody).sort()).toEqual(['message'])
+  })
 })
