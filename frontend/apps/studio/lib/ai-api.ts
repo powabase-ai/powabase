@@ -373,6 +373,9 @@ export type StreamRunEvent =
     }
   | { event: 'error'; error: string; run_id: string; context_handler_id?: string | null }
 
+/** Mirrors the server's cap on how many KBs a single run's picker can send. */
+export const MAX_RUNTIME_KBS = 10
+
 /**
  * Build the runtime_knowledge_bases entries for a run from the playground's
  * KB selection. Returns undefined when nothing is selected so the field is

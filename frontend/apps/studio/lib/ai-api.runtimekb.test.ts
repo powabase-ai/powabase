@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { buildRuntimeKbEntries } from './ai-api'
+import { buildRuntimeKbEntries, MAX_RUNTIME_KBS } from './ai-api'
+
+describe('MAX_RUNTIME_KBS', () => {
+  it('mirrors the server cap of 10', () => {
+    expect(MAX_RUNTIME_KBS).toBe(10)
+  })
+})
 
 describe('buildRuntimeKbEntries', () => {
   it('returns undefined when nothing selected', () => {
