@@ -1572,6 +1572,10 @@ const RunsPage: NextPageWithLayout = () => {
       }
     };
 
+    // Captured when a send clears the KB selection, so a failed request can
+    // restore it for retry instead of silently discarding the user's picks.
+    let clearedKbSelection: { ids: string[]; filters: Record<string, string[]> } | null = null;
+
     try {
       if (selectedType === "orchestration" && selectedOrchId) {
         await streamOrchestrationRun(
@@ -1586,6 +1590,7 @@ const RunsPage: NextPageWithLayout = () => {
         const runtimeKbs = buildRuntimeKbEntries(selectedKbIds, kbSourceFilters);
         // Per-request semantics: the selection applies to this message only.
         if (runtimeKbs) {
+          clearedKbSelection = { ids: selectedKbIds, filters: kbSourceFilters };
           setSelectedKbIds([]);
           setKbSourceFilters({});
         }
@@ -1611,6 +1616,12 @@ const RunsPage: NextPageWithLayout = () => {
           setSelectedSessionId(startSessionIdRef.current);
         }
         return;
+      }
+      // The send failed — put the cleared KB selection back so the user can
+      // retry without re-picking.
+      if (clearedKbSelection) {
+        setSelectedKbIds(clearedKbSelection.ids);
+        setKbSourceFilters(clearedKbSelection.filters);
       }
       setError(err instanceof Error ? err.message : "Stream failed");
       setMessages((prev) => {
