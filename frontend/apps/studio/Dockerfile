@@ -62,7 +62,8 @@ ARG NEXT_PUBLIC_HCAPTCHA_SITE_KEY=10000000-ffff-ffff-ffff-000000000001
 # Whether the FE renders/executes the hCaptcha widget. CI wires this from the
 # same HCAPTCHA_ENABLED var that toggles GoTrue's server-side verification.
 # Baked at build time (GoTrue reads it at deploy time), so flips are not atomic
-# — order transitions per docs/runbooks/activate-hcaptcha.md. Ships disabled.
+# — bring the server-side verification up before turning this on, and turn this
+# off before taking the server config down. Ships disabled.
 ARG NEXT_PUBLIC_HCAPTCHA_ENABLED=false
 # Whether the FE renders the "Continue with Google" button. Baked at build time
 # while the auth server reads its provider config at deploy time, so flips are
