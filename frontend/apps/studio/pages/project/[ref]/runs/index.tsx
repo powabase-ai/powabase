@@ -21,6 +21,7 @@ import {
   SessionListItem,
   ChatMessage,
   streamAgentRun,
+  buildRuntimeKbEntries,
   StreamRunEvent,
   Citation,
   orchestrationsApi,
@@ -1582,6 +1583,12 @@ const RunsPage: NextPageWithLayout = () => {
           { signal: abortController.signal }
         );
       } else if (selectedAgentId) {
+        const runtimeKbs = buildRuntimeKbEntries(selectedKbIds, kbSourceFilters);
+        // Per-request semantics: the selection applies to this message only.
+        if (runtimeKbs) {
+          setSelectedKbIds([]);
+          setKbSourceFilters({});
+        }
         await streamAgentRun(
           token,
           ref!,
@@ -1589,13 +1596,7 @@ const RunsPage: NextPageWithLayout = () => {
           {
             message,
             session_id: selectedSessionId ?? undefined,
-            knowledge_bases:
-              selectedKbIds.length > 0
-                ? selectedKbIds.map((id) => {
-                    const sourceIds = kbSourceFilters[id];
-                    return sourceIds?.length ? { id, source_ids: sourceIds } : { id };
-                  })
-                : undefined,
+            runtime_knowledge_bases: runtimeKbs,
             citations_enabled: citationsEnabled || undefined,
           },
           onEvent,
@@ -2202,7 +2203,7 @@ const RunsPage: NextPageWithLayout = () => {
               <form onSubmit={handleSend} className="p-4 border-t border-default space-y-3">
                 {selectedType === "agent" && <div>
                   <label className="text-xs text-foreground-muted block mb-1.5">
-                    Pre-loaded context
+                    Reference for next message — the agent can search these knowledge bases for this one query
                   </label>
                   {knowledgeBases.length === 0 ? (
                     <p className="text-xs text-foreground-muted italic">No knowledge bases available</p>
