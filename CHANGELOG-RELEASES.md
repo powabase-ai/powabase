@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.0](https://github.com/powabase-ai/powabase/compare/v0.3.0...v0.4.0) (2026-08-07)
+
+
+### Features
+
+* add "Continue with Google" sign-in behind a build-arg flag ([#32](https://github.com/powabase-ai/powabase/issues/32)) ([5536154](https://github.com/powabase-ai/powabase/commit/55361547c9348d9ec6444ec1ff5b4fd1a8b823d3))
+
+
+### Bug Fixes
+
+* **compose:** pin powabase-ai 0.4.0 and studio 0.3.0 for self-host ([#29](https://github.com/powabase-ai/powabase/issues/29)) ([14cc9ed](https://github.com/powabase-ai/powabase/commit/14cc9edc0046a6f95494dda5ab04f81c9d557310))
+
 ## [0.3.0](https://github.com/powabase-ai/powabase/compare/v0.2.0...v0.3.0) (2026-08-07)
 
 
