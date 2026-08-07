@@ -84,7 +84,8 @@ export function KBTab({ agentId }: KBTabProps) {
           Dynamic Search — Agent can search these KBs on demand during conversation
         </h3>
         <p className="text-xs text-foreground-muted">
-          For pre-loaded context (injected into every message), use the KB toggles on the Runs page.
+          To reference a knowledge base for a single message (without attaching it), use the KB
+          toggles on the Runs page.
         </p>
       </div>
 

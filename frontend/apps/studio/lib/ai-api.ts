@@ -362,6 +362,7 @@ export type StreamRunEvent =
       is_new_session?: boolean
       context_handler_id?: string | null
       status?: string
+      error?: string | null
       citations?: Citation[]
       tool_calls?: Array<{
         step: number
@@ -372,6 +373,25 @@ export type StreamRunEvent =
       }>
     }
   | { event: 'error'; error: string; run_id: string; context_handler_id?: string | null }
+
+/** Mirrors the server's cap on how many KBs a single run's picker can send. */
+export const MAX_RUNTIME_KBS = 10
+
+/**
+ * Build the runtime_knowledge_bases entries for a run from the playground's
+ * KB selection. Returns undefined when nothing is selected so the field is
+ * omitted from the request body entirely.
+ */
+export function buildRuntimeKbEntries(
+  selectedKbIds: string[],
+  kbSourceFilters: Record<string, string[] | undefined>
+): Array<{ id: string; source_ids?: string[] }> | undefined {
+  if (selectedKbIds.length === 0) return undefined
+  return selectedKbIds.map((id) => {
+    const sourceIds = kbSourceFilters[id]
+    return sourceIds?.length ? { id, source_ids: sourceIds } : { id }
+  })
+}
 
 /**
  * Stream agent run via POST (SSE) - proxied through platform.
@@ -384,6 +404,7 @@ export async function streamAgentRun(
     message: string
     session_id?: string
     knowledge_bases?: Array<{ id: string; top_k?: number; source_ids?: string[] }>
+    runtime_knowledge_bases?: Array<{ id: string; top_k?: number; source_ids?: string[] }>
     context_items?: Array<{
       item_id?: string
       text?: string

@@ -21,6 +21,8 @@ import {
   SessionListItem,
   ChatMessage,
   streamAgentRun,
+  buildRuntimeKbEntries,
+  MAX_RUNTIME_KBS,
   StreamRunEvent,
   Citation,
   orchestrationsApi,
@@ -1273,6 +1275,15 @@ const RunsPage: NextPageWithLayout = () => {
     e.preventDefault();
     const targetId = selectedType === "agent" ? selectedAgentId : selectedOrchId;
     if (!isReady || !hasAiAuth(token) || !targetId || !inputMessage.trim() || isStreaming) return;
+    // Enforce the cap here too, not just via the disabled checkboxes — the
+    // render-level disable only stops interactive clicks. Any future bulk-set
+    // of selectedKbIds (a "select all" button, a restored session) would skip
+    // that render guard entirely and reproduce the raw backend 400 the
+    // optimistic append below can't roll back cleanly.
+    if (selectedType === "agent" && selectedKbIds.length > MAX_RUNTIME_KBS) {
+      setError(`Select up to ${MAX_RUNTIME_KBS} knowledge bases per message (currently ${selectedKbIds.length} selected).`);
+      return;
+    }
     const message = inputMessage.trim();
     setInputMessage("");
     setIsStreaming(true);
@@ -1295,6 +1306,28 @@ const RunsPage: NextPageWithLayout = () => {
     const placeholder: ChatMessage = { role: "assistant", content: "" };
     setMessages((prev) => [...prev, { role: "user", content: message }, placeholder]);
     setTimeout(forceScrollToBottom, 0);
+
+    // Captured when a send clears the KB selection, so a failed request can
+    // restore it for retry instead of silently discarding the user's picks.
+    // Declared above `onEvent` (rather than just above the `try` below) so the
+    // `error`-event branch inside `onEvent` can also read/clear it — that SSE
+    // event fires when the stream opened successfully but the run itself
+    // failed server-side, a path the outer `catch` never sees because the
+    // fetch promise still resolves normally.
+    let clearedKbSelection: { ids: string[]; filters: Record<string, string[]> } | null = null;
+
+    // Restores the exact filter entries that were removed at send-time,
+    // merging them back into whatever `kbSourceFilters` holds now (never
+    // clobbering filters for KBs the user configured but didn't select).
+    // Nulls the snapshot so the `error`-event branch and the outer `catch`
+    // can't both restore for the same send.
+    const restoreClearedKbSelection = () => {
+      if (!clearedKbSelection) return;
+      const snapshot = clearedKbSelection;
+      setSelectedKbIds(snapshot.ids);
+      setKbSourceFilters((prev) => ({ ...prev, ...snapshot.filters }));
+      clearedKbSelection = null;
+    };
 
     const onEvent = (event: StreamRunEvent) => {
       if (event.event === "start") {
@@ -1559,6 +1592,10 @@ const RunsPage: NextPageWithLayout = () => {
       } else if (event.event === "approval_requested") {
         setPendingApproval({ runId: event.run_id, toolName: event.tool_name, toolInput: event.tool_input, message: event.message });
       } else if (event.event === "error") {
+        // The fetch/stream resolves normally even when the run itself failed
+        // server-side — this SSE event is the only signal, so it must restore
+        // the cleared KB selection itself (the outer `catch` never fires).
+        restoreClearedKbSelection();
         setError(event.error);
         setMessages((prev) => {
           const next = [...prev];
@@ -1582,6 +1619,25 @@ const RunsPage: NextPageWithLayout = () => {
           { signal: abortController.signal }
         );
       } else if (selectedAgentId) {
+        const runtimeKbs = buildRuntimeKbEntries(selectedKbIds, kbSourceFilters);
+        // Per-request semantics: the selection applies to this message only.
+        // Clear ONLY the entries that were actually sent — the source-filter
+        // modal is independent of the checkboxes, so a KB the user configured
+        // filters for but never checked must keep them.
+        if (runtimeKbs) {
+          const sentIds = selectedKbIds;
+          const removedFilters: Record<string, string[]> = {};
+          for (const id of sentIds) {
+            if (kbSourceFilters[id]) removedFilters[id] = kbSourceFilters[id];
+          }
+          clearedKbSelection = { ids: sentIds, filters: removedFilters };
+          setSelectedKbIds([]);
+          setKbSourceFilters((prev) => {
+            const next = { ...prev };
+            for (const id of sentIds) delete next[id];
+            return next;
+          });
+        }
         await streamAgentRun(
           token,
           ref!,
@@ -1589,13 +1645,7 @@ const RunsPage: NextPageWithLayout = () => {
           {
             message,
             session_id: selectedSessionId ?? undefined,
-            knowledge_bases:
-              selectedKbIds.length > 0
-                ? selectedKbIds.map((id) => {
-                    const sourceIds = kbSourceFilters[id];
-                    return sourceIds?.length ? { id, source_ids: sourceIds } : { id };
-                  })
-                : undefined,
+            runtime_knowledge_bases: runtimeKbs,
             citations_enabled: citationsEnabled || undefined,
           },
           onEvent,
@@ -1609,8 +1659,16 @@ const RunsPage: NextPageWithLayout = () => {
         if (startSessionIdRef.current) {
           setSelectedSessionId(startSessionIdRef.current);
         }
+        // Restore is deliberately skipped here: streamAbortRef's only
+        // abort() call site is the unmount cleanup effect, so an AbortError
+        // means this component is already gone — there's no picker left to
+        // restore the selection into.
         return;
       }
+      // The send failed — put the cleared KB selection back so the user can
+      // retry without re-picking. No-op if the `error` SSE-event branch in
+      // onEvent already restored it for this send.
+      restoreClearedKbSelection();
       setError(err instanceof Error ? err.message : "Stream failed");
       setMessages((prev) => {
         const next = [...prev];
@@ -2201,8 +2259,11 @@ const RunsPage: NextPageWithLayout = () => {
               </div>
               <form onSubmit={handleSend} className="p-4 border-t border-default space-y-3">
                 {selectedType === "agent" && <div>
-                  <label className="text-xs text-foreground-muted block mb-1.5">
-                    Pre-loaded context
+                  <label className="text-xs text-foreground-muted flex items-center justify-between gap-2 mb-1.5">
+                    <span>Reference for next message — the agent can search these knowledge bases for this one query</span>
+                    {selectedKbIds.length > 0 && (
+                      <span className="shrink-0">{selectedKbIds.length}/{MAX_RUNTIME_KBS}</span>
+                    )}
                   </label>
                   {knowledgeBases.length === 0 ? (
                     <p className="text-xs text-foreground-muted italic">No knowledge bases available</p>
@@ -2211,13 +2272,22 @@ const RunsPage: NextPageWithLayout = () => {
                       {knowledgeBases.map((kb) => {
                         const checked = selectedKbIds.includes(kb.id);
                         const filterCount = kbSourceFilters[kb.id]?.length || 0;
+                        // Unchecked boxes freeze at the server-mirrored cap (checked
+                        // ones stay toggleable so the user can still deselect down
+                        // from it); everything freezes while a run is streaming so a
+                        // failure's restore can't race the user's mid-stream picks.
+                        const checkboxDisabled = isStreaming || (!checked && selectedKbIds.length >= MAX_RUNTIME_KBS);
                         return (
                           <div key={kb.id} className="flex items-center gap-2">
                             <label
-                              className="flex items-center gap-2 cursor-pointer text-sm text-foreground hover:text-foreground flex-1 min-w-0"
+                              className={cn(
+                                "flex items-center gap-2 text-sm text-foreground flex-1 min-w-0",
+                                checkboxDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:text-foreground"
+                              )}
                             >
                               <Checkbox
                                 checked={checked}
+                                disabled={checkboxDisabled}
                                 onCheckedChange={() => {
                                   setSelectedKbIds((prev) =>
                                     checked ? prev.filter((id) => id !== kb.id) : [...prev, kb.id]
@@ -2235,9 +2305,12 @@ const RunsPage: NextPageWithLayout = () => {
                               type="button"
                               title="Filter by source documents"
                               onClick={() => openSourceFilterModal(kb.id)}
+                              disabled={isStreaming}
                               className={cn(
                                 "shrink-0 p-1 rounded transition",
-                                filterCount > 0
+                                isStreaming
+                                  ? "text-foreground-muted opacity-50 cursor-not-allowed"
+                                  : filterCount > 0
                                   ? "text-brand-600 hover:bg-brand-400/10"
                                   : "text-foreground-muted hover:text-foreground hover:bg-surface-300"
                               )}
