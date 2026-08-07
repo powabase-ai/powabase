@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.0](https://github.com/powabase-ai/powabase/compare/v0.2.0...v0.3.0) (2026-08-07)
+
+
+### Features
+
+* **studio:** per-message knowledge base references in agent playground ([#27](https://github.com/powabase-ai/powabase/issues/27)) ([7010b3e](https://github.com/powabase-ai/powabase/commit/7010b3e39b590c0317dd313326d4bc3083e946f7))
+
+
+### Bug Fixes
+
+* **compose:** pin powabase-ai 0.3.1 and studio 0.2.0 for self-host ([#26](https://github.com/powabase-ai/powabase/issues/26)) ([ef81b90](https://github.com/powabase-ai/powabase/commit/ef81b90c6065b9ae432bccf4b6c026bf5f1cfe3a))
+
 ## [0.2.0](https://github.com/powabase-ai/powabase/compare/v0.1.1...v0.2.0) (2026-08-05)
 
 
