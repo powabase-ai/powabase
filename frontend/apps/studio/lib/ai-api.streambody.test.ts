@@ -47,7 +47,15 @@ describe('lib/ai-api — streamAgentRun request body', () => {
     expect(sentBody.runtime_knowledge_bases).toEqual([{ id: 'kb-1' }])
   })
 
-  it('omits knowledge_bases when not passed (sibling field must not be conflated)', async () => {
+  it('serializes ONLY message + runtime_knowledge_bases when that is all that was passed', async () => {
+    // streamAgentRun never adds fields of its own — it JSON.stringifies
+    // exactly the object the caller passed. So the wire body's key set must
+    // equal the caller's key set, with no `knowledge_bases` (the sibling,
+    // persistent-config field) sneaking in. Asserting the exact key set
+    // (not just "knowledge_bases absent", which is true of any body that
+    // never included it) is what actually pins the two fields apart: it
+    // would fail if a future edit ever merged/renamed them, or added any
+    // other stray key to the request.
     ;(global.fetch as any).mockResolvedValueOnce(mockStreamResponse())
     const { streamAgentRun } = await import('./ai-api')
 
@@ -61,6 +69,6 @@ describe('lib/ai-api — streamAgentRun request body', () => {
 
     const [, init] = (global.fetch as any).mock.calls[0]
     const sentBody = JSON.parse(init.body)
-    expect(sentBody).not.toHaveProperty('knowledge_bases')
+    expect(Object.keys(sentBody).sort()).toEqual(['message', 'runtime_knowledge_bases'])
   })
 })

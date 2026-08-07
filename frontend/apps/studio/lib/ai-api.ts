@@ -362,6 +362,7 @@ export type StreamRunEvent =
       is_new_session?: boolean
       context_handler_id?: string | null
       status?: string
+      error?: string | null
       citations?: Citation[]
       tool_calls?: Array<{
         step: number

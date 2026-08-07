@@ -1275,6 +1275,15 @@ const RunsPage: NextPageWithLayout = () => {
     e.preventDefault();
     const targetId = selectedType === "agent" ? selectedAgentId : selectedOrchId;
     if (!isReady || !hasAiAuth(token) || !targetId || !inputMessage.trim() || isStreaming) return;
+    // Enforce the cap here too, not just via the disabled checkboxes — the
+    // render-level disable only stops interactive clicks. Any future bulk-set
+    // of selectedKbIds (a "select all" button, a restored session) would skip
+    // that render guard entirely and reproduce the raw backend 400 the
+    // optimistic append below can't roll back cleanly.
+    if (selectedType === "agent" && selectedKbIds.length > MAX_RUNTIME_KBS) {
+      setError(`Select up to ${MAX_RUNTIME_KBS} knowledge bases per message (currently ${selectedKbIds.length} selected).`);
+      return;
+    }
     const message = inputMessage.trim();
     setInputMessage("");
     setIsStreaming(true);
@@ -1650,6 +1659,10 @@ const RunsPage: NextPageWithLayout = () => {
         if (startSessionIdRef.current) {
           setSelectedSessionId(startSessionIdRef.current);
         }
+        // Restore is deliberately skipped here: streamAbortRef's only
+        // abort() call site is the unmount cleanup effect, so an AbortError
+        // means this component is already gone — there's no picker left to
+        // restore the selection into.
         return;
       }
       // The send failed — put the cleared KB selection back so the user can

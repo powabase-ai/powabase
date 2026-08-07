@@ -18,4 +18,13 @@ describe('buildRuntimeKbEntries', () => {
       { id: 'kb-2' },
     ])
   })
+
+  it('does not produce source_ids for an empty filter array', () => {
+    // A KB present in kbSourceFilters with an empty array (e.g. the user
+    // opened the filter modal and deselected everything) must serialize the
+    // same as a KB with no filter entry at all — otherwise the backend would
+    // receive `source_ids: []`, which reads as "match nothing" instead of
+    // "no filter".
+    expect(buildRuntimeKbEntries(['kb-1'], { 'kb-1': [] })).toEqual([{ id: 'kb-1' }])
+  })
 })
