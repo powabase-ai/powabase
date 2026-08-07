@@ -62,8 +62,14 @@ ARG NEXT_PUBLIC_HCAPTCHA_SITE_KEY=10000000-ffff-ffff-ffff-000000000001
 # Whether the FE renders/executes the hCaptcha widget. CI wires this from the
 # same HCAPTCHA_ENABLED var that toggles GoTrue's server-side verification.
 # Baked at build time (GoTrue reads it at deploy time), so flips are not atomic
-# — order transitions per docs/runbooks/activate-hcaptcha.md. Ships disabled.
+# — bring the server-side verification up before turning this on, and turn this
+# off before taking the server config down. Ships disabled.
 ARG NEXT_PUBLIC_HCAPTCHA_ENABLED=false
+# Whether the FE renders the "Continue with Google" button. Baked at build time
+# while the auth server reads its provider config at deploy time, so flips are
+# not atomic — bring the server config up before turning this on, and turn this
+# off before taking the server config down. Ships disabled.
+ARG NEXT_PUBLIC_GOOGLE_AUTH_ENABLED=false
 ARG NEXT_PUBLIC_MCP_URL=
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ARG NEXT_PUBLIC_GA_MEASUREMENT_ID=
@@ -74,9 +80,9 @@ ARG NEXT_PUBLIC_GOOGLE_ADS_ID=
 # tracks without extra build-arg wiring; override per-deployment. lib/clarity.tsx
 # still host-gates the script to app.powabase.ai regardless of this value.
 ARG NEXT_PUBLIC_CLARITY_ID=x418r07bor
-# Google Tag Manager container id. CI injects this from the production
-# environment variable (build-and-push.yml hard-fails when empty, like
-# GA/Reddit), so it defaults empty/off here for local/self-hosted builds.
+# Google Tag Manager container id. Hosted builds inject this from a production
+# environment variable and hard-fail when it is empty, like GA/Reddit; it
+# defaults empty/off here for local and self-hosted builds.
 ARG NEXT_PUBLIC_GTM_ID=
 ARG NEXT_PUBLIC_GOOGLE_ADS_SIGNUP_LABEL=
 ARG NEXT_PUBLIC_GOOGLE_ADS_PAID_LABEL=
@@ -95,6 +101,7 @@ ENV NEXT_PUBLIC_GOTRUE_URL=$NEXT_PUBLIC_GOTRUE_URL
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 ENV NEXT_PUBLIC_HCAPTCHA_SITE_KEY=$NEXT_PUBLIC_HCAPTCHA_SITE_KEY
 ENV NEXT_PUBLIC_HCAPTCHA_ENABLED=$NEXT_PUBLIC_HCAPTCHA_ENABLED
+ENV NEXT_PUBLIC_GOOGLE_AUTH_ENABLED=$NEXT_PUBLIC_GOOGLE_AUTH_ENABLED
 ENV NEXT_PUBLIC_MCP_URL=$NEXT_PUBLIC_MCP_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NEXT_PUBLIC_GA_MEASUREMENT_ID=$NEXT_PUBLIC_GA_MEASUREMENT_ID

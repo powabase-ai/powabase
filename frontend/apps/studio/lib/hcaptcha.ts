@@ -5,12 +5,11 @@ import type HCaptcha from '@hcaptcha/react-hcaptcha'
  *
  * Driven by the `NEXT_PUBLIC_HCAPTCHA_ENABLED` build arg, which CI wires from
  * the same `HCAPTCHA_ENABLED` variable that toggles GoTrue's server-side
- * captcha verification (`gotrue.securityCaptchaEnabled`). One source of truth,
- * but NOT atomic: this flag is baked into the FE at image-build time while
- * GoTrue reads it at pod-deploy time. So a flip is only safe when ordered —
- * GoTrue-off before FE-off to disable; FE-rebuilt-on before GoTrue-on to
- * enable — otherwise GoTrue can demand a token the gated-off FE no longer
- * mints and reject every signup/login. See docs/runbooks/activate-hcaptcha.md.
+ * captcha verification. One source of truth, but NOT atomic: this flag is
+ * baked into the FE at image-build time while GoTrue reads it at deploy time.
+ * So a flip is only safe when ordered — GoTrue-off before FE-off to disable;
+ * FE-rebuilt-on before GoTrue-on to enable — otherwise GoTrue can demand a
+ * token the gated-off FE no longer mints and reject every signup/login.
  * Defaults to OFF when unset.
  */
 export function isHCaptchaEnabled(): boolean {

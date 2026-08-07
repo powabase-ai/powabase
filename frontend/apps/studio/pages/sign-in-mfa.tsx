@@ -19,7 +19,7 @@ const SignInMfaPage: NextPageWithLayout = () => {
 
   const queryClient = useQueryClient()
   const {
-    // current methods for mfa are github and sso
+    // current methods for mfa are github, sso and google
     method: signInMethod = 'unknown',
   } = useParams()
   const signInMethodRef = useLatest(signInMethod)
@@ -35,9 +35,12 @@ const SignInMfaPage: NextPageWithLayout = () => {
       .initialize()
       .then(async ({ error }) => {
         if (error) {
-          // if there was a problem signing in via the url, don't redirect
+          // A failed provider sign-in lands here with an error in the URL. Surface it
+          // and go back — otherwise this renders an MFA code prompt to someone who is
+          // not signed in, with nothing on screen explaining why.
+          toast.error(`Failed to sign in: ${error.message}`)
           setLoading(false)
-          return
+          return router.push({ pathname: '/sign-in', query: router.query })
         }
 
         const token = await getAccessToken()
@@ -45,7 +48,7 @@ const SignInMfaPage: NextPageWithLayout = () => {
         if (token) {
           const { data, error } = await auth.mfa.getAuthenticatorAssuranceLevel()
           if (error) {
-            // if there was a problem signing in via the url, don't redirect
+            // The assurance-level check failed after sign-in — surface the error and redirect back to sign-in.
             toast.error(
               `Failed to retrieve assurance level: ${error.message}. Please try signing in again`
             )
