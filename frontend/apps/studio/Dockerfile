@@ -80,9 +80,9 @@ ARG NEXT_PUBLIC_GOOGLE_ADS_ID=
 # tracks without extra build-arg wiring; override per-deployment. lib/clarity.tsx
 # still host-gates the script to app.powabase.ai regardless of this value.
 ARG NEXT_PUBLIC_CLARITY_ID=x418r07bor
-# Google Tag Manager container id. CI injects this from the production
-# environment variable (build-and-push.yml hard-fails when empty, like
-# GA/Reddit), so it defaults empty/off here for local/self-hosted builds.
+# Google Tag Manager container id. Hosted builds inject this from a production
+# environment variable and hard-fail when it is empty, like GA/Reddit; it
+# defaults empty/off here for local and self-hosted builds.
 ARG NEXT_PUBLIC_GTM_ID=
 ARG NEXT_PUBLIC_GOOGLE_ADS_SIGNUP_LABEL=
 ARG NEXT_PUBLIC_GOOGLE_ADS_PAID_LABEL=
