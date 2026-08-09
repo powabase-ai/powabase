@@ -11,6 +11,10 @@ import {
   Modal,
 } from 'ui'
 
+import {
+  ONBOARDING_ANCHORS,
+  onboardingAnchor,
+} from '@/components/interfaces/AI/GuideBubbles/onboarding-anchors'
 import { ComputeTierCard } from '@/components/interfaces/Billing/ComputeTierCard'
 import { ScaffoldContainer, ScaffoldSection } from '@/components/layouts/Scaffold'
 import { COMPUTE_TIERS, ComputeTierId, PlanTierId } from '@/data/billing/compute-tiers.display'
@@ -79,7 +83,7 @@ export const InfrastructureComputeSection = () => {
       <ScaffoldSection isFullWidth>
         <div className="flex flex-col gap-6">
           {/* Intro + current tier */}
-          <div className="space-y-2">
+          <div className="space-y-2" {...onboardingAnchor(ONBOARDING_ANCHORS.compute.tiers)}>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <h2 className="text-base font-medium text-foreground m-0">Compute size</h2>
               <span className="text-sm text-foreground-light">Current tier</span>
@@ -114,6 +118,7 @@ export const InfrastructureComputeSection = () => {
               type="primary"
               disabled={!target || target === currentTier || !ref}
               onClick={() => setConfirmOpen(true)}
+              {...onboardingAnchor(ONBOARDING_ANCHORS.compute.resize)}
             >
               {target && target !== currentTier ? `Resize to ${targetName}` : 'Select a new tier'}
             </Button>

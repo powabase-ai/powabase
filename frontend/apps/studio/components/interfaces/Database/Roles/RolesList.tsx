@@ -12,6 +12,10 @@ import { CreateRolePanel } from './CreateRolePanel'
 import { RoleRow } from './RoleRow'
 import { RoleRowSkeleton } from './RoleRowSkeleton'
 import { SUPABASE_ROLES } from './Roles.constants'
+import {
+  onboardingAnchor,
+  ONBOARDING_ANCHORS,
+} from '@/components/interfaces/AI/GuideBubbles/onboarding-anchors'
 import { ButtonTooltip } from '@/components/ui/ButtonTooltip'
 import { NoSearchResults } from '@/components/ui/NoSearchResults'
 import { SparkBar } from '@/components/ui/SparkBar'
@@ -192,6 +196,7 @@ export const RolesList = () => {
             </TooltipContent>
           </Tooltip>
           <ButtonTooltip
+            {...onboardingAnchor(ONBOARDING_ANCHORS.database.addRole)}
             type="primary"
             disabled={!canUpdateRoles}
             icon={<Plus size={12} />}

@@ -28,6 +28,10 @@ import {
   PageHeaderTitle,
 } from 'ui-patterns/PageHeader'
 
+import {
+  onboardingAnchor,
+  ONBOARDING_ANCHORS,
+} from '@/components/interfaces/AI/GuideBubbles/onboarding-anchors'
 import { LLMProviderKeysSettings } from '@/components/interfaces/Settings/LLMProviderKeys/LLMProviderKeysSettings'
 import { SecretKeyInput } from '@/components/ui/SecretKeyInput'
 import DefaultLayout from '@/components/layouts/DefaultLayout'
@@ -179,7 +183,11 @@ const LLMProviderKeysPage: NextPageWithLayout = () => {
             }}
           >
             <DialogTrigger asChild>
-              <Button type="primary" icon={<Plus size={14} />}>
+              <Button
+                {...onboardingAnchor(ONBOARDING_ANCHORS.settings.llmKeys)}
+                type="primary"
+                icon={<Plus size={14} />}
+              >
                 Add Key
               </Button>
             </DialogTrigger>

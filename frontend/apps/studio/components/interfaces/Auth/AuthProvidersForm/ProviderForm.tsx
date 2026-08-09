@@ -27,6 +27,7 @@ import { AuthAlert } from './AuthAlert'
 import type { Provider } from './AuthProvidersForm.types'
 import FormField from './FormField'
 import { Markdown } from '@/components/interfaces/Markdown'
+import { onboardingAnchor, ONBOARDING_ANCHORS } from '@/components/interfaces/AI/GuideBubbles/onboarding-anchors'
 import { ButtonTooltip } from '@/components/ui/ButtonTooltip'
 import { ResourceItem } from '@/components/ui/Resource/ResourceItem'
 import type { components } from '@/data/api'
@@ -167,6 +168,7 @@ export const ProviderForm = ({ config, provider, isActive }: ProviderFormProps) 
   return (
     <>
       <ResourceItem
+        {...onboardingAnchor(ONBOARDING_ANCHORS.auth.providers)}
         onClick={handleProviderClick}
         media={
           <img

@@ -12,6 +12,10 @@ import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 import { ProtectedSchemaWarning } from '../../ProtectedSchemaWarning'
 import FunctionList from './FunctionList'
 import { useIsInlineEditorEnabled } from '@/components/interfaces/Account/Preferences/useDashboardSettings'
+import {
+  onboardingAnchor,
+  ONBOARDING_ANCHORS,
+} from '@/components/interfaces/AI/GuideBubbles/onboarding-anchors'
 import { CreateFunction } from '@/components/interfaces/Database/Functions/CreateFunction'
 import {
   ReportsSelectFilter,
@@ -235,6 +239,7 @@ export const FunctionsList = () => {
             onClickCta={() => createFunction()}
             disabled={!canCreateFunctions}
             disabledMessage="You need additional permissions to create functions"
+            ctaAnchor={ONBOARDING_ANCHORS.database.newFunction}
           >
             <p className="text-sm text-foreground-light">
               PostgreSQL functions, also known as stored procedures, is a set of SQL and procedural
@@ -292,6 +297,7 @@ export const FunctionsList = () => {
               {!isSchemaLocked && (
                 <>
                   <ButtonTooltip
+                    {...onboardingAnchor(ONBOARDING_ANCHORS.database.newFunction)}
                     disabled={!canCreateFunctions}
                     onClick={() => createFunction()}
                     className="flex-grow"

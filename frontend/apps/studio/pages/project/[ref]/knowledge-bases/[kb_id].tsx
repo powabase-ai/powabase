@@ -27,6 +27,7 @@ import { MarkdownText } from "@/components/interfaces/AI/Shared/MarkdownText";
 import { MarkdownToggle } from "@/components/interfaces/AI/Shared/MarkdownToggle";
 import { JsonSyntaxHighlight } from "@/components/interfaces/AI/Shared/JsonSyntaxHighlight";
 import { StatusPill } from "@/components/interfaces/AI/Shared/StatusPill";
+import { ONBOARDING_ANCHORS } from "@/components/interfaces/AI/GuideBubbles/onboarding-anchors";
 import { ResizablePanelGroup as PanelGroup, ResizablePanel as Panel, ResizableHandle as PanelResizeHandle } from "ui";
 import { useInfiniteQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { useVirtualizer } from '@tanstack/react-virtual'
@@ -1509,6 +1510,7 @@ const KnowledgeBaseDetailPage: NextPageWithLayout = () => {
         <div className="flex flex-wrap gap-3 mb-6">
           <button
             type="button"
+            data-onboarding-id={ONBOARDING_ANCHORS.knowledgeBases.detailAddSources}
             onClick={() => setShowAddSource(true)}
             className="px-4 py-2 bg-brand-400 hover:bg-brand-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground-muted focus-visible:ring-offset-2"
           >

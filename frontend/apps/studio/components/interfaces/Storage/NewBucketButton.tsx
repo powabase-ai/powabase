@@ -2,6 +2,7 @@ import { PermissionAction } from '@supabase/shared-types/out/constants'
 import { Plus } from 'lucide-react'
 import { MouseEventHandler } from 'react'
 
+import { onboardingAnchor, ONBOARDING_ANCHORS } from '@/components/interfaces/AI/GuideBubbles/onboarding-anchors'
 import { ButtonTooltip } from '@/components/ui/ButtonTooltip'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 
@@ -21,6 +22,7 @@ export const CreateBucketButton = ({
       icon={<Plus size={14} />}
       disabled={!canCreateBuckets}
       onClick={onClick}
+      {...onboardingAnchor(ONBOARDING_ANCHORS.storage.newBucket)}
       tooltip={{
         content: {
           side: 'bottom',

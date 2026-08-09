@@ -16,6 +16,8 @@ interface ProductEmptyStateProps {
   disabled?: boolean
   disabledMessage?: string
   ctaUrl?: string
+  /** Optional onboarding-anchor id spread onto the CTA button (for guide bubbles). */
+  ctaAnchor?: string
 }
 
 const ProductEmptyState = ({
@@ -30,6 +32,7 @@ const ProductEmptyState = ({
   disabled = false,
   disabledMessage = '',
   ctaUrl,
+  ctaAnchor,
 }: PropsWithChildren<ProductEmptyStateProps>) => {
   const hasAction = (ctaButtonLabel && onClickCta) || (infoButtonUrl && infoButtonLabel)
 
@@ -44,11 +47,16 @@ const ProductEmptyState = ({
             {hasAction && (
               <div className="flex items-center space-x-2">
                 {ctaButtonLabel && !!ctaUrl ? (
-                  <Button asChild type="primary">
+                  <Button
+                    asChild
+                    type="primary"
+                    {...(ctaAnchor ? { 'data-onboarding-id': ctaAnchor } : {})}
+                  >
                     <Link href={ctaUrl}>{ctaButtonLabel}</Link>
                   </Button>
                 ) : ctaButtonLabel && !!onClickCta ? (
                   <ButtonTooltip
+                    {...(ctaAnchor ? { 'data-onboarding-id': ctaAnchor } : {})}
                     type="primary"
                     onClick={onClickCta}
                     loading={loading}

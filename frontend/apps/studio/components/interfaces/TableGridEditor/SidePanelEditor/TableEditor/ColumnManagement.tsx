@@ -35,6 +35,7 @@ import { TEXT_TYPES } from '../SidePanelEditor.constants'
 import type { ColumnField, ExtendedPostgresRelationship } from '../SidePanelEditor.types'
 import { Column } from './Column'
 import type { ImportContent, TableField } from './TableEditor.types'
+import { onboardingAnchor, ONBOARDING_ANCHORS } from '@/components/interfaces/AI/GuideBubbles/onboarding-anchors'
 import InformationBox from '@/components/ui/InformationBox'
 import type { EnumeratedType } from '@/data/enumerated-types/enumerated-types-query'
 import { useSendEventMutation } from '@/data/telemetry/send-event-mutation'
@@ -344,7 +345,11 @@ export const ColumnManagement = ({
 
         {!hasImportContent && (
           <div className="flex items-center justify-center rounded border border-strong border-dashed py-3">
-            <Button type="default" onClick={() => onAddColumn()}>
+            <Button
+              type="default"
+              onClick={() => onAddColumn()}
+              {...onboardingAnchor(ONBOARDING_ANCHORS.tables.addColumn)}
+            >
               Add column
             </Button>
           </div>

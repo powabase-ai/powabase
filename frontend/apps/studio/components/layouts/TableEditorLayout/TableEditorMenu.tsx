@@ -30,6 +30,10 @@ import { ProtectedSchemaWarning } from '@/components/interfaces/Database/Protect
 import { ErrorMatcher } from '@/components/interfaces/ErrorHandling/ErrorMatcher'
 import EditorMenuListSkeleton from '@/components/layouts/TableEditorLayout/EditorMenuListSkeleton'
 import { ButtonTooltip } from '@/components/ui/ButtonTooltip'
+import {
+  ONBOARDING_ANCHORS,
+  onboardingAnchor,
+} from '@/components/interfaces/AI/GuideBubbles/onboarding-anchors'
 import { InfiniteListDefault, LoaderForIconMenuItems } from '@/components/ui/InfiniteList'
 import SchemaSelector from '@/components/ui/SchemaSelector'
 import { ENTITY_TYPE } from '@/data/entity-types/entity-type-constants'
@@ -173,6 +177,7 @@ export const TableEditorMenu = () => {
           <div className="grid gap-3 mx-4">
             {!isSchemaLocked ? (
               <ButtonTooltip
+                {...onboardingAnchor(ONBOARDING_ANCHORS.tables.newTableButton)}
                 block
                 title="Create a new table"
                 name="New table"

@@ -38,6 +38,10 @@ import { SchemaGraphLegend } from './SchemaGraphLegend'
 import { EdgeData, TableNodeData } from './Schemas.constants'
 import { getGraphDataFromTables, getLayoutedElementsViaDagre } from './Schemas.utils'
 import { TableNode } from './SchemaTableNode'
+import {
+  onboardingAnchor,
+  ONBOARDING_ANCHORS,
+} from '@/components/interfaces/AI/GuideBubbles/onboarding-anchors'
 import AlertError from '@/components/ui/AlertError'
 import { ButtonTooltip } from '@/components/ui/ButtonTooltip'
 import SchemaSelector from '@/components/ui/SchemaSelector'
@@ -292,13 +296,18 @@ export const SchemaGraph = () => {
 
         {isSuccessSchemas && (
           <>
-            <SchemaSelector
-              className="w-[180px]"
-              size="tiny"
-              showError={false}
-              selectedSchemaName={selectedSchema}
-              onSelectSchema={setSelectedSchema}
-            />
+            <div
+              className="inline-flex"
+              {...onboardingAnchor(ONBOARDING_ANCHORS.database.schemaVisualizer)}
+            >
+              <SchemaSelector
+                className="w-[180px]"
+                size="tiny"
+                showError={false}
+                selectedSchemaName={selectedSchema}
+                onSelectSchema={setSelectedSchema}
+              />
+            </div>
             {!hasNoTables && (
               <div className="flex items-center gap-x-2">
                 <ButtonTooltip

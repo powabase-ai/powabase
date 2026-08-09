@@ -8,6 +8,10 @@ import { Button, Card, CardContent } from 'ui'
 import ConfirmationModal from 'ui-patterns/Dialogs/ConfirmationModal'
 
 import {
+  onboardingAnchor,
+  ONBOARDING_ANCHORS,
+} from '@/components/interfaces/AI/GuideBubbles/onboarding-anchors'
+import {
   PolicyTableRow,
   PolicyTableRowProps,
 } from '@/components/interfaces/Auth/Policies/PolicyTableRow'
@@ -138,7 +142,7 @@ export const Policies = ({
             RLS Policies control per-user access to table rows. Create a table in this schema first
             before creating a policy.
           </p>
-          <Button asChild type="default">
+          <Button asChild type="default" {...onboardingAnchor(ONBOARDING_ANCHORS.auth.newPolicy)}>
             <Link href={`/project/${ref}/editor`}>Create a table</Link>
           </Button>
         </CardContent>

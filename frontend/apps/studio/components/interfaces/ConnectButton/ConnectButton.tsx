@@ -4,6 +4,10 @@ import { ComponentProps } from 'react'
 import { Button, cn } from 'ui'
 
 import { ButtonTooltip } from '@/components/ui/ButtonTooltip'
+import {
+  ONBOARDING_ANCHORS,
+  onboardingAnchor,
+} from '@/components/interfaces/AI/GuideBubbles/onboarding-anchors'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
 import { PROJECT_STATUS } from '@/lib/constants'
 import { useAppStateSnapshot } from '@/state/app-state'
@@ -22,6 +26,7 @@ export const ConnectButton = ({ buttonType = 'default', className }: ConnectButt
 
   return (
     <ButtonTooltip
+      {...onboardingAnchor(ONBOARDING_ANCHORS.connect.button)}
       type={buttonType}
       disabled={!isActiveHealthy}
       className={cn('rounded-full', className)}
