@@ -83,4 +83,49 @@ describe('McpConsentPage', () => {
     expect(await screen.findByText(/could not reach Powabase/i)).toBeInTheDocument()
     expect(screen.queryByText('Loading…')).not.toBeInTheDocument()
   })
+
+  // GET /oauth/authorizations/:id is polymorphic. When a stored consent already
+  // covers the requested scopes the server approves the request itself and answers
+  // with { redirect_url } — HTTP 200, no `client` key — rather than the details
+  // body. The decision is already made by then, so the only correct move is to
+  // follow the redirect; rendering a consent screen would be asking about
+  // something that has already happened.
+  it('follows redirect_url when the server auto-approves instead of returning details', async () => {
+    getAccessToken.mockResolvedValue('tok-abc')
+    ;(globalThis.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ redirect_url: 'cursor://callback?code=xyz&state=s' }),
+    })
+    render(<McpConsentPage />)
+    await waitFor(() => expect(window.location.href).toBe('cursor://callback?code=xyz&state=s'))
+    expect(screen.queryByRole('button', { name: /approve/i })).not.toBeInTheDocument()
+    // Exactly one call: no consent POST, because the server already decided.
+    expect((globalThis.fetch as any).mock.calls).toHaveLength(1)
+  })
+
+  // RFC 7591 makes `client_name` OPTIONAL — "If omitted, the authorization server
+  // MAY display the raw 'client_id' value to the end-user instead." A nameless
+  // client must therefore still reach an approvable screen: refusing it would be a
+  // dead end, and reloading cannot recover once the request stops being pending.
+  it('renders an approvable screen for a nameless client, falling back to its id', async () => {
+    getAccessToken.mockResolvedValue('tok-abc')
+    ;(globalThis.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ ...DETAILS, client: { id: 'c1' } }), // no `name`
+    })
+    render(<McpConsentPage />)
+    expect(await screen.findByText('c1')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /approve/i })).toBeInTheDocument()
+    expect(screen.queryByText(/could not be displayed/i)).not.toBeInTheDocument()
+  })
+
+  it('surfaces an error instead of crashing when the details body matches neither shape', async () => {
+    getAccessToken.mockResolvedValue('tok-abc')
+    ;(globalThis.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ authorization_id: 'auth-123' }), // no `client`, no `redirect_url`
+    })
+    render(<McpConsentPage />)
+    expect(await screen.findByText(/could not be displayed/i)).toBeInTheDocument()
+  })
 })

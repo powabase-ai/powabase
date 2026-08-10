@@ -49,7 +49,29 @@ export default function McpConsentPage() {
           setError('This authorization request has expired or could not be loaded.')
           return
         }
-        setDetails((await res.json()) as AuthorizationDetails)
+        const body = (await res.json()) as Partial<AuthorizationDetails> & {
+          redirect_url?: string
+        }
+        if (cancelled) return
+        // This endpoint answers with one of two shapes, both HTTP 200. If a stored
+        // consent already covers the requested scopes, the server approves the
+        // request itself and returns { redirect_url } with no `client` — the
+        // decision is already made, so follow it rather than asking again.
+        if (typeof body.redirect_url === 'string') {
+          window.location.href = body.redirect_url
+          return
+        }
+        // Test the CONTAINERS, not the leaf fields. RFC 7591 makes `client_name`
+        // OPTIONAL, so a truthiness check on `client.name` would refuse a
+        // legitimate nameless client — a dead end, since reloading cannot recover
+        // once the request stops being pending.
+        if (body.client && body.user) {
+          setDetails(body as AuthorizationDetails)
+          return
+        }
+        // Neither shape. Show an error rather than dereferencing our way into a
+        // blank page.
+        setError('This authorization request could not be displayed.')
       } catch {
         // Network/CORS/parse failure — surface an error instead of wedging on "Loading…".
         if (!cancelled)
@@ -104,7 +126,9 @@ export default function McpConsentPage() {
     <div className="mx-auto mt-24 max-w-md rounded-md border p-6">
       <h1 className="text-lg font-medium">Connect to Powabase</h1>
       <p className="mt-2 text-sm text-foreground-light">
-        <span className="font-medium text-foreground">{details.client.name}</span> wants to access your
+        {/* RFC 7591: when client_name is omitted the server MAY show the raw client_id. */}
+        <span className="font-medium text-foreground">{details.client.name || details.client.id}</span>{' '}
+        wants to access your
         Powabase account as <span className="font-medium text-foreground">{details.user.email}</span>.
       </p>
       <p className="mt-2 text-sm text-foreground-light">
