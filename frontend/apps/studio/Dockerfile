@@ -89,10 +89,13 @@ ARG NEXT_PUBLIC_GOOGLE_ADS_PAID_LABEL=
 # Upstream Supabase self-host feature-disable knob: comma-separated feature
 # keys (e.g. "billing:all,credits:enabled"), read by
 # apps/studio/data/profile/profile-query.ts's getProfile() only when
-# !IS_PLATFORM, merged into profile.disabled_features. Defaults empty (every
-# feature falls back to the bundled enabled-features.json default). Does NOT
-# touch that shared JSON, so this is safe to leave unset for prod builds.
-ARG NEXT_PUBLIC_DISABLED_FEATURES=
+# !IS_PLATFORM, merged into profile.disabled_features. Does NOT touch that
+# shared JSON, so this is safe to override per-deployment.
+#
+# The copilot is a hosted feature; self-host builds ship it dark. The published
+# powabase-studio image is built IS_PLATFORM=false, so this value is what
+# getProfile() merges into disabled_features there.
+ARG NEXT_PUBLIC_DISABLED_FEATURES=ai:project_copilot
 
 ENV NEXT_PUBLIC_IS_PLATFORM=$NEXT_PUBLIC_IS_PLATFORM
 ENV NEXT_PUBLIC_ENVIRONMENT=$NEXT_PUBLIC_ENVIRONMENT
