@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/powabase-ai/powabase/compare/v0.4.0...v0.4.1) (2026-08-10)
+
+
+### Bug Fixes
+
+* follow redirect_url when the authorization server auto-approves ([#35](https://github.com/powabase-ai/powabase/issues/35)) ([79d378e](https://github.com/powabase-ai/powabase/commit/79d378e523a9e2977fdf6f601cec9f0e40aadcd1))
+
 ## [0.4.0](https://github.com/powabase-ai/powabase/compare/v0.3.0...v0.4.0) (2026-08-07)
 
 
