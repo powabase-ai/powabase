@@ -49,7 +49,25 @@ export default function McpConsentPage() {
           setError('This authorization request has expired or could not be loaded.')
           return
         }
-        setDetails((await res.json()) as AuthorizationDetails)
+        const body = (await res.json()) as Partial<AuthorizationDetails> & {
+          redirect_url?: string
+        }
+        if (cancelled) return
+        // This endpoint answers with one of two shapes, both HTTP 200. If a stored
+        // consent already covers the requested scopes, the server approves the
+        // request itself and returns { redirect_url } with no `client` — the
+        // decision is already made, so follow it rather than asking again.
+        if (typeof body.redirect_url === 'string') {
+          window.location.href = body.redirect_url
+          return
+        }
+        if (body.client?.name && body.user?.email) {
+          setDetails(body as AuthorizationDetails)
+          return
+        }
+        // Neither shape. Show an error rather than dereferencing our way into a
+        // blank page.
+        setError('This authorization request could not be displayed.')
       } catch {
         // Network/CORS/parse failure — surface an error instead of wedging on "Loading…".
         if (!cancelled)
