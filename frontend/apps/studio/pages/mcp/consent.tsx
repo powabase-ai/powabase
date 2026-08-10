@@ -61,7 +61,11 @@ export default function McpConsentPage() {
           window.location.href = body.redirect_url
           return
         }
-        if (body.client?.name && body.user?.email) {
+        // Test the CONTAINERS, not the leaf fields. RFC 7591 makes `client_name`
+        // OPTIONAL, so a truthiness check on `client.name` would refuse a
+        // legitimate nameless client — a dead end, since reloading cannot recover
+        // once the request stops being pending.
+        if (body.client && body.user) {
           setDetails(body as AuthorizationDetails)
           return
         }
@@ -122,7 +126,9 @@ export default function McpConsentPage() {
     <div className="mx-auto mt-24 max-w-md rounded-md border p-6">
       <h1 className="text-lg font-medium">Connect to Powabase</h1>
       <p className="mt-2 text-sm text-foreground-light">
-        <span className="font-medium text-foreground">{details.client.name}</span> wants to access your
+        {/* RFC 7591: when client_name is omitted the server MAY show the raw client_id. */}
+        <span className="font-medium text-foreground">{details.client.name || details.client.id}</span>{' '}
+        wants to access your
         Powabase account as <span className="font-medium text-foreground">{details.user.email}</span>.
       </p>
       <p className="mt-2 text-sm text-foreground-light">

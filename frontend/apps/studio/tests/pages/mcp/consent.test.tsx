@@ -103,6 +103,22 @@ describe('McpConsentPage', () => {
     expect((globalThis.fetch as any).mock.calls).toHaveLength(1)
   })
 
+  // RFC 7591 makes `client_name` OPTIONAL — "If omitted, the authorization server
+  // MAY display the raw 'client_id' value to the end-user instead." A nameless
+  // client must therefore still reach an approvable screen: refusing it would be a
+  // dead end, and reloading cannot recover once the request stops being pending.
+  it('renders an approvable screen for a nameless client, falling back to its id', async () => {
+    getAccessToken.mockResolvedValue('tok-abc')
+    ;(globalThis.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ ...DETAILS, client: { id: 'c1' } }), // no `name`
+    })
+    render(<McpConsentPage />)
+    expect(await screen.findByText('c1')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /approve/i })).toBeInTheDocument()
+    expect(screen.queryByText(/could not be displayed/i)).not.toBeInTheDocument()
+  })
+
   it('surfaces an error instead of crashing when the details body matches neither shape', async () => {
     getAccessToken.mockResolvedValue('tok-abc')
     ;(globalThis.fetch as any).mockResolvedValueOnce({
