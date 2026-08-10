@@ -51,6 +51,7 @@ export const LayoutSidebarProvider = ({ children }: PropsWithChildren) => {
   const { mutate: sendEvent } = useSendEventMutation()
   const { openSidebar, closeSidebar, activeSidebar } = useSidebarManagerSnapshot()
   const aiAssistantEnabled = useIsFeatureEnabled('ai:assistant')
+  const projectCopilotEnabled = useIsFeatureEnabled('ai:project_copilot')
 
   const [sidebarURLParam, setSidebarUrlParam] = useQueryState('sidebar', parseAsString)
   const [sidebarLocalStorage, setSidebarLocalStorage, { isSuccess: isLoadedLocalStorage }] =
@@ -72,7 +73,7 @@ export const LayoutSidebarProvider = ({ children }: PropsWithChildren) => {
     () => <ProjectCopilotPanel />,
     {},
     undefined,
-    !!project
+    !!project && projectCopilotEnabled
   )
 
   useEffect(() => {
@@ -162,7 +163,7 @@ export const LayoutSidebarProvider = ({ children }: PropsWithChildren) => {
   return (
     <>
       {children}
-      {!!project && (
+      {!!project && projectCopilotEnabled && (
         <ProjectCopilotWelcomeModal
           open={showWelcome}
           onOpenChange={(open) => {
