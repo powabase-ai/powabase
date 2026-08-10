@@ -2,7 +2,10 @@ import { LOCAL_STORAGE_KEYS } from 'common'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/router'
 import { parseAsString, useQueryState } from 'nuqs'
-import { useEffect, type PropsWithChildren } from 'react'
+import { useEffect, useState, type PropsWithChildren } from 'react'
+
+import { ProjectCopilotWelcomeModal } from '@/components/interfaces/AI/ProjectCopilot/ProjectCopilotWelcome'
+import { guideEngineState } from '@/state/guide-engine-state'
 
 import { getSupportLinkQueryParams } from '@/components/ui/HelpPanel/HelpPanel.utils'
 import { useSendEventMutation } from '@/data/telemetry/send-event-mutation'
@@ -25,12 +28,18 @@ const EditorPanel = dynamic(() =>
 const HelpPanel = dynamic(() =>
   import('@/components/ui/HelpPanel/HelpPanel').then((m) => m.HelpPanel)
 )
+const ProjectCopilotPanel = dynamic(() =>
+  import('@/components/interfaces/AI/ProjectCopilot/ProjectCopilotPanel').then(
+    (m) => m.ProjectCopilotPanel
+  )
+)
 
 export const SIDEBAR_KEYS = {
   AI_ASSISTANT: 'ai-assistant',
   EDITOR_PANEL: 'editor-panel',
   ADVISOR_PANEL: 'advisor-panel',
   HELP_PANEL: 'help-panel',
+  PROJECT_COPILOT: 'project-copilot',
 } as const
 
 export type TYPEOF_SIDEBAR_KEYS = (typeof SIDEBAR_KEYS)[keyof typeof SIDEBAR_KEYS]
@@ -49,6 +58,32 @@ export const LayoutSidebarProvider = ({ children }: PropsWithChildren) => {
 
   const sidebarURLParamRef = useLatest(sidebarURLParam)
   const sidebarLocalStorageRef = useLatest(sidebarLocalStorage)
+
+  // First-entry onboarding: show the welcome modal once per project, then dock
+  // the copilot into the side panel.
+  const [welcomeSeen, setWelcomeSeen, { isSuccess: isLoadedWelcomeSeen }] = useLocalStorageQuery(
+    LOCAL_STORAGE_KEYS.COPILOT_WELCOME_SEEN(project?.ref ?? ''),
+    false
+  )
+  const [showWelcome, setShowWelcome] = useState(false)
+
+  useRegisterSidebar(
+    SIDEBAR_KEYS.PROJECT_COPILOT,
+    () => <ProjectCopilotPanel />,
+    {},
+    undefined,
+    !!project
+  )
+
+  useEffect(() => {
+    // Show the welcome once per project. The "seen" flag is written on DISMISS
+    // (not here), so an interrupted first-entry — e.g. a reload while the modal
+    // is open — retries instead of silently losing onboarding. Drive BOTH branches
+    // so switching to an already-seen project closes a modal left open on the
+    // previous one (showWelcome lives in this provider, which persists across
+    // client-side project switches).
+    setShowWelcome(!!project?.ref && isLoadedWelcomeSeen && !welcomeSeen)
+  }, [project?.ref, isLoadedWelcomeSeen, welcomeSeen])
 
   useRegisterSidebar(
     SIDEBAR_KEYS.AI_ASSISTANT,
@@ -124,5 +159,24 @@ export const LayoutSidebarProvider = ({ children }: PropsWithChildren) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.isReady, isLoadedLocalStorage])
 
-  return <>{children}</>
+  return (
+    <>
+      {children}
+      {!!project && (
+        <ProjectCopilotWelcomeModal
+          open={showWelcome}
+          onOpenChange={(open) => {
+            setShowWelcome(open)
+            if (!open) {
+              // Mark seen on dismiss (so it shows exactly once, but survives a
+              // reload mid-welcome) and dock the copilot into the side panel.
+              setWelcomeSeen(true)
+              openSidebar(SIDEBAR_KEYS.PROJECT_COPILOT)
+            }
+          }}
+          onStartGuide={(id) => guideEngineState.start(id, 'welcome')}
+        />
+      )}
+    </>
+  )
 }

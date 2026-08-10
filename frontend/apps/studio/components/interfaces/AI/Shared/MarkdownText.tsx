@@ -6,6 +6,7 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import rehypeRaw from "rehype-raw";
+import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import "katex/dist/katex.min.css";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
@@ -28,6 +29,19 @@ interface MarkdownTextProps {
   disableMath?: boolean;
 }
 
+// Sanitize schema: extend the default allowlist to preserve the classes our
+// custom renderers rely on (code-highlighting `language-*`/hljs classes,
+// KaTeX-generated classes) so rehype-sanitize doesn't strip them.
+const sanitizeSchema = {
+  ...defaultSchema,
+  attributes: {
+    ...defaultSchema.attributes,
+    code: [...(defaultSchema.attributes?.code || []), "className"],
+    span: [...(defaultSchema.attributes?.span || []), "className"],
+    pre: [...(defaultSchema.attributes?.pre || []), "className"],
+  },
+};
+
 export function MarkdownText({
   children,
   className,
@@ -45,9 +59,18 @@ export function MarkdownText({
 
   if (showRendered) {
     const remarkPlugins = disableMath ? [remarkGfm] : [remarkGfm, remarkMath];
+    // rehype-sanitize runs AFTER rehypeRaw (so raw HTML is parsed then
+    // cleaned) and BEFORE rehypeKatex (so KaTeX generates its trusted
+    // output from already-sanitized text, and that output never needs to
+    // be in the sanitize allowlist).
+    // rehype-sanitize's tuple shape doesn't line up with react-markdown's
+    // Pluggable typing (same pre-existing mismatch the rehypeKatex tuple
+    // below works around via `as const`); `as any` sidesteps that.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rehypeSanitizePlugin = [rehypeSanitize, sanitizeSchema] as any;
     const rehypePlugins = disableMath
-      ? [rehypeRaw]
-      : [rehypeRaw, [rehypeKatex, { strict: "ignore" }] as const];
+      ? [rehypeRaw, rehypeSanitizePlugin]
+      : [rehypeRaw, rehypeSanitizePlugin, [rehypeKatex, { strict: "ignore" }] as const];
     return (
       <div className={cn("markdown-content break-words", className)}>
         <ReactMarkdown
@@ -76,8 +99,14 @@ export function MarkdownText({
                   </SyntaxHighlighter>
                 );
               }
+              // react-markdown (via rehype-raw) can pass a non-DOM `inline` prop;
+              // strip it so it isn't spread onto <code> — React warns "Received
+              // true for a non-boolean attribute `inline`" and floods the console.
+              const { inline: _inline, ...domProps } = rest as {
+                inline?: boolean;
+              } & Record<string, unknown>;
               return (
-                <code className={codeClassName} {...rest}>
+                <code className={codeClassName} {...domProps}>
                   {codeChildren}
                 </code>
               );

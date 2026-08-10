@@ -13,6 +13,7 @@ import { LayoutSidebar } from './ProjectLayout/LayoutSidebar'
 import { LayoutSidebarProvider } from './ProjectLayout/LayoutSidebar/LayoutSidebarProvider'
 import { ProjectContextProvider } from './ProjectLayout/ProjectContext'
 import { AppBannerWrapper } from '@/components/interfaces/App/AppBannerWrapper'
+import { GuideBubbleOverlay } from '@/components/interfaces/AI/GuideBubbles/GuideBubbleOverlay'
 import { Sidebar } from '@/components/interfaces/Sidebar'
 import { useLocalStorageQuery } from '@/hooks/misc/useLocalStorage'
 import { IS_PLATFORM } from '@/lib/constants'
@@ -122,6 +123,7 @@ export const DefaultLayout = ({
 
               <BannerStack />
               <StudioMobileSheetNav />
+              <GuideBubbleOverlay />
             </BannerStackProvider>
           </MobileSheetProvider>
         </ProjectContextProvider>

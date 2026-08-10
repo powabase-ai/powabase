@@ -53,7 +53,12 @@ export const LayoutSidebar = ({
         minSize={minSize}
         maxSize={maxSize}
         className={cn(
-          'border-l bg fixed z-40 right-0 top-0 bottom-0',
+          'border-l bg fixed right-0 top-0 bottom-0',
+          // z-40 keeps the panel below the modal layer (dialogs, side-panels and
+          // confirmation modals are all z-50), so a modal that overlaps the
+          // docked copilot renders on top and stays interactable; closing it
+          // reveals the copilot underneath. (Applies to every sidebar equally.)
+          'z-40',
           'h-[100dvh]',
           'md:absolute md:h-auto md:w-1/2',
           'lg:w-2/5',

@@ -10,7 +10,15 @@ import { cn } from 'ui/src/lib/utils'
 const MobileSheetNav: React.FC<{
   children: React.ReactNode
   open?: boolean
-  onOpenChange(open: boolean): void
+  /**
+   * `userInitiated` is true only when the close came from the underlying Sheet
+   * itself (backdrop tap, swipe, Escape) — never from the route-change /
+   * viewport-resize auto-close effects below. Callers that need to tell a
+   * genuine user dismiss apart from an internal auto-close (e.g. a persistent
+   * panel that shouldn't reopen after a real dismiss, but also shouldn't be
+   * torn down by an unrelated route change) can use this to distinguish them.
+   */
+  onOpenChange(open: boolean, userInitiated?: boolean): void
   className?: string
   shouldCloseOnRouteChange?: boolean
   shouldCloseOnViewportResize?: boolean
@@ -41,7 +49,7 @@ const MobileSheetNav: React.FC<{
   }, [width])
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={(next) => onOpenChange(next, true)}>
       <SheetContent
         id="mobile-sheet-content"
         aria-describedby={undefined}

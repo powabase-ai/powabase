@@ -2402,7 +2402,7 @@ export interface SidebarOpenedEvent {
     /**
      * The sidebar panel that was opened, e.g. ai-assistant, editor-panel, advisor-panel
      */
-    sidebar: 'ai-assistant' | 'editor-panel' | 'advisor-panel' | 'help-panel'
+    sidebar: 'ai-assistant' | 'editor-panel' | 'advisor-panel' | 'help-panel' | 'project-copilot'
   }
   groups: TelemetryGroups
 }
@@ -3054,6 +3054,130 @@ export interface HeaderUpgradeCtaClickedEvent {
 }
 
 /**
+ * A guide-bubble walkthrough sequence was started (or replayed). Fired by the
+ * module-level guide engine store, so groups may be missing project/org
+ * context depending on the mounted state of the emitting component.
+ *
+ * @group Events
+ * @source studio
+ */
+export interface GuideStartedEvent {
+  action: 'guide_started'
+  properties: {
+    /**
+     * The guide sequence id, e.g. create-table, add-sources (see GUIDE_SEQUENCE_IDS).
+     */
+    sequence_id: string
+    /**
+     * How the walkthrough was launched.
+     */
+    source: 'copilot' | 'welcome' | 'replay'
+  }
+  groups: Partial<TelemetryGroups>
+}
+
+/**
+ * A step within an active guide-bubble walkthrough became the active step
+ * (on start, Next, and Back).
+ *
+ * @group Events
+ * @source studio
+ */
+export interface GuideStepViewedEvent {
+  action: 'guide_step_viewed'
+  properties: {
+    sequence_id: string
+    /**
+     * Zero-based index of the step within the sequence.
+     */
+    step_index: number
+    /**
+     * The `data-onboarding-id` anchor the step highlights.
+     */
+    anchor_id: string
+  }
+  groups: Partial<TelemetryGroups>
+}
+
+/**
+ * User clicked Skip during an active guide-bubble walkthrough.
+ *
+ * @group Events
+ * @source studio
+ */
+export interface GuideSkippedEvent {
+  action: 'guide_skipped'
+  properties: {
+    sequence_id: string
+    step_index: number
+  }
+  groups: Partial<TelemetryGroups>
+}
+
+/**
+ * A guide-bubble walkthrough reached its last step and completed (via Done,
+ * not Skip).
+ *
+ * @group Events
+ * @source studio
+ */
+export interface GuideFinishedEvent {
+  action: 'guide_finished'
+  properties: {
+    sequence_id: string
+  }
+  groups: Partial<TelemetryGroups>
+}
+
+/**
+ * A guide-bubble step's anchor never mounted within the bounded polling
+ * timeout, so the walkthrough auto-advanced past it instead of sitting on a
+ * blank spotlight. See ANCHOR_NOT_FOUND_TIMEOUT_MS in useAnchorRect.ts.
+ *
+ * @group Events
+ * @source studio
+ */
+export interface GuideAnchorNotFoundEvent {
+  action: 'guide_anchor_not_found'
+  properties: {
+    sequence_id: string
+    step_index: number
+    anchor_id: string
+  }
+  groups: Partial<TelemetryGroups>
+}
+
+/**
+ * The Project Copilot assistant's reply claimed to launch a walkthrough (e.g.
+ * "I've launched the walkthrough") but no `trigger_guide` event was received
+ * for that turn, or `trigger_guide` referenced an unrecognized sequence id —
+ * so no guide actually started. Reconciliation signal for silent launch
+ * failures the user otherwise has no way to report.
+ *
+ * @group Events
+ * @source studio
+ */
+export interface GuideLaunchMissingEvent {
+  action: 'guide_launch_missing'
+  properties: {
+    /**
+     * The unrecognized sequence id from trigger_guide, when that's the cause.
+     * Omitted when the cause is a launch-claim with no trigger_guide event at all.
+     */
+    sequence_id?: string
+    /**
+     * Why we believe the launch is missing.
+     */
+    reason: 'no_trigger_guide_event' | 'unknown_sequence_id'
+    /**
+     * UUID of the chat session the turn belongs to.
+     */
+    chatId?: string
+  }
+  groups: Partial<TelemetryGroups>
+}
+
+/**
  * @hidden
  */
 export type TelemetryEvent =
@@ -3224,3 +3348,9 @@ export type TelemetryEvent =
   | FreeMicroUpgradeBannerCtaClickedEvent
   | PricingPageExperimentExposedEvent
   | HeaderUpgradeCtaClickedEvent
+  | GuideStartedEvent
+  | GuideStepViewedEvent
+  | GuideSkippedEvent
+  | GuideFinishedEvent
+  | GuideAnchorNotFoundEvent
+  | GuideLaunchMissingEvent

@@ -15,6 +15,7 @@ import { HeaderPlanUpgradeButton } from './HeaderPlanUpgradeButton'
 import { HomeIcon } from './HomeIcon'
 import { LocalVersionPopover } from './LocalVersionPopover'
 import { MergeRequestButton } from './MergeRequestButton'
+import { ProjectCopilotButton } from './ProjectCopilotButton'
 import {
   useIsBranching2Enabled,
   useIsFloatingMobileToolbarEnabled,
@@ -186,6 +187,7 @@ export const LayoutHeader = ({
           </div>
           <div className="flex items-center gap-x-2">
             {customHeaderComponents && customHeaderComponents}
+            {projectRef && <ProjectCopilotButton />}
             <CreditBar />
             <HeaderPlanUpgradeButton />
             {/* Powabase: removed Feedback, Search, Help, Advisor, Assistant, DevToolbar (Upgrade re-added above as HeaderPlanUpgradeButton) */}

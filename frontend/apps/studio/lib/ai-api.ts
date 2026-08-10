@@ -117,6 +117,61 @@ export class DuplicateSourceError extends Error {
   }
 }
 
+/** Body of the 402 the project-copilot chat route raises on the credit gate. */
+export interface CopilotPaymentRequiredPayload {
+  balance?: number
+  estimated_cost?: number
+  renews_at?: string
+}
+
+/** Out of credits (402) on a pre-stream Project Copilot turn. */
+export class CopilotPaymentRequiredError extends Error {
+  status = 402 as const
+  balance?: number
+  estimated_cost?: number
+  renews_at?: string
+  constructor(payload: CopilotPaymentRequiredPayload) {
+    super('insufficient_credits')
+    this.name = 'CopilotPaymentRequiredError'
+    this.balance = payload.balance
+    this.estimated_cost = payload.estimated_cost
+    this.renews_at = payload.renews_at
+  }
+}
+
+/** A copilot turn was already in progress on this session (409 turn lock). */
+export class CopilotTurnInProgressError extends Error {
+  status = 409 as const
+  constructor() {
+    super('a copilot turn is already in progress')
+    this.name = 'CopilotTurnInProgressError'
+  }
+}
+
+/** Copilot chat endpoint unreachable (503, often a non-JSON gateway body). */
+export class CopilotServiceUnavailableError extends Error {
+  status = 503 as const
+  constructor() {
+    super('Copilot is temporarily unavailable — please try again in a moment.')
+    this.name = 'CopilotServiceUnavailableError'
+  }
+}
+
+/**
+ * Any other non-OK pre-stream copilot response (500 when the user-message
+ * INSERT throws pre-commit, 429, gateway 502/504 during fleet rolls, …).
+ * Typed so the panel's recovery gate keeps the optimistic user bubble instead
+ * of the generic-Error path's history reload silently wiping it.
+ */
+export class CopilotRequestFailedError extends Error {
+  status: number
+  constructor(status: number) {
+    super('Something went wrong — your message was not sent. Please try again.')
+    this.name = 'CopilotRequestFailedError'
+    this.status = status
+  }
+}
+
 function tryParseDuplicateError(
   status: number,
   data: Record<string, unknown>,
@@ -1498,6 +1553,18 @@ export async function streamCopilotChat(
   if (response.status === 401) {
     throw new SessionExpiredError()
   }
+  if (response.status === 402) {
+    const data = await response.json().catch(() => ({}))
+    throw new CopilotPaymentRequiredError(data as CopilotPaymentRequiredPayload)
+  }
+  if (response.status === 409) {
+    throw new CopilotTurnInProgressError()
+  }
+  if (response.status === 503) {
+    // Often fronted by a gateway that returns an HTML error page, not JSON —
+    // don't attempt to read `.error` off an empty/unparseable body.
+    throw new CopilotServiceUnavailableError()
+  }
   if (!response.ok) {
     const data = await response.json().catch(() => ({}))
     throw new Error((data as { error?: string }).error || 'Copilot stream request failed')
@@ -1540,6 +1607,128 @@ export async function streamCopilotChat(
         }
       }
     }
+  } finally {
+    reader.releaseLock()
+  }
+}
+
+// ── Project Copilot (onboarding) ──────────────────────────────────────
+// Project-scoped onboarding/guidance copilot. Mirrors the workflow copilot
+// above, but is keyed by project (one resumable session) and can emit a
+// `trigger_guide` event telling the UI to launch a guide-bubble walkthrough.
+
+export interface ProjectCopilotSession {
+  id: string
+  created_at: string
+  updated_at: string
+}
+
+export interface ProjectCopilotMessage {
+  id: string
+  session_id: string
+  role: 'user' | 'assistant' | 'system'
+  content: string
+  guide_event: { sequence_id: string } | null
+  created_at: string
+}
+
+export type ProjectCopilotStreamEvent =
+  | { event: 'tool_call'; tool_call: { name: string; arguments: Record<string, unknown> } }
+  | { event: 'reasoning_delta'; step: number | null; delta: string }
+  | { event: 'trigger_guide'; sequence_id: string }
+  | { event: 'notice'; kind: string }
+  | { event: 'complete'; message_id: string; content: string }
+  | { event: 'error'; error: string }
+
+export const projectCopilotApi = {
+  getSession: (token: string, ref: string) =>
+    projectApi<{ session: ProjectCopilotSession | null }>(
+      token, ref, '/project-copilot/sessions'
+    ),
+
+  createSession: (token: string, ref: string) =>
+    projectApi<{ id: string }>(
+      token, ref, '/project-copilot/sessions',
+      { method: 'POST', body: {} }
+    ),
+
+  deleteSession: (token: string, ref: string, sessionId: string) =>
+    projectApi<void>(
+      token, ref, `/project-copilot/sessions/${sessionId}`,
+      { method: 'DELETE' }
+    ),
+
+  getMessages: (token: string, ref: string, sessionId: string) =>
+    projectApi<{ messages: ProjectCopilotMessage[] }>(
+      token, ref, `/project-copilot/sessions/${sessionId}/messages`
+    ),
+}
+
+export async function streamProjectCopilotChat(
+  token: string,
+  ref: string,
+  sessionId: string,
+  body: { message: string },
+  onEvent: (event: ProjectCopilotStreamEvent) => void,
+  options?: { signal?: AbortSignal },
+): Promise<void> {
+  const response = await fetch(
+    projectApiUrl(ref, `/project-copilot/sessions/${sessionId}/chat`),
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+      signal: options?.signal,
+    }
+  )
+  if (response.status === 401) {
+    throw new SessionExpiredError()
+  }
+  if (response.status === 402) {
+    const data = await response.json().catch(() => ({}))
+    throw new CopilotPaymentRequiredError(data as CopilotPaymentRequiredPayload)
+  }
+  if (response.status === 409) {
+    throw new CopilotTurnInProgressError()
+  }
+  if (response.status === 503) {
+    // Often fronted by a gateway that returns an HTML error page, not JSON —
+    // don't attempt to read `.error` off an empty/unparseable body.
+    throw new CopilotServiceUnavailableError()
+  }
+  if (!response.ok) {
+    // Every other pre-stream non-OK fails before anything is persisted
+    // server-side — throw typed so the panel keeps the optimistic user bubble
+    // instead of reloading history over it.
+    throw new CopilotRequestFailedError(response.status)
+  }
+  const reader = response.body?.getReader()
+  if (!reader) throw new Error('No response body')
+  const decoder = new TextDecoder()
+  let buffer = ''
+  const handle = (raw: string) => {
+    if (!raw || raw === '[DONE]') return
+    try {
+      onEvent(JSON.parse(raw) as ProjectCopilotStreamEvent)
+    } catch (err) {
+      // A malformed SSE frame shouldn't kill the stream, but don't drop it
+      // silently — a truncated terminal `error` frame would otherwise hide the
+      // real failure behind a generic "no reply".
+      console.warn('[project-copilot] dropping unparseable SSE frame', raw, err)
+    }
+  }
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n\n')
+      buffer = lines.pop() ?? ''
+      for (const line of lines) {
+        if (line.startsWith('data: ')) handle(line.slice(6).trim())
+      }
+    }
+    if (buffer.trim().startsWith('data: ')) handle(buffer.trim().slice(6).trim())
   } finally {
     reader.releaseLock()
   }

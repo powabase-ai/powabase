@@ -41,10 +41,22 @@ const StudioMobileSheetNav = () => {
   const { activeSidebar } = useSidebarManagerSnapshot()
   const sheetChildren = getSheetChildren(content, activeSidebar ?? null)
 
-  const handleOpenChange = (open: boolean) => {
+  const handleOpenChange = (open: boolean, userInitiated?: boolean) => {
     if (!open) {
       setContent(null)
-      sidebarManagerState.closeActive()
+      // The Project Copilot is a persistent panel. MobileSheetNav fires
+      // onOpenChange(false) from its route-change / viewport effects on ANY url
+      // change (e.g. ?showConnect=true when the Connect dialog opens, or guide-bubble
+      // navigation) — even on desktop, where this component is mounted but unused.
+      // Closing the copilot there tears it down spuriously, so exempt it — UNLESS
+      // this is a genuine user dismiss (backdrop tap / swipe / Escape on the sheet
+      // itself, userInitiated=true), which must still close it. Without this
+      // carve-out the copilot's activeSidebar never clears, so the LayoutSidebar
+      // effect re-asserts it and the sheet snaps back open with no way to close it.
+      // Task-scoped sidebars keep the existing close-on-navigation behavior.
+      if (activeSidebar?.id !== SIDEBAR_KEYS.PROJECT_COPILOT || userInitiated) {
+        sidebarManagerState.closeActive()
+      }
     }
   }
 

@@ -138,6 +138,7 @@
     "recharts": "catalog:",
     "rehype-katex": "^6.0.3",
     "rehype-raw": "^6.1.1",
+    "rehype-sanitize": "^6.0.0",
     "remark-gfm": "^3.0.1",
     "remark-math": "^5.1.1",
     "sass": "^1.99.0",
