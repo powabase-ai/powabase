@@ -21,6 +21,7 @@ import { guideEngineState } from '@/state/guide-engine-state'
 import { SIDEBAR_KEYS } from '@/components/layouts/ProjectLayout/LayoutSidebar/LayoutSidebarProvider'
 import { useSidebarManagerSnapshot } from '@/state/sidebar-manager-state'
 
+import { type DocsNoticeKind, docsNoticeCopy, isDocsNoticeKind } from './docs-notice-copy'
 import { looksLikeGuideLaunchClaim } from './launch-claim'
 import { ProjectCopilotWelcomeBody } from './ProjectCopilotWelcome'
 
@@ -64,9 +65,11 @@ export const ProjectCopilotPanel = () => {
   // at "Connecting…" forever. `retryTick` re-triggers the bootstrap effect.
   const [bootstrapError, setBootstrapError] = useState(false)
   const [retryTick, setRetryTick] = useState(0)
-  // Set when the last turn couldn't reach the docs index, so the answer wasn't
-  // grounded — we warn the user rather than present a confident, unsourced reply.
-  const [docsNotice, setDocsNotice] = useState(false)
+  // Set when the last turn couldn't ground its answer in the docs — holds WHY
+  // (not configured / unreachable / not indexed yet) so the warning tells the
+  // operator what to do about it, rather than one catch-all "couldn't be
+  // reached". We warn rather than present a confident, unsourced reply.
+  const [docsNotice, setDocsNotice] = useState<DocsNoticeKind | null>(null)
   // Set on a thrown PRE-STREAM turn (402 out-of-credits, 409 turn-already-in-progress,
   // 503 unavailable, or any other non-OK status — 500/429/502/504). These fail before
   // anything is persisted server-side, so unlike docsNotice this replaces reloading
@@ -109,7 +112,7 @@ export const ProjectCopilotPanel = () => {
       setSessionId(null)
       setMessages([])
       setIsStreaming(false)
-      setDocsNotice(false)
+      setDocsNotice(null)
       setTurnNotice(null)
     }
     prevRefRef.current = ref
@@ -175,7 +178,7 @@ export const ProjectCopilotPanel = () => {
     setInput('')
     setStatusTool('')
     setReasoning('')
-    setDocsNotice(false)
+    setDocsNotice(null)
     setTurnNotice(null)
     setIsStreaming(false)
     try {
@@ -207,7 +210,7 @@ export const ProjectCopilotPanel = () => {
       setIsStreaming(true)
       setStatusTool('')
       setReasoning('')
-      setDocsNotice(false)
+      setDocsNotice(null)
       setTurnNotice(null)
       sawTriggerGuideRef.current = false
       // Optimistic user bubble until we reload the persisted history below.
@@ -268,11 +271,11 @@ export const ProjectCopilotPanel = () => {
               // Same liveness guard as trigger_guide: ignore a buffered notice from
               // a turn the user has since reset/navigated away from.
               if (
-                event.kind === 'docs_unavailable' &&
+                isDocsNoticeKind(event.kind) &&
                 mountedRef.current &&
                 sessionIdRef.current === turnSessionId
               ) {
-                setDocsNotice(true)
+                setDocsNotice(event.kind)
               }
             } else if (event.event === 'complete') {
               completedContent = event.content
@@ -529,10 +532,7 @@ export const ProjectCopilotPanel = () => {
             role="status"
           >
             <TriangleAlert size={13} className="mt-0.5 flex-shrink-0 text-warning-600" />
-            <p className="text-xs text-warning-600">
-              Answered without documentation — the docs index couldn’t be reached, so
-              double-check this against the official docs.
-            </p>
+            <p className="text-xs text-warning-600">{docsNoticeCopy(docsNotice)}</p>
           </div>
         )}
 

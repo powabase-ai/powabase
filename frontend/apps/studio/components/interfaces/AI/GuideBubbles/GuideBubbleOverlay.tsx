@@ -8,9 +8,10 @@
  * dim+spotlight mask plus a bubble card. The copilot panel stays mounted/visible
  * throughout because neither it nor this overlay live inside the routed page.
  */
+import { DismissableLayerBranch } from '@radix-ui/react-dismissable-layer'
 import { useParams } from 'common'
 import { useRouter } from 'next/router'
-import { type CSSProperties, useEffect, useState } from 'react'
+import { type CSSProperties, type ReactNode, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 import { Button } from 'ui'
@@ -26,6 +27,32 @@ import { useGuideFeatureGates } from '@/hooks/misc/useGuideFeatureGates'
 
 const BUBBLE_WIDTH = 320
 const GAP = 12
+
+/**
+ * How long the engine may sit in 'navigating' waiting for `useParams().ref`
+ * to resolve before the walkthrough is skipped. Long enough for any real tab
+ * transition; short enough that a walkthrough launched outside a project
+ * scope doesn't leave a parked bubble with no timeout running.
+ */
+export const NAVIGATING_NO_REF_TIMEOUT_MS = 10000
+
+/**
+ * Everything this overlay portals to document.body goes inside a Radix
+ * DismissableLayerBranch with pointer events re-enabled. A `waitForUserAction`
+ * step often has the user open a Radix dialog/side-panel in MODAL mode, whose
+ * DismissableLayer (the same module instance backing the `ui` Dialog) sets
+ * `body { pointer-events: none }` and dismisses on any pointerdown outside its
+ * own layer/branches. Without this wrapper the bubble is painted on top but
+ * mouse-inert, and a press on its buttons hit-tests through to the dialog
+ * overlay — Radix reads it as pointerDownOutside and closes the MODAL, so the
+ * step can deadlock until the anchor hard cap (seen live on the connect
+ * walkthrough). Registering as a branch makes presses on the bubble "inside";
+ * `pointerEvents: 'auto'` opts it back in under the neutralised body. The
+ * spotlight svg stays pointer-events-none via its own class.
+ */
+const GuideBranch = ({ children }: { children: ReactNode }) => (
+  <DismissableLayerBranch style={{ pointerEvents: 'auto' }}>{children}</DismissableLayerBranch>
+)
 
 function computeBubblePosition(rect: DOMRect, placement: GuidePlacement = 'bottom') {
   let top: number
@@ -86,9 +113,42 @@ export const GuideBubbleOverlay = () => {
     if (gateBlocked) return
     if (status !== 'navigating' || !step || !ref) return
     if (step.route && !step.waitForUserAction && router.pathname !== step.route) {
-      router.push(step.route.replace('[ref]', ref as string))
+      // Enter the anchor phase only once the navigation settles —
+      // useAnchorRect's 8s not-found clock starts when the phase does, and
+      // starting it against the OLD page burns the whole window on a slow
+      // load: step 0 auto-skips into a waitForUserAction step with no route
+      // and no soft timeout (unrecoverable until the hard cap). `.finally`
+      // also covers a rejected push (aborted transition) — the anchor phase
+      // then times out normally instead of the engine parking in 'navigating'.
+      // The stale guard drops the transition if the step/ref changed (or the
+      // user skipped) while the push was in flight.
+      let stale = false
+      router.push(step.route.replace('[ref]', ref as string)).finally(() => {
+        if (!stale) guideEngineState.setStatus('waiting_for_anchor')
+      })
+      return () => {
+        stale = true
+      }
     }
     guideEngineState.setStatus('waiting_for_anchor')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, activeSequenceId, stepIndex, ref, gateBlocked])
+
+  // Backstop for the `!ref` wait above: `ref` being momentarily undefined is a
+  // normal tab transition and the driver retries when it resolves — but if it
+  // NEVER resolves (the user left the project scope entirely), the engine
+  // would park in 'navigating' with no timeout running (the anchor hard cap
+  // only starts with the anchor phase). End the walkthrough observably instead:
+  // skip() emits guide_skipped, and the toast says why the bubble went away.
+  useEffect(() => {
+    if (gateBlocked || status !== 'navigating' || !step || ref) return
+    const timer = window.setTimeout(() => {
+      import('sonner')
+        .then(({ toast }) => toast("Couldn't find the page for this walkthrough — ending it."))
+        .catch(() => {})
+      guideEngineState.skip()
+    }, NAVIGATING_NO_REF_TIMEOUT_MS)
+    return () => window.clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, activeSequenceId, stepIndex, ref, gateBlocked])
 
@@ -143,22 +203,24 @@ export const GuideBubbleOverlay = () => {
   if (gateBlocked && sequence) {
     if (typeof document === 'undefined') return null
     return createPortal(
-      <div
-        className="fixed left-1/2 top-24 -translate-x-1/2 bg-overlay border border-overlay rounded-md shadow-lg p-4 flex flex-col gap-y-2"
-        style={{ width: BUBBLE_WIDTH, zIndex: 71 }}
-        role="dialog"
-        aria-label={sequence.title}
-      >
-        <p className="text-sm text-foreground font-medium">{sequence.title}</p>
-        <p className="text-sm text-foreground-light">
-          This feature isn’t enabled in your project, so this walkthrough isn’t available.
-        </p>
-        <div className="flex justify-end pt-1">
-          <Button type="primary" size="tiny" onClick={() => guideEngineState.finish()}>
-            Got it
-          </Button>
+      <GuideBranch>
+        <div
+          className="fixed left-1/2 top-24 -translate-x-1/2 bg-overlay border border-overlay rounded-md shadow-lg p-4 flex flex-col gap-y-2"
+          style={{ width: BUBBLE_WIDTH, zIndex: 71 }}
+          role="dialog"
+          aria-label={sequence.title}
+        >
+          <p className="text-sm text-foreground font-medium">{sequence.title}</p>
+          <p className="text-sm text-foreground-light">
+            This feature isn’t enabled in your project, so this walkthrough isn’t available.
+          </p>
+          <div className="flex justify-end pt-1">
+            <Button type="primary" size="tiny" onClick={() => guideEngineState.finish()}>
+              Got it
+            </Button>
+          </div>
         </div>
-      </div>,
+      </GuideBranch>,
       document.body
     )
   }
@@ -178,7 +240,7 @@ export const GuideBubbleOverlay = () => {
     : { left: '50%', bottom: 24, transform: 'translateX(-50%)', width: BUBBLE_WIDTH, zIndex: 71 }
 
   return createPortal(
-    <>
+    <GuideBranch>
       {/* Dim + spotlight: pointer-events-none so the highlighted control stays clickable. */}
       {positioned && (
         <svg
@@ -271,7 +333,7 @@ export const GuideBubbleOverlay = () => {
           </div>
         </div>
       </div>
-    </>,
+    </GuideBranch>,
     document.body
   )
 }
