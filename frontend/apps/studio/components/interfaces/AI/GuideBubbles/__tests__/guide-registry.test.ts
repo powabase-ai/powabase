@@ -57,6 +57,20 @@ describe('guide registry', () => {
     expect(ANCHOR_NOT_FOUND_TIMEOUT_MS).toBeLessThanOrEqual(30_000)
   })
 
+  it('walks create-agent back to Overview before asking for Save', () => {
+    // The save anchor lives INSIDE the Overview tab, but the preceding steps
+    // leave the user on the Tools tab — without an explicit "open Overview"
+    // step the final instruction floats with nothing highlighted (observed
+    // live). Clicking the Overview tab advances into the save step.
+    const steps = GUIDE_SEQUENCES['create-agent'].steps
+    const overviewIdx = steps.findIndex((s) => s.anchor === ONBOARDING_ANCHORS.agents.tabOverview)
+    const saveIdx = steps.findIndex((s) => s.anchor === ONBOARDING_ANCHORS.agents.save)
+    expect(overviewIdx).toBeGreaterThan(-1)
+    expect(saveIdx).toBe(overviewIdx + 1)
+    expect(steps[overviewIdx].advanceOnAnchorClick).toBe(true)
+    expect(steps[overviewIdx].waitForUserAction).toBe(true)
+  })
+
   it('references every declared anchor constant in a component', () => {
     const root = join(__dirname, '..', '..', '..', '..', '..') // studio app root
     const sources = walk(join(root, 'components'))

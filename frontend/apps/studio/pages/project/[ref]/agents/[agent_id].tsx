@@ -96,7 +96,7 @@ const AgentDetailPage: NextPageWithLayout = () => {
         {/* Tabs */}
         <Tabs defaultValue="overview">
           <TabsList className="flex gap-x-5">
-            <TabsTrigger className="py-2.5" value="overview">Overview</TabsTrigger>
+            <TabsTrigger className="py-2.5" value="overview" {...onboardingAnchor(ONBOARDING_ANCHORS.agents.tabOverview)}>Overview</TabsTrigger>
             <TabsTrigger className="py-2.5" value="tools" {...onboardingAnchor(ONBOARDING_ANCHORS.agents.tabTools)}>Tools</TabsTrigger>
             <TabsTrigger className="py-2.5" value="knowledge-bases" {...onboardingAnchor(ONBOARDING_ANCHORS.agents.tabKnowledgeBases)}>Knowledge Bases</TabsTrigger>
             <TabsTrigger className="py-2.5" value="mcp-servers">MCP Servers</TabsTrigger>

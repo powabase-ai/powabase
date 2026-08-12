@@ -105,8 +105,41 @@ export function useAnchorRect(
     // actually changes, so a static highlight doesn't re-render on every re-measure.
     let last: { x: number; y: number; w: number; h: number } | null = null
 
-    const hasBox = (el: HTMLElement, r: DOMRect) =>
-      el.getClientRects().length > 0 && (r.width > 0 || r.height > 0)
+    // A layout box alone is not enough to spotlight an element. An off-canvas
+    // drawer keeps its box while translated out of view, and the product menu
+    // keeps its box under the copilot sheet at narrow widths — both were
+    // "found" and ringed UI the user couldn't see or click (observed live:
+    // create-table step 1 spotlighted the menu's New table button THROUGH the
+    // copilot panel). So additionally require:
+    //  - the box intersects the viewport (a legit below-the-fold anchor is
+    //    simply found once the user scrolls it into view — the fallback
+    //    bubble's copy already says exactly that), and
+    //  - nothing unrelated covers its center (elementFromPoint skips
+    //    pointer-events:none nodes, so our own dim/spotlight never counts as
+    //    cover; under a Radix modal this also parks page anchors — correct,
+    //    since spotlighting THROUGH a modal is the same wrong highlight —
+    //    while anchors INSIDE the open dialog still hit-test to themselves).
+    const hasBox = (el: HTMLElement, r: DOMRect) => {
+      if (el.getClientRects().length === 0 || (r.width <= 0 && r.height <= 0)) return false
+      if (
+        r.right <= 0 ||
+        r.bottom <= 0 ||
+        r.left >= window.innerWidth ||
+        r.top >= window.innerHeight
+      ) {
+        return false
+      }
+      if (typeof document.elementFromPoint === 'function') {
+        try {
+          const cover = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)
+          // null (no layout engine / point outside) is treated as visible.
+          if (cover && !el.contains(cover) && !cover.contains(el)) return false
+        } catch {
+          // jsdom without elementFromPoint support — skip the occlusion check.
+        }
+      }
+      return true
+    }
 
     // Scan every match and take the first with a real layout box.
     const findEl = (): HTMLElement | null => {

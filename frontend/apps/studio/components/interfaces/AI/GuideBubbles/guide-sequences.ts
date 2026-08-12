@@ -106,8 +106,10 @@ export const GUIDE_SEQUENCES: Record<string, GuideSequence> = {
         body: 'Open your agent and use the Knowledge Bases tab to attach indexed content so it can answer from your data (RAG).' },
       { anchor: A.agents.tabTools, advanceOnAnchorClick: true, title: 'Add tools', placement: 'bottom', waitForUserAction: true,
         body: 'In the Tools tab, add capabilities like web search, SQL, or MCP servers.' },
+      { anchor: A.agents.tabOverview, advanceOnAnchorClick: true, title: 'Back to Overview', placement: 'bottom', waitForUserAction: true,
+        body: 'Open the Overview tab — that’s where the model and system prompt live.' },
       { anchor: A.agents.save, advanceOnAnchorClick: true, title: 'Configure & save', placement: 'top', waitForUserAction: true,
-        body: 'Set the model and system prompt in Overview — the prompt is the biggest lever on behaviour — then Save. Test it from the agent’s chat.' },
+        body: 'Set the model and system prompt — the prompt is the biggest lever on behaviour — then Save. Test it from the agent’s chat.' },
     ],
   },
   'create-orchestration': {
