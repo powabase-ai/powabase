@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { docsNoticeCopy, isDocsNoticeKind } from '../docs-notice-copy'
+import { docsNoticeCopy, isDocsNotice } from '../docs-notice-copy'
 
 /**
  * The backend distinguishes WHY an answer wasn't docs-grounded
@@ -8,18 +8,22 @@ import { docsNoticeCopy, isDocsNoticeKind } from '../docs-notice-copy'
  * just WAIT, instead of the old catch-all "couldn't be reached" (which is
  * simply wrong on an unconfigured self-host stack).
  */
-describe('isDocsNoticeKind', () => {
+describe('isDocsNotice', () => {
   it('accepts the three backend kinds plus the legacy catch-all', () => {
-    expect(isDocsNoticeKind('docs_not_configured')).toBe(true)
-    expect(isDocsNoticeKind('docs_unreachable')).toBe(true)
-    expect(isDocsNoticeKind('docs_not_ready')).toBe(true)
-    expect(isDocsNoticeKind('docs_unavailable')).toBe(true)
+    expect(isDocsNotice('docs_not_configured')).toBe(true)
+    expect(isDocsNotice('docs_unreachable')).toBe(true)
+    expect(isDocsNotice('docs_not_ready')).toBe(true)
+    expect(isDocsNotice('docs_unavailable')).toBe(true)
   })
 
-  it('rejects anything else', () => {
-    expect(isDocsNoticeKind('out_of_credits')).toBe(false)
-    expect(isDocsNoticeKind('')).toBe(false)
-    expect(isDocsNoticeKind(undefined)).toBe(false)
+  it('accepts unknown future docs_* kinds so the warning cannot silently turn off', () => {
+    expect(isDocsNotice('docs_index_rebuilding')).toBe(true)
+  })
+
+  it('rejects non-docs kinds', () => {
+    expect(isDocsNotice('out_of_credits')).toBe(false)
+    expect(isDocsNotice('')).toBe(false)
+    expect(isDocsNotice(undefined)).toBe(false)
   })
 })
 
@@ -45,6 +49,12 @@ describe('docsNoticeCopy', () => {
     // Older backends emit docs_unavailable for every degraded cause; render it
     // like unreachable rather than dropping the notice.
     expect(docsNoticeCopy('docs_unavailable')).toBe(docsNoticeCopy('docs_unreachable'))
+  })
+
+  it('falls back to generic ungrounded-answer copy for unknown docs_* kinds', () => {
+    const copy = docsNoticeCopy('docs_index_rebuilding')
+    expect(copy).toMatch(/answered without documentation/i)
+    expect(copy).toMatch(/official docs/i)
   })
 
   it('always warns that the answer was ungrounded', () => {

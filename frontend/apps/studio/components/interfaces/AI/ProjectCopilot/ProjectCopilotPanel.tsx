@@ -21,7 +21,7 @@ import { guideEngineState } from '@/state/guide-engine-state'
 import { SIDEBAR_KEYS } from '@/components/layouts/ProjectLayout/LayoutSidebar/LayoutSidebarProvider'
 import { useSidebarManagerSnapshot } from '@/state/sidebar-manager-state'
 
-import { type DocsNoticeKind, docsNoticeCopy, isDocsNoticeKind } from './docs-notice-copy'
+import { docsNoticeCopy, isDocsNotice } from './docs-notice-copy'
 import { looksLikeGuideLaunchClaim } from './launch-claim'
 import { ProjectCopilotWelcomeBody } from './ProjectCopilotWelcome'
 
@@ -69,7 +69,7 @@ export const ProjectCopilotPanel = () => {
   // (not configured / unreachable / not indexed yet) so the warning tells the
   // operator what to do about it, rather than one catch-all "couldn't be
   // reached". We warn rather than present a confident, unsourced reply.
-  const [docsNotice, setDocsNotice] = useState<DocsNoticeKind | null>(null)
+  const [docsNotice, setDocsNotice] = useState<string | null>(null)
   // Set on a thrown PRE-STREAM turn (402 out-of-credits, 409 turn-already-in-progress,
   // 503 unavailable, or any other non-OK status — 500/429/502/504). These fail before
   // anything is persisted server-side, so unlike docsNotice this replaces reloading
@@ -271,7 +271,7 @@ export const ProjectCopilotPanel = () => {
               // Same liveness guard as trigger_guide: ignore a buffered notice from
               // a turn the user has since reset/navigated away from.
               if (
-                isDocsNoticeKind(event.kind) &&
+                isDocsNotice(event.kind) &&
                 mountedRef.current &&
                 sessionIdRef.current === turnSessionId
               ) {

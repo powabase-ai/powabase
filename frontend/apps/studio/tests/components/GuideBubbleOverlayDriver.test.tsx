@@ -19,10 +19,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 let mockRef: string | undefined = 'test-ref'
 let mockPathname = '/project/[ref]/editor'
 let resolvePush: (() => void) | undefined
+let rejectPush: (() => void) | undefined
 const mockPush = vi.fn(
   () =>
-    new Promise<boolean>((resolve) => {
+    new Promise<boolean>((resolve, reject) => {
       resolvePush = () => resolve(true)
+      // Real rejection source in this codebase: usePreventNavigationOnUnsavedChanges
+      // throws 'Route change declined' in a routeChangeStart handler.
+      rejectPush = () => reject('Route change declined')
     })
 )
 
@@ -78,6 +82,30 @@ describe('GuideBubbleOverlay driver effect', () => {
       await Promise.resolve()
     })
     expect(guideEngineState.status).toBe('waiting_for_anchor')
+  })
+
+  it('skips the walkthrough when the user declines the navigation', async () => {
+    // usePreventNavigationOnUnsavedChanges blocks route changes by THROWING in
+    // routeChangeStart, so router.push rejects. Advancing to anchor-waiting on
+    // the page the user refused to leave would burn the 8s clock against the
+    // wrong page — and the rejection must not escape as an unhandled error.
+    mockPathname = '/project/[ref]/sources'
+    render(<GuideBubbleOverlay />)
+    await act(async () => {
+      guideEngineState.start('create-table', 'copilot')
+    })
+    expect(guideEngineState.status).toBe('navigating')
+
+    await act(async () => {
+      rejectPush!()
+      await Promise.resolve()
+    })
+    expect(guideEngineState.status).toBe('idle')
+    expect(guideEngineState.activeSequenceId).toBeUndefined()
+    expect(mockTrack).toHaveBeenCalledWith(
+      'guide_skipped',
+      expect.objectContaining({ sequence_id: 'create-table' })
+    )
   })
 
   it('skips the walkthrough after a bounded wait when ref never resolves', async () => {

@@ -84,3 +84,50 @@ describe('useAnchorRect — not-found timeout', () => {
     expect(result.current.timedOut).toBe(false)
   })
 })
+
+describe('useAnchorRect — multi-match scan', () => {
+  // Several anchors are deliberately mounted on more than one node (e.g.
+  // tables.new-table-button lives on both the product-menu button and the
+  // NewTab ActionCard). The hook must skip a present-but-boxless match and
+  // resolve to the first element with a real layout box — the premise the
+  // second-mount-point strategy depends on.
+  const MULTI_ANCHOR = 'multi-anchor-for-test'
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    document.body.innerHTML = ''
+    vi.useRealTimers()
+  })
+
+  it('skips a boxless match and resolves to the first element with a real box', () => {
+    // First in DOM order: present but boxless (jsdom's default all-zero rect
+    // stands in for a hidden/unmounted-menu instance).
+    const boxless = document.createElement('button')
+    boxless.setAttribute('data-onboarding-id', MULTI_ANCHOR)
+
+    const visible = document.createElement('button')
+    visible.setAttribute('data-onboarding-id', MULTI_ANCHOR)
+    const rect = {
+      x: 10, y: 20, width: 100, height: 30,
+      top: 20, left: 10, right: 110, bottom: 50,
+      toJSON: () => ({}),
+    } as DOMRect
+    visible.getBoundingClientRect = () => rect
+    visible.getClientRects = () => ({ length: 1 }) as DOMRectList
+    visible.scrollIntoView = () => {}
+
+    document.body.append(boxless, visible)
+
+    const { result } = renderHook(() => useAnchorRect(MULTI_ANCHOR, true, false))
+    act(() => {
+      vi.advanceTimersByTime(100)
+    })
+
+    expect(result.current.found).toBe(true)
+    expect(result.current.rect?.width).toBe(100)
+    expect(result.current.rect?.x).toBe(10)
+  })
+})

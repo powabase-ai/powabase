@@ -72,9 +72,11 @@ export function NewTab() {
           isBeta: false,
           onClick: () => snap.onAddTable(),
           // Second mount point for the create-table guide's anchor: the product
-          // menu's New table button only exists when the menu is visible,
-          // non-mobile, and the schema is unlocked — this card covers the rest
-          // (useAnchorRect scans all matches and takes the first with a box).
+          // menu's New table button only exists when the menu is visible and
+          // non-mobile — this card covers those states (useAnchorRect scans all
+          // matches and takes the first with a box). Locked schemas render
+          // NEITHER mount point and correctly fall through to the guide's
+          // anchor-timeout auto-skip.
           ...onboardingAnchor(ONBOARDING_ANCHORS.tables.newTableButton),
         },
       ]

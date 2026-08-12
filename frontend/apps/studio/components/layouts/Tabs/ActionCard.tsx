@@ -7,9 +7,11 @@ export const ActionCard = ({
   bgColor,
   isBeta,
   onClick,
-  // Rest props land on the Card root (a real, box-generating element) — this is
-  // what lets callers spread `onboardingAnchor(...)` data attributes onto a card
-  // so guide bubbles can target it (e.g. NewTab's "Create a table").
+  // data-* rest props land on the Card root (a real, box-generating element) —
+  // this is what lets callers spread `onboardingAnchor(...)` attributes onto a
+  // card so guide bubbles can target it (e.g. NewTab's "Create a table").
+  // Deliberately narrowed to data-* keys so excess-property checking still
+  // catches typos in the ordinary props.
   ...rest
 }: {
   icon: JSX.Element
@@ -18,7 +20,7 @@ export const ActionCard = ({
   bgColor: string
   isBeta?: boolean
   onClick?: () => void
-} & Record<string, unknown>) => {
+} & { [key: `data-${string}`]: string }) => {
   return (
     <Card
       className="grow bg-surface-100 p-3 transition-colors hover:bg-surface-200 border border-light hover:border-default cursor-pointer"

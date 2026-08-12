@@ -49,6 +49,19 @@ export const NAVIGATING_NO_REF_TIMEOUT_MS = 10000
  * walkthrough). Registering as a branch makes presses on the bubble "inside";
  * `pointerEvents: 'auto'` opts it back in under the neutralised body. The
  * spotlight svg stays pointer-events-none via its own class.
+ *
+ * KNOWN LIMITATION — mouse only. While a modal is open, Radix's `hideOthers`
+ * still marks the bubble `aria-hidden` and its FocusScope keeps Tab inside the
+ * dialog, so keyboard and screen-reader users cannot reach the bubble until
+ * the modal closes. Fixing that means portaling into the dialog's own
+ * container (per-dialog wiring) or an aria-hidden exemption — out of scope
+ * here; the deadlock this wrapper fixes was the mouse path.
+ *
+ * The `@radix-ui/react-dismissable-layer` dependency is pinned EXACTLY (no
+ * caret): `ui`'s Dialog pins 1.1.11 hard via @radix-ui/react-dialog, and a
+ * caret here could resolve a newer patch → two module instances → two branch
+ * registries → this deadlock silently returns (the RadixModal test would
+ * catch it, but keep the versions converged in the first place).
  */
 const GuideBranch = ({ children }: { children: ReactNode }) => (
   <DismissableLayerBranch style={{ pointerEvents: 'auto' }}>{children}</DismissableLayerBranch>
@@ -113,19 +126,30 @@ export const GuideBubbleOverlay = () => {
     if (gateBlocked) return
     if (status !== 'navigating' || !step || !ref) return
     if (step.route && !step.waitForUserAction && router.pathname !== step.route) {
-      // Enter the anchor phase only once the navigation settles —
+      // Enter the anchor phase only once the navigation SUCCEEDS —
       // useAnchorRect's 8s not-found clock starts when the phase does, and
       // starting it against the OLD page burns the whole window on a slow
       // load: step 0 auto-skips into a waitForUserAction step with no route
-      // and no soft timeout (unrecoverable until the hard cap). `.finally`
-      // also covers a rejected push (aborted transition) — the anchor phase
-      // then times out normally instead of the engine parking in 'navigating'.
-      // The stale guard drops the transition if the step/ref changed (or the
+      // and no soft timeout (unrecoverable until the hard cap). A REJECTED
+      // push means the user declined the navigation (this codebase blocks
+      // route changes by throwing in routeChangeStart — see
+      // usePreventNavigationOnUnsavedChanges): don't start hunting anchors on
+      // the page they refused to leave; end the walkthrough observably. The
+      // stale guard drops either transition if the step/ref changed (or the
       // user skipped) while the push was in flight.
       let stale = false
-      router.push(step.route.replace('[ref]', ref as string)).finally(() => {
-        if (!stale) guideEngineState.setStatus('waiting_for_anchor')
-      })
+      router.push(step.route.replace('[ref]', ref as string)).then(
+        () => {
+          if (!stale) guideEngineState.setStatus('waiting_for_anchor')
+        },
+        () => {
+          if (stale) return
+          import('sonner')
+            .then(({ toast }) => toast('Navigation was declined — ending the walkthrough.'))
+            .catch(() => {})
+          guideEngineState.skip()
+        }
+      )
       return () => {
         stale = true
       }

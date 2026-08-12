@@ -20,11 +20,20 @@ export const DOCS_NOTICE_KINDS = [
 
 export type DocsNoticeKind = (typeof DOCS_NOTICE_KINDS)[number]
 
-export const isDocsNoticeKind = (kind: unknown): kind is DocsNoticeKind =>
-  typeof kind === 'string' && (DOCS_NOTICE_KINDS as readonly string[]).includes(kind)
+/**
+ * Any `docs_*` kind gates the warning — including kinds this build doesn't
+ * know yet, which fall back to generic copy in `docsNoticeCopy`. Gating on the
+ * known list instead would let a new backend kind silently turn the ungrounded
+ * -answer warning off.
+ */
+export const isDocsNotice = (kind: unknown): kind is string =>
+  typeof kind === 'string' && kind.startsWith('docs_')
 
 const UNREACHABLE_COPY =
   'Answered without documentation — the docs index couldn’t be reached, so double-check this against the official docs.'
+
+const GENERIC_COPY =
+  'Answered without documentation — double-check this against the official docs.'
 
 const COPY: Record<DocsNoticeKind, string> = {
   docs_not_configured:
@@ -35,4 +44,5 @@ const COPY: Record<DocsNoticeKind, string> = {
     'Answered without documentation — the docs index is still being built. Try again in a few minutes, and double-check this against the official docs.',
 }
 
-export const docsNoticeCopy = (kind: DocsNoticeKind): string => COPY[kind]
+export const docsNoticeCopy = (kind: string): string =>
+  COPY[kind as DocsNoticeKind] ?? GENERIC_COPY
