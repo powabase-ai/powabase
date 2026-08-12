@@ -11,7 +11,14 @@
 import { DismissableLayerBranch } from '@radix-ui/react-dismissable-layer'
 import { useParams } from 'common'
 import { useRouter } from 'next/router'
-import { type CSSProperties, type ReactNode, useEffect, useState } from 'react'
+import {
+  type CSSProperties,
+  type ReactNode,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react'
 import { createPortal } from 'react-dom'
 
 import { Button } from 'ui'
@@ -22,11 +29,15 @@ import {
   useGuideEngineSnapshot,
 } from '@/state/guide-engine-state'
 import { getSequence, type GuidePlacement } from './guide-sequences'
+import { ONBOARDING_ATTR } from './onboarding-anchors'
 import { useAnchorRect } from './useAnchorRect'
 import { useGuideFeatureGates } from '@/hooks/misc/useGuideFeatureGates'
 
-const BUBBLE_WIDTH = 320
-const GAP = 12
+export const BUBBLE_WIDTH = 320
+export const GAP = 12
+/** Used for positioning until the card's real height is measured (and in
+ *  jsdom, where layout boxes are always 0). Roughly a three-line step body. */
+export const FALLBACK_BUBBLE_HEIGHT = 160
 
 /**
  * How long the engine may sit in 'navigating' waiting for `useParams().ref`
@@ -67,32 +78,50 @@ const GuideBranch = ({ children }: { children: ReactNode }) => (
   <DismissableLayerBranch style={{ pointerEvents: 'auto' }}>{children}</DismissableLayerBranch>
 )
 
-function computeBubblePosition(rect: DOMRect, placement: GuidePlacement = 'bottom') {
+/**
+ * Height-aware placement with flips. 'top' must subtract the card's height —
+ * anchoring the card's TOP edge at `rect.top - GAP` grows it DOWNWARD across
+ * the very control the step says to click (seen live on create-table's
+ * add-columns/RLS steps). And when a placement doesn't fit (a 'top' bubble
+ * with no headroom, a 'bottom' bubble past the fold, a side bubble past an
+ * edge) it flips to the opposite side instead of clamping over the anchor or
+ * off-screen — `position: fixed` can't be scrolled to.
+ */
+export function computeBubblePosition(
+  rect: DOMRect,
+  placement: GuidePlacement = 'bottom',
+  bubbleHeight: number = FALLBACK_BUBBLE_HEIGHT
+) {
+  const vw = window.innerWidth
+  const vh = window.innerHeight
   let top: number
   let left: number
   switch (placement) {
     case 'top':
-      top = rect.top - GAP
+      top = rect.top - GAP - bubbleHeight
       left = rect.left
+      if (top < 8) top = rect.bottom + GAP // no headroom — flip below
       break
     case 'left':
       top = rect.top
       left = rect.left - BUBBLE_WIDTH - GAP
+      if (left < 8) left = rect.right + GAP // past the left edge — flip right
       break
     case 'right':
       top = rect.top
       left = rect.right + GAP
+      if (left + BUBBLE_WIDTH > vw - 8) left = rect.left - BUBBLE_WIDTH - GAP // flip left
       break
     case 'bottom':
     default:
       top = rect.bottom + GAP
       left = rect.left
+      if (top + bubbleHeight > vh - 8) top = rect.top - GAP - bubbleHeight // past the fold — flip above
       break
   }
-  // Clamp into the viewport with an 8px margin.
-  const maxLeft = window.innerWidth - BUBBLE_WIDTH - 8
-  left = Math.max(8, Math.min(left, maxLeft))
-  top = Math.max(8, Math.min(top, window.innerHeight - 8))
+  // Clamp into the viewport with an 8px margin (both edges, both axes).
+  left = Math.max(8, Math.min(left, vw - BUBBLE_WIDTH - 8))
+  top = Math.max(8, Math.min(top, vh - bubbleHeight - 8))
   return { top, left }
 }
 
@@ -192,11 +221,49 @@ export const GuideBubbleOverlay = () => {
     if (found && status === 'waiting_for_anchor') guideEngineState.setStatus('showing')
   }, [found, status])
 
+  // Auto-advance for "click this control" steps: when the instruction is to
+  // click the highlighted anchor, actually clicking it advances the
+  // walkthrough as if Next was pressed — pressing Next after doing the thing
+  // is redundant, and on the last step it retires the bubble BEFORE whatever
+  // the click opens (e.g. the Connect modal) covers it. Capture phase on
+  // window so the anchor is still mounted when we look, and matched via the
+  // anchor selector (covers multi-mount anchors) — clicks on the bubble's own
+  // buttons can never match. Only steps that opt in via advanceOnAnchorClick:
+  // informational and type-here steps must not advance on stray clicks.
+  useEffect(() => {
+    if (gateBlocked || !step?.advanceOnAnchorClick) return
+    if (status !== 'waiting_for_anchor' && status !== 'showing') return
+    const selector = `[${ONBOARDING_ATTR}="${step.anchor}"]`
+    let fired = false
+    const onClickCapture = (e: MouseEvent) => {
+      if (fired) return
+      const target = e.target as Element | null
+      if (target?.closest?.(selector)) {
+        fired = true
+        guideEngineState.next()
+      }
+    }
+    window.addEventListener('click', onClickCapture, true)
+    return () => window.removeEventListener('click', onClickCapture, true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, activeSequenceId, stepIndex, gateBlocked])
+
   // Small "moving on" affordance shown in the next step's bubble after an
   // anchor-timeout auto-skip, instead of silently jumping. Cleared once that
   // next step's anchor is actually found. (useAnchorRect never times out
   // waitForUserAction steps, so `timedOut` can only fire for the other kind.)
   const [autoSkipNotice, setAutoSkipNotice] = useState(false)
+
+  // Measure the card so computeBubblePosition can be height-aware ('top' must
+  // subtract the height; both vertical placements flip when they don't fit).
+  // Layout effect so the corrected position paints in the same frame; the
+  // guarded setState makes the re-measure a no-op when nothing changed.
+  const bubbleRef = useRef<HTMLDivElement | null>(null)
+  const [bubbleHeight, setBubbleHeight] = useState(0)
+  useLayoutEffect(() => {
+    const h = bubbleRef.current?.offsetHeight ?? 0
+    if (h > 0 && h !== bubbleHeight) setBubbleHeight(h)
+  })
 
   // The anchor never mounted within useAnchorRect's bounded timeout: rather
   // than sit on a blank spotlight forever, log it, tell the user, and
@@ -269,7 +336,15 @@ export const GuideBubbleOverlay = () => {
   // visible and the user can act, Skip, or go Back — never a silent blank wait.
   const positioned = status === 'showing' && !!rect
   const bubbleStyle: CSSProperties = positioned
-    ? { ...computeBubblePosition(rect as DOMRect, step.placement), width: BUBBLE_WIDTH, zIndex: 71 }
+    ? {
+        ...computeBubblePosition(
+          rect as DOMRect,
+          step.placement,
+          bubbleHeight || FALLBACK_BUBBLE_HEIGHT
+        ),
+        width: BUBBLE_WIDTH,
+        zIndex: 71,
+      }
     : { left: '50%', bottom: 24, transform: 'translateX(-50%)', width: BUBBLE_WIDTH, zIndex: 71 }
 
   return createPortal(
@@ -315,6 +390,7 @@ export const GuideBubbleOverlay = () => {
 
       {/* Bubble */}
       <div
+        ref={bubbleRef}
         className="fixed bg-overlay border border-overlay rounded-md shadow-lg p-4 flex flex-col gap-y-2"
         style={bubbleStyle}
         role="dialog"

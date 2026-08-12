@@ -49,7 +49,24 @@ import {
   GuideBubbleOverlay,
   NAVIGATING_NO_REF_TIMEOUT_MS,
 } from '@/components/interfaces/AI/GuideBubbles/GuideBubbleOverlay'
+import { GUIDE_SEQUENCES } from '@/components/interfaces/AI/GuideBubbles/guide-sequences'
+import { ONBOARDING_ATTR } from '@/components/interfaces/AI/GuideBubbles/onboarding-anchors'
 import { guideEngineState } from '@/state/guide-engine-state'
+
+// Track manually-mounted DOM (anchors, decoys) and remove ONLY those in
+// afterEach — wiping document.body would race RTL's own cleanup unmounting
+// the portal ("The node to be removed is not a child of this node").
+const mountedNodes: HTMLElement[] = []
+const mountNode = (el: HTMLElement) => {
+  document.body.appendChild(el)
+  mountedNodes.push(el)
+  return el
+}
+const mountAnchor = (anchorId: string) => {
+  const el = document.createElement('button')
+  el.setAttribute(ONBOARDING_ATTR, anchorId)
+  return mountNode(el)
+}
 
 describe('GuideBubbleOverlay driver effect', () => {
   beforeEach(() => {
@@ -65,6 +82,85 @@ describe('GuideBubbleOverlay driver effect', () => {
 
   afterEach(() => {
     vi.useRealTimers()
+    for (const el of mountedNodes.splice(0)) el.remove()
+  })
+
+  it('advances when the user clicks the anchor of a click-instruction step', async () => {
+    // "Click New query to open a blank editor" — doing the thing IS the Next.
+    const step0 = GUIDE_SEQUENCES['sql-query'].steps[0]
+    expect(step0.advanceOnAnchorClick).toBe(true)
+    mockPathname = step0.route! // already there — no navigation involved
+    const anchor = mountAnchor(step0.anchor)
+
+    render(<GuideBubbleOverlay />)
+    await act(async () => {
+      guideEngineState.start('sql-query', 'copilot')
+    })
+    expect(guideEngineState.stepIndex).toBe(0)
+
+    await act(async () => {
+      anchor.click()
+    })
+    expect(guideEngineState.stepIndex).toBe(1)
+  })
+
+  it('does not advance on anchor clicks for steps without the flag', async () => {
+    // manage-compute step 0 highlights the current tier — informational, and
+    // clicking around inside it must not advance/finish the walkthrough.
+    const step0 = GUIDE_SEQUENCES['manage-compute'].steps[0]
+    expect(step0.advanceOnAnchorClick).toBeUndefined()
+    mockPathname = step0.route!
+    const anchor = mountAnchor(step0.anchor)
+
+    render(<GuideBubbleOverlay />)
+    await act(async () => {
+      guideEngineState.start('manage-compute', 'copilot')
+    })
+
+    await act(async () => {
+      anchor.click()
+    })
+    expect(guideEngineState.stepIndex).toBe(0)
+    expect(guideEngineState.activeSequenceId).toBe('manage-compute')
+  })
+
+  it('does not advance on clicks elsewhere during a click-instruction step', async () => {
+    const step0 = GUIDE_SEQUENCES['sql-query'].steps[0]
+    mockPathname = step0.route!
+    mountAnchor(step0.anchor)
+    const elsewhere = mountNode(document.createElement('button'))
+
+    render(<GuideBubbleOverlay />)
+    await act(async () => {
+      guideEngineState.start('sql-query', 'copilot')
+    })
+
+    await act(async () => {
+      elsewhere.click()
+    })
+    expect(guideEngineState.stepIndex).toBe(0)
+  })
+
+  it('finishes the walkthrough when the clicked anchor belongs to the last step', async () => {
+    // Single-step connect guide: clicking the Connect button completes it —
+    // the bubble is gone BEFORE the modal opens instead of lingering under it.
+    const step0 = GUIDE_SEQUENCES['connect'].steps[0]
+    expect(step0.advanceOnAnchorClick).toBe(true)
+    const anchor = mountAnchor(step0.anchor)
+
+    render(<GuideBubbleOverlay />)
+    await act(async () => {
+      guideEngineState.start('connect', 'copilot')
+    })
+
+    await act(async () => {
+      anchor.click()
+    })
+    expect(guideEngineState.status).toBe('idle')
+    expect(mockTrack).toHaveBeenCalledWith(
+      'guide_finished',
+      expect.objectContaining({ sequence_id: 'connect' })
+    )
   })
 
   it('does not start the anchor phase until router.push settles', async () => {
