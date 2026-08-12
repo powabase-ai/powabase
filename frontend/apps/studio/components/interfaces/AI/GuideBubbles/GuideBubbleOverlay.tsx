@@ -142,11 +142,20 @@ export const GuideBubbleOverlay = () => {
         () => {
           if (!stale) guideEngineState.setStatus('waiting_for_anchor')
         },
-        () => {
+        (err: unknown) => {
           if (stale) return
-          import('sonner')
-            .then(({ toast }) => toast('Navigation was declined — ending the walkthrough.'))
-            .catch(() => {})
+          // Two rejection shapes: Next marks a push superseded by a NEWER
+          // navigation with `cancelled: true` (the user went somewhere else —
+          // nothing was "declined", so skip quietly); anything else is a
+          // genuine decline (the unsaved-changes guard's routeChangeStart
+          // throw), which deserves an explanation for the vanishing bubble.
+          const superseded =
+            typeof err === 'object' && err !== null && (err as { cancelled?: boolean }).cancelled
+          if (!superseded) {
+            import('sonner')
+              .then(({ toast }) => toast('Navigation was declined — ending the walkthrough.'))
+              .catch(() => {})
+          }
           guideEngineState.skip()
         }
       )

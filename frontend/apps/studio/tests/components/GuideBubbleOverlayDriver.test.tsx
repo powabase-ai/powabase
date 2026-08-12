@@ -19,16 +19,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 let mockRef: string | undefined = 'test-ref'
 let mockPathname = '/project/[ref]/editor'
 let resolvePush: (() => void) | undefined
-let rejectPush: (() => void) | undefined
+let rejectPush: ((reason?: unknown) => void) | undefined
 const mockPush = vi.fn(
   () =>
     new Promise<boolean>((resolve, reject) => {
       resolvePush = () => resolve(true)
       // Real rejection source in this codebase: usePreventNavigationOnUnsavedChanges
       // throws 'Route change declined' in a routeChangeStart handler.
-      rejectPush = () => reject('Route change declined')
+      rejectPush = (reason: unknown = 'Route change declined') => reject(reason)
     })
 )
+// vi.hoisted: the `ui` package imports sonner at module load, so the mock
+// factory runs before this file's const initializers.
+const { mockToast } = vi.hoisted(() => ({ mockToast: vi.fn() }))
+vi.mock('sonner', () => ({ toast: mockToast }))
 
 vi.mock('next/router', () => ({
   useRouter: () => ({ pathname: mockPathname, push: mockPush }),
@@ -53,8 +57,10 @@ describe('GuideBubbleOverlay driver effect', () => {
     mockRef = 'test-ref'
     mockPathname = '/project/[ref]/editor'
     resolvePush = undefined
+    rejectPush = undefined
     mockPush.mockClear()
     mockTrack.mockClear()
+    mockToast.mockClear()
   })
 
   afterEach(() => {
@@ -106,6 +112,48 @@ describe('GuideBubbleOverlay driver effect', () => {
       'guide_skipped',
       expect.objectContaining({ sequence_id: 'create-table' })
     )
+    expect(mockToast).toHaveBeenCalledWith(expect.stringMatching(/declined/i))
+  })
+
+  it('skips quietly (no "declined" toast) when the push was superseded by another navigation', async () => {
+    // Next rejects a route change cancelled by a NEWER navigation with an
+    // error carrying `cancelled: true` — the user went somewhere else, they
+    // didn't decline anything, so the declined copy would be wrong.
+    mockPathname = '/project/[ref]/sources'
+    render(<GuideBubbleOverlay />)
+    await act(async () => {
+      guideEngineState.start('create-table', 'copilot')
+    })
+
+    await act(async () => {
+      rejectPush!(Object.assign(new Error('Route Cancelled'), { cancelled: true }))
+      await Promise.resolve()
+    })
+    expect(guideEngineState.status).toBe('idle')
+    expect(mockToast).not.toHaveBeenCalled()
+  })
+
+  it('drops a settled push transition after the user skipped mid-navigation (stale guard)', async () => {
+    // The stale guard is load-bearing in both settle branches: without it, a
+    // push resolving AFTER skip() would setStatus('waiting_for_anchor') on an
+    // idle engine, polluting the state for the next start().
+    mockPathname = '/project/[ref]/sources'
+    render(<GuideBubbleOverlay />)
+    await act(async () => {
+      guideEngineState.start('create-table', 'copilot')
+    })
+    expect(mockPush).toHaveBeenCalled()
+
+    await act(async () => {
+      guideEngineState.skip()
+    })
+    expect(guideEngineState.status).toBe('idle')
+
+    await act(async () => {
+      resolvePush!()
+      await Promise.resolve()
+    })
+    expect(guideEngineState.status).toBe('idle')
   })
 
   it('skips the walkthrough after a bounded wait when ref never resolves', async () => {
