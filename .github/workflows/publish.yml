@@ -88,11 +88,12 @@ jobs:
           context: frontend
           file: frontend/apps/studio/Dockerfile
           # NEXT_PUBLIC_* are inlined at build time — must be baked here (billing UI
-          # off). Kept in sync with docker-compose.yml's former build.args.
+          # off; project copilot off — self-host ships it dark). Kept in sync with
+          # docker-compose.yml's former build.args.
           build-args: |
             NEXT_PUBLIC_IS_PLATFORM=false
             NEXT_PUBLIC_SITE_URL=http://localhost:8000
-            NEXT_PUBLIC_DISABLED_FEATURES=billing:all,billing:plan_picker,credits:enabled
+            NEXT_PUBLIC_DISABLED_FEATURES=billing:all,billing:plan_picker,credits:enabled,ai:project_copilot
           platforms: ${{ matrix.platform }}
           # No dry-run branch: every `release: published` run is real, and a push
           # an input can skip is a push that can silently not happen.

@@ -4,6 +4,7 @@
   "account:show_security_settings": true,
 
   "ai:assistant": false,
+  "ai:project_copilot": true,
 
   "ai:opt_in_level_disabled": true,
   "ai:opt_in_level_schema": true,

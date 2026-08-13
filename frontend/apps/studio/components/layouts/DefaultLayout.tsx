@@ -13,7 +13,9 @@ import { LayoutSidebar } from './ProjectLayout/LayoutSidebar'
 import { LayoutSidebarProvider } from './ProjectLayout/LayoutSidebar/LayoutSidebarProvider'
 import { ProjectContextProvider } from './ProjectLayout/ProjectContext'
 import { AppBannerWrapper } from '@/components/interfaces/App/AppBannerWrapper'
+import { GuideBubbleOverlay } from '@/components/interfaces/AI/GuideBubbles/GuideBubbleOverlay'
 import { Sidebar } from '@/components/interfaces/Sidebar'
+import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
 import { useLocalStorageQuery } from '@/hooks/misc/useLocalStorage'
 import { IS_PLATFORM } from '@/lib/constants'
 import { useAppStateSnapshot } from '@/state/app-state'
@@ -41,6 +43,7 @@ export const DefaultLayout = ({
   const { ref } = useParams()
   const router = useRouter()
   const appSnap = useAppStateSnapshot()
+  const projectCopilotEnabled = useIsFeatureEnabled('ai:project_copilot')
 
   const [lastVisitedOrganization] = useLocalStorageQuery(
     LOCAL_STORAGE_KEYS.LAST_VISITED_ORGANIZATION,
@@ -122,6 +125,7 @@ export const DefaultLayout = ({
 
               <BannerStack />
               <StudioMobileSheetNav />
+              {projectCopilotEnabled && <GuideBubbleOverlay />}
             </BannerStackProvider>
           </MobileSheetProvider>
         </ProjectContextProvider>

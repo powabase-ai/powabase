@@ -96,6 +96,9 @@ export const LOCAL_STORAGE_KEYS = {
 
   LAST_OPENED_SIDE_BAR: (ref: string) => `last-opened-sidebar-${ref}`,
 
+  // Project Copilot onboarding welcome modal — shown once per project
+  COPILOT_WELCOME_SEEN: (ref: string) => `copilot-welcome-seen-${ref}`,
+
   // Project sidebar hotkeys
   HOTKEY_SIDEBAR: (sidebarId: string) => `supabase-dashboard-hotkey-sidebar-${sidebarId}`,
 

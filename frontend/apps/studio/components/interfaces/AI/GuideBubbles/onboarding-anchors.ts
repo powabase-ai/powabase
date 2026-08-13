@@ -38,6 +38,7 @@ export const ONBOARDING_ANCHORS = {
   },
   agents: {
     createButton: 'agents.create-button',
+    tabOverview: 'agents.tab-overview',
     tabKnowledgeBases: 'agents.tab-knowledge-bases',
     tabTools: 'agents.tab-tools',
     save: 'agents.save',

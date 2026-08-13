@@ -2,8 +2,75 @@ import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, it, expect } from 'vitest'
 import { ONBOARDING_ANCHORS } from '../onboarding-anchors'
+import { GUIDE_SEQUENCES, GUIDE_SEQUENCE_IDS } from '../guide-sequences'
+import { ANCHOR_NOT_FOUND_TIMEOUT_MS } from '../useAnchorRect'
+
+// Every anchor id value across all groups.
+const anchorValues = new Set(
+  Object.values(ONBOARDING_ANCHORS).flatMap((group) => Object.values(group))
+)
+
+// The 21 canonical ids (must match the Python GUIDE_SEQUENCE_IDS tuple).
+const EXPECTED_IDS = [
+  'connect', 'create-table', 'add-sources', 'create-knowledge-base', 'create-agent',
+  'create-orchestration', 'create-workflow', 'sql-query', 'create-storage-bucket',
+  'add-user', 'create-rls-policy', 'schema-visualizer', 'database-functions',
+  'database-triggers', 'database-indexes', 'database-roles', 'enable-extension',
+  'auth-providers', 'realtime-inspector', 'llm-provider-keys', 'manage-compute',
+]
+
+// Gate keys the useGuideFeatureGates hook maps. A sequence must not
+// declare a gate the hook can't resolve, or it silently reads as enabled.
+const SUPPORTED_GATES = new Set([
+  'project_auth:all', 'project_storage:all', 'realtime:all', 'database:roles',
+])
 
 describe('guide registry', () => {
+  it('exposes exactly the 21 canonical sequence ids', () => {
+    expect(new Set(GUIDE_SEQUENCE_IDS)).toEqual(new Set(EXPECTED_IDS))
+    expect(GUIDE_SEQUENCE_IDS.length).toBe(21)
+  })
+
+  it('keeps each sequence id equal to its map key', () => {
+    for (const [key, seq] of Object.entries(GUIDE_SEQUENCES)) expect(seq.id).toBe(key)
+  })
+
+  it('gives every sequence at least one step', () => {
+    for (const seq of Object.values(GUIDE_SEQUENCES)) expect(seq.steps.length).toBeGreaterThan(0)
+  })
+
+  it('points every step at a defined anchor id', () => {
+    for (const seq of Object.values(GUIDE_SEQUENCES))
+      for (const step of seq.steps) expect(anchorValues.has(step.anchor)).toBe(true)
+  })
+
+  it('only uses feature gates the hook can resolve', () => {
+    for (const seq of Object.values(GUIDE_SEQUENCES))
+      if (seq.featureGate) expect(SUPPORTED_GATES.has(seq.featureGate)).toBe(true)
+  })
+
+  it('exports a positive, bounded not-found timeout', () => {
+    // useAnchorRect's not-found polling must give up eventually (FIX for the
+    // old unbounded-rAF-forever busy-poll) — a zero/negative/absurdly large
+    // value would defeat the point of bounding it.
+    expect(ANCHOR_NOT_FOUND_TIMEOUT_MS).toBeGreaterThan(0)
+    expect(ANCHOR_NOT_FOUND_TIMEOUT_MS).toBeLessThanOrEqual(30_000)
+  })
+
+  it('walks create-agent back to Overview before asking for Save', () => {
+    // The save anchor lives INSIDE the Overview tab, but the preceding steps
+    // leave the user on the Tools tab — without an explicit "open Overview"
+    // step the final instruction floats with nothing highlighted (observed
+    // live). Clicking the Overview tab advances into the save step.
+    const steps = GUIDE_SEQUENCES['create-agent'].steps
+    const overviewIdx = steps.findIndex((s) => s.anchor === ONBOARDING_ANCHORS.agents.tabOverview)
+    const saveIdx = steps.findIndex((s) => s.anchor === ONBOARDING_ANCHORS.agents.save)
+    expect(overviewIdx).toBeGreaterThan(-1)
+    expect(saveIdx).toBe(overviewIdx + 1)
+    expect(steps[overviewIdx].advanceOnAnchorClick).toBe(true)
+    expect(steps[overviewIdx].waitForUserAction).toBe(true)
+  })
+
   it('references every declared anchor constant in a component', () => {
     const root = join(__dirname, '..', '..', '..', '..', '..') // studio app root
     const sources = walk(join(root, 'components'))

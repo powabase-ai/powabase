@@ -182,7 +182,7 @@ services:
       NEXT_PUBLIC_IS_PLATFORM: "false"
       # Inert at runtime — see the build.args comment above; kept here only
       # for parity with NEXT_PUBLIC_IS_PLATFORM's pattern.
-      NEXT_PUBLIC_DISABLED_FEATURES: "billing:all,billing:plan_picker,credits:enabled"
+      NEXT_PUBLIC_DISABLED_FEATURES: "billing:all,billing:plan_picker,credits:enabled,ai:project_copilot"
       NEXT_PUBLIC_SUPABASE_URL: "http://kong:8000"
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${ANON_KEY}
       NEXT_PUBLIC_GOTRUE_URL: "http://kong:8000/auth/v1"
