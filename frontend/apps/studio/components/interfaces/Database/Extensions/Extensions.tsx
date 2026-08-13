@@ -18,6 +18,10 @@ import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
 
 import { ExtensionRow } from './ExtensionRow'
 import { HIDDEN_EXTENSIONS, SEARCH_TERMS } from './Extensions.constants'
+import {
+  onboardingAnchor,
+  ONBOARDING_ANCHORS,
+} from '@/components/interfaces/AI/GuideBubbles/onboarding-anchors'
 import InformationBox from '@/components/ui/InformationBox'
 import { NoSearchResults } from '@/components/ui/NoSearchResults'
 import { useDatabaseExtensionsQuery } from '@/data/database-extensions/database-extensions-query'
@@ -63,6 +67,7 @@ export const Extensions = () => {
     <>
       <div className="mb-4">
         <Input
+          {...onboardingAnchor(ONBOARDING_ANCHORS.database.extensions)}
           size="tiny"
           placeholder="Search for an extension"
           value={filterString}

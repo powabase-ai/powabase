@@ -29,6 +29,7 @@ import {
 } from "ui";
 import { cn } from "@/lib/utils";
 import { StatusPill } from "@/components/interfaces/AI/Shared/StatusPill";
+import { ONBOARDING_ANCHORS } from "@/components/interfaces/AI/GuideBubbles/onboarding-anchors";
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -346,6 +347,7 @@ const SourcesListPage: NextPageWithLayout = () => {
                   />
                   <input
                     type="text"
+                    data-onboarding-id={ONBOARDING_ANCHORS.sources.search}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search sources..."
@@ -383,7 +385,11 @@ const SourcesListPage: NextPageWithLayout = () => {
               {/* New Source dropdown - primary action */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button type="button" className="px-4 py-2 bg-brand-400 hover:bg-brand-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground-muted focus-visible:ring-offset-2 flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    data-onboarding-id={ONBOARDING_ANCHORS.sources.newButton}
+                    className="px-4 py-2 bg-brand-400 hover:bg-brand-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground-muted focus-visible:ring-offset-2 flex items-center gap-1.5"
+                  >
                     <Plus size={14} />
                     New Source
                     <ChevronDown size={14} />
@@ -433,7 +439,7 @@ const SourcesListPage: NextPageWithLayout = () => {
               </div>
             )}
 
-            <div className="border border-muted rounded-lg overflow-x-auto bg-surface-100">
+            <div className="border border-muted rounded-lg overflow-x-auto bg-surface-100" data-onboarding-id={ONBOARDING_ANCHORS.sources.list}>
             {!isLoading && visibleSources.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 px-6">
                 {searchQuery.trim() ? (

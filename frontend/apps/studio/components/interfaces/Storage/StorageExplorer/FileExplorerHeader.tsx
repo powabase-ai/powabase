@@ -47,6 +47,7 @@ import { Input } from 'ui-patterns/DataInputs/Input'
 
 import { STORAGE_SORT_BY, STORAGE_SORT_BY_ORDER, STORAGE_VIEWS } from '../Storage.constants'
 import { useStoragePreference } from './useStoragePreference'
+import { onboardingAnchor, ONBOARDING_ANCHORS } from '@/components/interfaces/AI/GuideBubbles/onboarding-anchors'
 import { ButtonTooltip } from '@/components/ui/ButtonTooltip'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useTrack } from '@/lib/telemetry/track'
@@ -480,6 +481,7 @@ export const FileExplorerHeader = ({
                 type="text"
                 disabled={!canUpdateStorage || breadcrumbs.length === 0}
                 onClick={onSelectUpload}
+                {...onboardingAnchor(ONBOARDING_ANCHORS.storage.upload)}
                 tooltip={{
                   content: {
                     side: 'bottom',

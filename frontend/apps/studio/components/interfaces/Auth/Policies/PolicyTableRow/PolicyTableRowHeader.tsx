@@ -6,6 +6,7 @@ import { AiIconAnimation, Badge, CardTitle } from 'ui'
 
 import type { PolicyTable } from './PolicyTableRow.types'
 import { SIDEBAR_KEYS } from '@/components/layouts/ProjectLayout/LayoutSidebar/LayoutSidebarProvider'
+import { onboardingAnchor, ONBOARDING_ANCHORS } from '@/components/interfaces/AI/GuideBubbles/onboarding-anchors'
 import { ButtonTooltip } from '@/components/ui/ButtonTooltip'
 import { EditorTablePageLink } from '@/data/prefetchers/project.$ref.editor.$id'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
@@ -103,6 +104,7 @@ export const PolicyTableRowHeader = ({
               disabled={!canToggleRLS || !canCreatePolicies}
               onClick={() => onSelectCreatePolicy(table)}
               data-testid={`${table.name}-create-policy`}
+              {...onboardingAnchor(ONBOARDING_ANCHORS.auth.newPolicy)}
               tooltip={{
                 content: {
                   side: 'bottom',

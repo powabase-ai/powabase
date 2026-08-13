@@ -25,6 +25,7 @@ import {
   generateTableFieldFromPostgresTable,
   validateFields,
 } from './TableEditor.utils'
+import { onboardingAnchor, ONBOARDING_ANCHORS } from '@/components/interfaces/AI/GuideBubbles/onboarding-anchors'
 import { useDatabasePublicationsQuery } from '@/data/database-publications/database-publications-query'
 import { CONSTRAINT_TYPE, useTableConstraintsQuery } from '@/data/database/constraints-query'
 import { useForeignKeyConstraintsQuery } from '@/data/database/foreign-key-constraints-query'
@@ -355,6 +356,7 @@ export const TableEditor = ({
           error={errors.name ? String(errors.name) : undefined}
           value={tableFields?.name}
           onChange={(event) => onUpdateField({ name: event.target.value })}
+          {...onboardingAnchor(ONBOARDING_ANCHORS.tables.name)}
         />
         <Input
           label="Description"
@@ -372,6 +374,7 @@ export const TableEditor = ({
       <SidePanel.Content className="space-y-10 py-6">
         <Checkbox
           id="enable-rls"
+          {...onboardingAnchor(ONBOARDING_ANCHORS.tables.rls)}
           // @ts-ignore
           label={
             <div className="flex items-center space-x-2">

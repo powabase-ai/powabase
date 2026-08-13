@@ -1,6 +1,8 @@
 import { Loader2 } from 'lucide-react'
 import { Button, KeyboardShortcut } from 'ui'
 
+import { onboardingAnchor, ONBOARDING_ANCHORS } from '@/components/interfaces/AI/GuideBubbles/onboarding-anchors'
+
 interface SqlRunButtonProps {
   isDisabled?: boolean
   isExecuting?: boolean
@@ -23,6 +25,7 @@ export const SqlRunButton = ({
       type="primary"
       size="tiny"
       data-testid="sql-run-button"
+      {...onboardingAnchor(ONBOARDING_ANCHORS.sql.run)}
       iconRight={
         isExecuting ? (
           <Loader2 className="animate-spin" size={10} strokeWidth={1.5} />

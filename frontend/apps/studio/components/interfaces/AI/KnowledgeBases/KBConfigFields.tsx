@@ -5,6 +5,7 @@ import {
   type JsonSchemaField,
 } from "@/components/interfaces/AI/KnowledgeBases/JsonSchemaEditor";
 import { KBModelSelect } from "@/components/interfaces/AI/KnowledgeBases/KBModelSelect";
+import { ONBOARDING_ANCHORS } from "@/components/interfaces/AI/GuideBubbles/onboarding-anchors";
 
 export function isValidInt(s: string, min: number): boolean {
   const n = Number(s);
@@ -172,6 +173,7 @@ export function KBConfigFields({
       <div>
         <label className="block text-sm text-foreground-light mb-1.5">Indexing strategy</label>
         <select
+          data-onboarding-id={ONBOARDING_ANCHORS.knowledgeBases.indexingStrategy}
           value={indexingStrategy}
           onChange={(e) => onIndexingStrategyChange(e.target.value)}
           className="w-full px-4 py-2.5 bg-surface-200 border border-default rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-brand-400"

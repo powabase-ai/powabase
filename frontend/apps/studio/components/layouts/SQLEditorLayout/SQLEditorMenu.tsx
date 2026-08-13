@@ -24,6 +24,7 @@ import {
 
 import { SearchList } from './SQLEditorNavV2/SearchList'
 import { SQLEditorNav } from './SQLEditorNavV2/SQLEditorNav'
+import { onboardingAnchor, ONBOARDING_ANCHORS } from '@/components/interfaces/AI/GuideBubbles/onboarding-anchors'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useLocalStorage } from '@/hooks/misc/useLocalStorage'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
@@ -141,6 +142,7 @@ export const SQLEditorMenu = () => {
                 type="default"
                 icon={<Plus className="text-foreground" />}
                 className="w-[26px]"
+                {...onboardingAnchor(ONBOARDING_ANCHORS.sql.newQuery)}
               />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" side="bottom" className="w-48">

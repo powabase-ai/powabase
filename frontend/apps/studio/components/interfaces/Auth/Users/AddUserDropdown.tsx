@@ -5,6 +5,7 @@ import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '
 
 import CreateUserModal from './CreateUserModal'
 import InviteUserModal from './InviteUserModal'
+import { onboardingAnchor, ONBOARDING_ANCHORS } from '@/components/interfaces/AI/GuideBubbles/onboarding-anchors'
 import { DropdownMenuItemTooltip } from '@/components/ui/DropdownMenuItemTooltip'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
@@ -34,7 +35,11 @@ export const AddUserDropdown = () => {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button type="primary" iconRight={<ChevronDown size={14} strokeWidth={1.5} />}>
+          <Button
+            type="primary"
+            iconRight={<ChevronDown size={14} strokeWidth={1.5} />}
+            {...onboardingAnchor(ONBOARDING_ANCHORS.auth.addUser)}
+          >
             Add user
           </Button>
         </DropdownMenuTrigger>

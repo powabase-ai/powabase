@@ -21,6 +21,10 @@ import { GenericSkeletonLoader, ShimmeringLoader } from 'ui-patterns/ShimmeringL
 
 import { ProtectedSchemaWarning } from '../ProtectedSchemaWarning'
 import { CreateIndexSidePanel } from './CreateIndexSidePanel'
+import {
+  onboardingAnchor,
+  ONBOARDING_ANCHORS,
+} from '@/components/interfaces/AI/GuideBubbles/onboarding-anchors'
 import AlertError from '@/components/ui/AlertError'
 import CodeEditor from '@/components/ui/CodeEditor/CodeEditor'
 import SchemaSelector from '@/components/ui/SchemaSelector'
@@ -157,6 +161,7 @@ const Indexes = () => {
 
             {!isSchemaLocked && (
               <Button
+                {...onboardingAnchor(ONBOARDING_ANCHORS.database.createIndex)}
                 className="ml-auto flex-grow lg:flex-grow-0"
                 type="primary"
                 onClick={() => setShowCreateIndex(true)}

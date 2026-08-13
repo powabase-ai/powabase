@@ -23,6 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "ui";
 import { cn } from "@/lib/utils";
+import { ONBOARDING_ANCHORS } from "@/components/interfaces/AI/GuideBubbles/onboarding-anchors";
 import DefaultLayout from "@/components/layouts/DefaultLayout";
 import AILayout from "@/components/layouts/AILayout/AILayout";
 import type { NextPageWithLayout } from "@/types";
@@ -251,6 +252,7 @@ const WorkflowsListPage: NextPageWithLayout = () => {
           <button
             type="button"
             onClick={() => setShowCreateModal(true)}
+            data-onboarding-id={ONBOARDING_ANCHORS.workflows.createButton}
             className="px-4 py-2 bg-brand-400 hover:bg-brand-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground-muted focus-visible:ring-offset-2 flex items-center gap-1.5"
           >
             <Plus size={14} />

@@ -7,6 +7,10 @@ import { ChooseChannelPopover } from './ChooseChannelPopover'
 import { RealtimeFilterPopover } from './RealtimeFilterPopover'
 import { RealtimeTokensPopover } from './RealtimeTokensPopover'
 import { RealtimeConfig } from './useRealtimeMessages'
+import {
+  onboardingAnchor,
+  ONBOARDING_ANCHORS,
+} from '@/components/interfaces/AI/GuideBubbles/onboarding-anchors'
 import { ButtonTooltip } from '@/components/ui/ButtonTooltip'
 import { getTemporaryAPIKey } from '@/data/api-keys/temp-api-keys-query'
 import { useSendEventMutation } from '@/data/telemetry/send-event-mutation'
@@ -34,6 +38,7 @@ export const Header = ({ config, onChangeConfig }: HeaderProps) => {
         <ChooseChannelPopover config={config} onChangeConfig={onChangeConfig} />
         <RealtimeTokensPopover config={config} onChangeConfig={onChangeConfig} />
         <ButtonTooltip
+          {...onboardingAnchor(ONBOARDING_ANCHORS.realtime.inspector)}
           size="tiny"
           type={config.enabled ? 'warning' : 'primary'}
           className="rounded-l-none border-l-0"

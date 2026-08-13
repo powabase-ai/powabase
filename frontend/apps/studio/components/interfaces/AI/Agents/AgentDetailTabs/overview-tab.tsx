@@ -7,6 +7,7 @@ import { useProjectSupabaseClient } from "@/hooks/ai/useProjectSupabaseClient";
 import { ModelSelector } from "@/components/interfaces/AI/Agents/ModelSelector";
 import { FieldLabel } from "@/components/interfaces/AI/Shared/InfoTooltip";
 import { ModelSelectionInfoBody } from "@/components/interfaces/AI/Shared/ModelSelectionInfo";
+import { ONBOARDING_ANCHORS } from "@/components/interfaces/AI/GuideBubbles/onboarding-anchors";
 
 interface OverviewTabProps {
   agent: Agent;
@@ -161,6 +162,7 @@ export function OverviewTab({ agent, stats, onAgentUpdate }: OverviewTabProps) {
           type="button"
           onClick={handleSave}
           disabled={isSaving}
+          data-onboarding-id={ONBOARDING_ANCHORS.agents.save}
           className="px-4 py-2 bg-brand-400 hover:bg-brand-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground-muted focus-visible:ring-offset-2"
         >
           {isSaving ? "Saving..." : "Save"}

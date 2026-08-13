@@ -1,6 +1,10 @@
 import { Plus } from 'lucide-react'
 import { AiIconAnimation } from 'ui'
 
+import {
+  onboardingAnchor,
+  ONBOARDING_ANCHORS,
+} from '@/components/interfaces/AI/GuideBubbles/onboarding-anchors'
 import { SIDEBAR_KEYS } from '@/components/layouts/ProjectLayout/LayoutSidebar/LayoutSidebarProvider'
 import { ButtonTooltip } from '@/components/ui/ButtonTooltip'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
@@ -31,6 +35,7 @@ export const CreateTriggerButtons = ({
   return (
     <div className="flex items-center gap-x-2">
       <ButtonTooltip
+        {...onboardingAnchor(ONBOARDING_ANCHORS.database.newTrigger)}
         type={buttonType}
         disabled={!hasTables || !canCreateTriggers}
         onClick={onCreateTrigger}

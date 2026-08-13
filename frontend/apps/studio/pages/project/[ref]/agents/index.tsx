@@ -10,6 +10,7 @@ import { usePaginatedList } from "@/hooks/usePaginatedList";
 import { HorizontalCard } from "@/components/interfaces/AI/Shared/HorizontalCard";
 import type { HorizontalCardBadgeSpec } from "@/components/interfaces/AI/Shared/HorizontalCard";
 import { CreateAgentModal } from "@/components/interfaces/AI/Agents/CreateAgentModal";
+import { ONBOARDING_ANCHORS } from "@/components/interfaces/AI/GuideBubbles/onboarding-anchors";
 import {
   Button_Shadcn_ as Button,
   DropdownMenu,
@@ -201,6 +202,7 @@ const AgentsListPage: NextPageWithLayout = () => {
           </div>
           <button
             type="button"
+            data-onboarding-id={ONBOARDING_ANCHORS.agents.createButton}
             onClick={() => setShowCreateModal(true)}
             className="px-4 py-2 bg-brand-400 hover:bg-brand-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground-muted focus-visible:ring-offset-2 flex items-center gap-1.5"
           >
