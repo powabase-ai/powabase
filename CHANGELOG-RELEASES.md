@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.0](https://github.com/powabase-ai/powabase/compare/v0.4.1...v0.5.0) (2026-08-13)
+
+
+### Features
+
+* **copilot:** project copilot panel + guide walkthroughs ([#34](https://github.com/powabase-ai/powabase/issues/34)) ([f8745ce](https://github.com/powabase-ai/powabase/commit/f8745ce078a7cbe7778579ee98bbdf52503ae6db))
+* **onboarding:** data-onboarding-id anchor primitive ([#33](https://github.com/powabase-ai/powabase/issues/33)) ([da1c4e6](https://github.com/powabase-ai/powabase/commit/da1c4e6189b7f7dbaf39a00d8d430cdbe9635366))
+
 ## [0.4.1](https://github.com/powabase-ai/powabase/compare/v0.4.0...v0.4.1) (2026-08-10)
 
 
