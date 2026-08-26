@@ -111,7 +111,7 @@ export const ProjectLayout = forwardRef<HTMLDivElement, PropsWithChildren<Projec
   ) => {
     const router = useRouter()
     const { data: selectedOrganization } = useSelectedOrganizationQuery()
-    const { data: selectedProject } = useSelectedProjectQuery()
+    const { data: selectedProject, isLoading: isProjectDetailLoading } = useSelectedProjectQuery()
     const { addBanner, dismissBanner } = useBannerStack()
     const { data: resourceWarnings } = useResourceWarningsQuery({
       slug: selectedOrganization?.slug,
@@ -169,14 +169,15 @@ export const ProjectLayout = forwardRef<HTMLDivElement, PropsWithChildren<Projec
     // A project whose stack is not serving has no product to show a menu for.
     // The route-supplied menu would mount its data queries (the editor's
     // entity list, for one) before ContentWrapper's redirect fires, so it is
-    // neither rendered nor registered for the mobile sheet in those states.
+    // neither rendered nor registered for the mobile sheet in those states —
+    // nor while the detail is still loading and the status is not yet known.
     const isStackServing = !(
       selectedProject?.status === PROJECT_STATUS.COMING_UP ||
       selectedProject?.status === PROJECT_STATUS.UNKNOWN ||
       selectedProject?.status === PROJECT_STATUS.INIT_FAILED ||
       selectedProject?.status === PROJECT_STATUS.GOING_DOWN
     )
-    const routeProductMenu = isStackServing ? productMenu : undefined
+    const routeProductMenu = isStackServing && !isProjectDetailLoading ? productMenu : undefined
 
     const ignorePausedState =
       router.pathname === '/project/[ref]' ||
