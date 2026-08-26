@@ -21,7 +21,11 @@ export function resolveCreateIntentKey(
   return { key: generate(), fingerprint }
 }
 
-/** The body as sent — exactly what the platform hashes, no more and no less. */
+/**
+ * The body as sent. The platform compares a canonical subset of it, so this
+ * is a conservative superset: a reused key can never be rejected as a
+ * different request, and only a genuinely different submission rotates it.
+ */
 export function createIntentFingerprint(body: unknown): string {
   return JSON.stringify(body)
 }

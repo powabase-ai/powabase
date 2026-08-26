@@ -112,8 +112,11 @@ export function buildCreateProjectBody({
 }
 
 export async function createProject(vars: ProjectCreateVariables, idempotencyKey: string) {
-  const body = buildCreateProjectBody(vars)
+  return sendCreateProject(buildCreateProjectBody(vars), idempotencyKey)
+}
 
+/** Sends one already-built body — the same object the intent key was derived from. */
+async function sendCreateProject(body: CreateProjectBodyWithKeys, idempotencyKey: string) {
   const { data, error } = await post(`/platform/projects`, {
     body,
     headers: { 'Idempotency-Key': idempotencyKey },
@@ -143,12 +146,13 @@ export const useProjectCreateMutation = ({
 
   return useMutation<ProjectCreateData, ResponseError, ProjectCreateVariables>({
     mutationFn: (vars) => {
+      const body = buildCreateProjectBody(vars)
       intentKey.current = resolveCreateIntentKey(
         intentKey.current,
-        createIntentFingerprint(buildCreateProjectBody(vars)),
+        createIntentFingerprint(body),
         uuidv4
       )
-      return createProject(vars, intentKey.current.key)
+      return sendCreateProject(body, intentKey.current.key)
     },
     async onSuccess(data, variables, context) {
       await invalidateProjectsQuery()
