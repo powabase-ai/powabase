@@ -4,7 +4,8 @@ import { useCallback } from 'react'
 import { authKeys } from './keys'
 import type { components } from '@/data/api'
 import { get, handleError } from '@/data/fetchers'
-import { IS_PLATFORM } from '@/lib/constants'
+import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
+import { IS_PLATFORM, PROJECT_STATUS } from '@/lib/constants'
 import type { ResponseError, UseCustomQueryOptions } from '@/types'
 
 export type AuthConfigVariables = {
@@ -37,13 +38,24 @@ export const useAuthConfigQuery = <TData = ProjectAuthConfigData>(
     enabled = true,
     ...options
   }: UseCustomQueryOptions<ProjectAuthConfigData, ProjectAuthConfigError, TData> = {}
-) =>
-  useQuery<ProjectAuthConfigData, ProjectAuthConfigError, TData>({
+) => {
+  // Mounted on every page by the command menu: hold it until the project's
+  // stack is serving, or it 503s on a project that is still being set up.
+  const { data: project } = useSelectedProjectQuery()
+  const isActive = project?.status === PROJECT_STATUS.ACTIVE_HEALTHY
+
+  return useQuery<ProjectAuthConfigData, ProjectAuthConfigError, TData>({
     queryKey: authKeys.authConfig(projectRef),
     queryFn: ({ signal }) => getProjectAuthConfig({ projectRef }, signal),
-    enabled: enabled && IS_PLATFORM && typeof projectRef !== 'undefined' && projectRef !== '_',
+    enabled:
+      enabled &&
+      IS_PLATFORM &&
+      typeof projectRef !== 'undefined' &&
+      projectRef !== '_' &&
+      isActive,
     ...options,
   })
+}
 
 export const useAuthConfigPrefetch = ({ projectRef }: AuthConfigVariables) => {
   const client = useQueryClient()

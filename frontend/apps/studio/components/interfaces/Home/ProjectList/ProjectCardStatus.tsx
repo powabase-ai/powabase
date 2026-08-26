@@ -57,7 +57,9 @@ export const ProjectCardStatus = ({
       case 'isResizing':
         return renderMode === 'badge' ? 'Resizing' : 'Project is resizing'
       case 'isComingUp':
-        return renderMode === 'badge' ? 'Starting' : 'Project is coming up'
+        return renderMode === 'badge' ? 'Setting up' : 'Project is being set up'
+      case 'isInitFailed':
+        return renderMode === 'badge' ? 'Setup failed' : 'Project setup failed'
       case 'isRestoring':
         return renderMode === 'badge' ? 'Restoring' : 'Project is restoring'
       case 'isUpgrading':
@@ -90,6 +92,8 @@ export const ProjectCardStatus = ({
       case 'isRestoring':
       case 'isUpgrading':
         return 'Your project will be ready in a few minutes'
+      case 'isInitFailed':
+        return 'Open the project to retry the setup or delete it'
       case 'isRestoreFailed':
       case 'isPauseFailed':
         return 'Please contact support for assistance'
@@ -136,7 +140,8 @@ export const ProjectCardStatus = ({
       ? 'destructive'
       : activeWarnings.length > 0 ||
           projectStatus === 'isPauseFailed' ||
-          projectStatus === 'isRestoreFailed'
+          projectStatus === 'isRestoreFailed' ||
+          projectStatus === 'isInitFailed'
         ? 'warning'
         : projectStatus === 'isHealthy'
           ? 'success'

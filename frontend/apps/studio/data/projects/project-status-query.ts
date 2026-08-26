@@ -1,11 +1,18 @@
 import { useQuery } from '@tanstack/react-query'
 
 import { projectKeys } from './keys'
+import type { ProjectProvisioning } from './provisioning'
 import { get, handleError } from '@/data/fetchers'
 import type { ResponseError, UseCustomQueryOptions } from '@/types'
 
 export type ProjectStatusVariables = {
   projectRef?: string
+}
+
+export type ProjectStatusResponse = {
+  status: string
+  state?: string
+  provisioning?: ProjectProvisioning | null
 }
 
 export async function getProjectStatus(
@@ -20,7 +27,7 @@ export async function getProjectStatus(
   })
 
   if (error) handleError(error)
-  return data as { status: string }
+  return data as ProjectStatusResponse
 }
 
 export type ProjectStatusData = Awaited<ReturnType<typeof getProjectStatus>>

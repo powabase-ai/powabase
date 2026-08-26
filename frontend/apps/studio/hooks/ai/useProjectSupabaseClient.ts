@@ -4,6 +4,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 import { useProjectDetailQuery } from '@/data/projects/project-detail-query'
 import { hasAiAuth } from '@/lib/ai-api'
+import { PROJECT_STATUS } from '@/lib/constants'
 
 // ── Database types for the ai schema ──────────────────────────────────
 
@@ -210,6 +211,13 @@ export function useProjectSupabaseClient(): UseProjectSupabaseClientReturn {
     // alwaysLoggedIn), so hasAiAuth is always true and readiness depends
     // only on the project detail load; the project-api proxy injects the
     // real service_role credential server-side regardless.
-    isReady: !isLoading && !!project && hasAiAuth(token),
+    // Both: a project that is still being set up, failed set-up, or is being
+    // deleted has no reachable data plane — the platform answers 503 — so
+    // readiness also requires ACTIVE_HEALTHY (paused rows report it too).
+    isReady:
+      !isLoading &&
+      !!project &&
+      project.status === PROJECT_STATUS.ACTIVE_HEALTHY &&
+      hasAiAuth(token),
   }
 }

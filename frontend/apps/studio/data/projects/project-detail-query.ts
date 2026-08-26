@@ -3,6 +3,7 @@ import { useCallback } from 'react'
 
 import { projectKeys } from './keys'
 import { OrgProjectsResponse } from './org-projects-infinite-query'
+import type { ProjectProvisioning } from './provisioning'
 import type { components } from '@/data/api'
 import { get, handleError, isValidConnString } from '@/data/fetchers'
 import type { ResponseError, UseCustomQueryOptions } from '@/types'
@@ -22,6 +23,10 @@ export interface Project extends Omit<ProjectDetail, 'status'> {
   state?: string
   paused_at?: string | null
   pause_cause?: string | null
+  // Async provisioning: null for rows that never went through the
+  // asynchronous create path (legacy rows, and every row while the
+  // platform's asynchronous accept is off).
+  provisioning?: ProjectProvisioning | null
 }
 
 export async function getProjectDetail(
@@ -44,6 +49,30 @@ export async function getProjectDetail(
 export type ProjectDetailData = Awaited<ReturnType<typeof getProjectDetail>>
 export type ProjectDetailError = ResponseError
 
+/** Statuses during which the detail is re-read every few seconds until it settles. */
+export const POLLED_PROJECT_STATUSES: readonly string[] = ['COMING_UP', 'UNKNOWN', 'GOING_DOWN']
+
+/** Statuses that will not change without a user action — never poll on them. */
+export const TERMINAL_PROJECT_STATUSES: readonly string[] = ['INIT_FAILED']
+
+/**
+ * Keep polling while the project is still moving (building, unknown, or being
+ * torn down — the latter ends in a 404 the layout turns into a redirect), or
+ * while it has no usable connection string yet. A terminal status wins over
+ * the missing connection string: a failed set-up has none, and only a retry
+ * (whose mutation refetches the detail) moves it on.
+ */
+export function shouldPollProjectDetail(
+  status: string | undefined,
+  connectionString: string | null | undefined
+): boolean {
+  if (status !== undefined && TERMINAL_PROJECT_STATUSES.includes(status)) return false
+  return (
+    (status !== undefined && POLLED_PROJECT_STATUSES.includes(status)) ||
+    !isValidConnString(connectionString)
+  )
+}
+
 export const useProjectDetailQuery = <TData = ProjectDetailData>(
   { ref }: ProjectDetailVariables,
   {
@@ -58,14 +87,7 @@ export const useProjectDetailQuery = <TData = ProjectDetailData>(
     staleTime: 30 * 1000,
     refetchInterval: (query) => {
       const data = query.state.data
-      const status = data && data.status
-      const connectionString = data && data.connectionString
-
-      if (status === 'COMING_UP' || status === 'UNKNOWN' || !isValidConnString(connectionString)) {
-        return 5 * 1000 // 5 seconds
-      }
-
-      return false
+      return shouldPollProjectDetail(data?.status, data?.connectionString) ? 5 * 1000 : false
     },
     ...options,
   })

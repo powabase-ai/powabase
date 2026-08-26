@@ -8,6 +8,7 @@ import { ENTITY_TYPE } from '@/data/entity-types/entity-type-constants'
 import { prefetchEntityTypes } from '@/data/entity-types/entity-types-infinite-query'
 import { useLocalStorage } from '@/hooks/misc/useLocalStorage'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
+import { PROJECT_STATUS } from '@/lib/constants'
 
 export function usePrefetchEditorIndexPage() {
   const router = useRouter()
@@ -20,7 +21,9 @@ export function usePrefetchEditorIndexPage() {
   )
 
   return useCallback(() => {
-    if (!project) return
+    // The editor has nothing to prefetch — and the platform answers 503 —
+    // until the project's stack is serving.
+    if (!project || project.status !== PROJECT_STATUS.ACTIVE_HEALTHY) return
 
     // Prefetch code
     router.prefetch(`/project/${project.ref}/editor`)

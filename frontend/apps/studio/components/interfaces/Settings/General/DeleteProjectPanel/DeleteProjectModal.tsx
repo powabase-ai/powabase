@@ -81,14 +81,33 @@ export const DeleteProjectModal = ({
         }
       }
 
-      toast.success(`Successfully deleted ${project?.name}`)
+      // A completed delete (200) and an accepted one (202 — the platform
+      // finishes it in the background) both leave the project unusable and
+      // out of every list: one message, one destination.
+      toast.success(`${project?.name} has been removed`)
 
-      // Only redirect if still viewing the deleted project
+      // Only redirect if still viewing the deleted project — and finish the
+      // navigation before the mutation clears this project's detail cache,
+      // which a still-mounted project page would otherwise re-read. A
+      // navigation that fails must not abort that cleanup: the project is
+      // gone either way. Removing the detail does not make a mounted page
+      // refetch it, so nothing would move the user off the deleted route on
+      // its own — if the soft navigation was rejected and the browser is
+      // still there, a hard one always does. A push that resolves false was
+      // superseded by a newer navigation, which moves the user itself.
       if (router.asPath.startsWith(`/project/${projectRef}`)) {
-        if (lastVisitedOrganization) {
-          router.push(`/org/${lastVisitedOrganization}`)
-        } else {
-          router.push('/organizations')
+        const destination = lastVisitedOrganization
+          ? `/org/${lastVisitedOrganization}`
+          : '/organizations'
+        const rejected = await router.push(destination).then(
+          () => false,
+          () => true
+        )
+        if (
+          rejected &&
+          window.location.pathname.startsWith(`${router.basePath}/project/${projectRef}`)
+        ) {
+          window.location.assign(`${router.basePath}${destination}`)
         }
       }
     },
