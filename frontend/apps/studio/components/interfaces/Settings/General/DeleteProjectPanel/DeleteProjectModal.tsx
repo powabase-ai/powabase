@@ -90,13 +90,18 @@ export const DeleteProjectModal = ({
       // navigation before the mutation clears this project's detail cache,
       // which a still-mounted project page would otherwise re-read. A
       // navigation that is cancelled or fails must not abort that cleanup:
-      // the project is gone either way, and a page left on it is sent away
-      // by the detail's 404.
+      // the project is gone either way. Removing the detail does not make a
+      // mounted page refetch it, so nothing would move the user off the
+      // deleted route on its own — if the soft navigation did not happen and
+      // the browser is still there, a hard one always does.
       if (router.asPath.startsWith(`/project/${projectRef}`)) {
         const destination = lastVisitedOrganization
           ? `/org/${lastVisitedOrganization}`
           : '/organizations'
-        await router.push(destination).catch(() => false)
+        const navigated = await router.push(destination).catch(() => false)
+        if (!navigated && window.location.pathname.startsWith(`/project/${projectRef}`)) {
+          window.location.assign(destination)
+        }
       }
     },
   })
