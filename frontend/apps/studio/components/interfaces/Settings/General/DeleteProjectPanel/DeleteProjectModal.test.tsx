@@ -1,15 +1,18 @@
 import { render } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { mockUseDelete, mockPush, mockToastSuccess, mockToastError } = vi.hoisted(() => ({
-  mockUseDelete: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
-  mockPush: vi.fn(),
-  mockToastSuccess: vi.fn(),
-  mockToastError: vi.fn(),
-}))
+const { mockUseDelete, mockPush, mockToastSuccess, mockToastError, mockRouterState } = vi.hoisted(
+  () => ({
+    mockUseDelete: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+    mockPush: vi.fn(),
+    mockToastSuccess: vi.fn(),
+    mockToastError: vi.fn(),
+    mockRouterState: { basePath: '' },
+  })
+)
 
 vi.mock('next/router', () => ({
-  useRouter: () => ({ asPath: '/project/abc', push: mockPush }),
+  useRouter: () => ({ asPath: '/project/abc', basePath: mockRouterState.basePath, push: mockPush }),
 }))
 vi.mock('sonner', () => ({ toast: { success: mockToastSuccess, error: mockToastError } }))
 vi.mock('ui', () => ({ Input: () => null }))
@@ -43,6 +46,7 @@ describe('DeleteProjectModal success handling', () => {
     mockToastError.mockReset()
     mockUseDelete.mockClear()
     mockAssign.mockReset()
+    mockRouterState.basePath = ''
     // jsdom's Location cannot be spied on; stand in a location that is still
     // on the deleted project's route, with an observable hard navigation.
     Object.defineProperty(window, 'location', {
@@ -57,7 +61,9 @@ describe('DeleteProjectModal success handling', () => {
 
   it('announces the removal neutrally and finishes navigating before it returns', async () => {
     let releasePush!: () => void
-    mockPush.mockImplementation(() => new Promise<void>((resolve) => (releasePush = resolve)))
+    mockPush.mockImplementation(
+      () => new Promise<boolean>((resolve) => (releasePush = () => resolve(true)))
+    )
     render(<DeleteProjectModal visible onClose={() => {}} />)
 
     const { onSuccess } = (mockUseDelete.mock.calls[0] as any)[0]
@@ -76,6 +82,7 @@ describe('DeleteProjectModal success handling', () => {
     releasePush()
     await pending
     expect(settled).toBe(true)
+    expect(mockAssign).not.toHaveBeenCalled()
   })
 
   it('still returns normally when the navigation is rejected — the cache cleanup that follows must run', async () => {
@@ -92,24 +99,35 @@ describe('DeleteProjectModal success handling', () => {
     expect(mockAssign).toHaveBeenCalledWith('/org/org-1')
   })
 
-  it('still returns normally when the navigation resolves false — a cancelled route change', async () => {
+  it('leaves a push that resolved false alone — a newer navigation superseded it and moves the user', async () => {
     mockPush.mockResolvedValue(false)
     render(<DeleteProjectModal visible onClose={() => {}} />)
 
     const { onSuccess } = (mockUseDelete.mock.calls[0] as any)[0]
     await expect(onSuccess()).resolves.toBeUndefined()
     expect(mockToastSuccess).toHaveBeenCalledTimes(1)
-    expect(mockAssign).toHaveBeenCalledWith('/org/org-1')
+    expect(mockAssign).not.toHaveBeenCalled()
   })
 
-  it('does not hard-navigate when the soft navigation succeeded, or when the browser has already left the route', async () => {
+  it('keeps the base path in the stranded-route check and the hard navigation', async () => {
+    mockRouterState.basePath = '/studio'
+    ;(window.location as any).pathname = '/studio/project/abc'
+    mockPush.mockRejectedValue(new Error('Route Cancelled'))
+    render(<DeleteProjectModal visible onClose={() => {}} />)
+
+    const { onSuccess } = (mockUseDelete.mock.calls[0] as any)[0]
+    await onSuccess()
+    expect(mockAssign).toHaveBeenCalledWith('/studio/org/org-1')
+  })
+
+  it('does not hard-navigate when the soft navigation succeeded, or when a rejected one finds the browser already elsewhere', async () => {
     mockPush.mockResolvedValue(true)
     render(<DeleteProjectModal visible onClose={() => {}} />)
     const { onSuccess } = (mockUseDelete.mock.calls[0] as any)[0]
     await onSuccess()
     expect(mockAssign).not.toHaveBeenCalled()
 
-    mockPush.mockResolvedValue(false)
+    mockPush.mockRejectedValue(new Error('Route Cancelled'))
     ;(window.location as any).pathname = '/org/org-1'
     await onSuccess()
     expect(mockAssign).not.toHaveBeenCalled()
