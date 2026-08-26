@@ -34,7 +34,7 @@ export type OrgProjectsResponse = components['schemas']['OrganizationProjectsRes
 // the OpenAPI fields keep typechecking.
 export type OrgProject = OrgProjectsResponse['projects'][number] & {
   id?: string
-  // Control-plane lifecycle fields (async provisioning); absent upstream.
+  // Platform lifecycle fields (async provisioning); absent upstream.
   state?: string
   provisioning?: ProjectProvisioning | null
 }
