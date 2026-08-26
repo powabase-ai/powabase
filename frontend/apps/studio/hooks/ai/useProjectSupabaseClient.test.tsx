@@ -8,7 +8,7 @@ const { mockProject } = vi.hoisted(() => ({
 vi.mock('common', async (importOriginal) => ({
   ...(await importOriginal<typeof import('common')>()),
   useParams: () => ({ ref: 'default' }),
-  getAccessToken: () => Promise.resolve('token'),
+  getAccessToken: () => Promise.resolve(''),
 }))
 vi.mock('@/data/projects/project-detail-query', () => ({
   useProjectDetailQuery: () => ({ data: mockProject.current, isLoading: false }),

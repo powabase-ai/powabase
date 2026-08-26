@@ -37,7 +37,7 @@ describe('useBucketNumberEstimateQuery data-plane gate (command-menu search moun
   beforeEach(() => {
     mockExecuteSql.mockReset()
     mockGet.mockReset()
-    mockExecuteSql.mockResolvedValue({ result: [{ count: 0 }] })
+    mockExecuteSql.mockResolvedValue({ result: [{ live_tuple_estimate: 0 }] })
     mockGet.mockResolvedValue({ data: [], error: undefined })
   })
 
