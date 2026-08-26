@@ -103,6 +103,18 @@ describe('useProjectCreateMutation intent key', () => {
     expect(sentKey(1)).toBe(sentKey(0))
   })
 
+  it('keys the intent on the body as sent: variables that normalise to the same body share a key', async () => {
+    const { result } = renderHook(() => useProjectCreateMutation(), { wrapper })
+    await act(async () => {
+      await result.current.mutateAsync({ ...vars, aiProviderKeys: { openai: '' } })
+    })
+    await act(async () => {
+      await result.current.mutateAsync({ ...vars, aiProviderKeys: { openai: undefined } })
+    })
+    expect(mockPost.mock.calls[0][1].body).toEqual(mockPost.mock.calls[1][1].body)
+    expect(sentKey(1)).toBe(sentKey(0))
+  })
+
   it('remembers only the latest submitted body: A → B → A issues three keys', async () => {
     const { result } = renderHook(() => useProjectCreateMutation(), { wrapper })
     for (const body of [vars, { ...vars, name: 'other' }, vars]) {

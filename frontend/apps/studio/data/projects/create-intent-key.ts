@@ -21,7 +21,7 @@ export function resolveCreateIntentKey(
   return { key: generate(), fingerprint }
 }
 
-/** The whole request, so it is a superset of whatever the platform hashes. */
-export function createIntentFingerprint(vars: unknown): string {
-  return JSON.stringify(vars)
+/** The body as sent — exactly what the platform hashes, no more and no less. */
+export function createIntentFingerprint(body: unknown): string {
+  return JSON.stringify(body)
 }

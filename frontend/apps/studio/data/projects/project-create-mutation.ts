@@ -58,29 +58,32 @@ export type ProjectCreateVariables = {
   computeSizeId?: string
 }
 
-export async function createProject(
-  {
-    name,
-    organizationSlug,
-    dbPass,
-    dbRegion,
-    regionSelection,
-    dbSql,
-    cloudProvider = PROVIDERS.AWS.id,
-    authSiteUrl,
-    customSupabaseRequest,
-    dbInstanceSize,
-    dataApiExposedSchemas,
-    dataApiUseApiSchema,
-    postgresEngine,
-    releaseChannel,
-    highAvailability,
-    aiProviderKeys = {},
-    computeSizeId,
-  }: ProjectCreateVariables,
-  idempotencyKey: string
-) {
-  const body: CreateProjectBodyWithKeys = {
+/**
+ * The exact body the create request carries, built from the form's
+ * variables. Exported so the idempotency fingerprint covers what the
+ * platform actually receives — two variable objects that normalise to the
+ * same body (an empty provider key and an absent one, say) are one intent.
+ */
+export function buildCreateProjectBody({
+  name,
+  organizationSlug,
+  dbPass,
+  dbRegion,
+  regionSelection,
+  dbSql,
+  cloudProvider = PROVIDERS.AWS.id,
+  authSiteUrl,
+  customSupabaseRequest,
+  dbInstanceSize,
+  dataApiExposedSchemas,
+  dataApiUseApiSchema,
+  postgresEngine,
+  releaseChannel,
+  highAvailability,
+  aiProviderKeys = {},
+  computeSizeId,
+}: ProjectCreateVariables): CreateProjectBodyWithKeys {
+  return {
     cloud_provider: cloudProvider as CloudProvider,
     organization_slug: organizationSlug,
     name,
@@ -106,6 +109,10 @@ export async function createProject(
     },
     ...(computeSizeId !== undefined && { compute_size_id: computeSizeId }),
   }
+}
+
+export async function createProject(vars: ProjectCreateVariables, idempotencyKey: string) {
+  const body = buildCreateProjectBody(vars)
 
   const { data, error } = await post(`/platform/projects`, {
     body,
@@ -138,7 +145,7 @@ export const useProjectCreateMutation = ({
     mutationFn: (vars) => {
       intentKey.current = resolveCreateIntentKey(
         intentKey.current,
-        createIntentFingerprint(vars),
+        createIntentFingerprint(buildCreateProjectBody(vars)),
         uuidv4
       )
       return createProject(vars, intentKey.current.key)
