@@ -88,13 +88,15 @@ export const DeleteProjectModal = ({
 
       // Only redirect if still viewing the deleted project — and finish the
       // navigation before the mutation clears this project's detail cache,
-      // which a still-mounted project page would otherwise re-read.
+      // which a still-mounted project page would otherwise re-read. A
+      // navigation that is cancelled or fails must not abort that cleanup:
+      // the project is gone either way, and a page left on it is sent away
+      // by the detail's 404.
       if (router.asPath.startsWith(`/project/${projectRef}`)) {
-        if (lastVisitedOrganization) {
-          await router.push(`/org/${lastVisitedOrganization}`)
-        } else {
-          await router.push('/organizations')
-        }
+        const destination = lastVisitedOrganization
+          ? `/org/${lastVisitedOrganization}`
+          : '/organizations'
+        await router.push(destination).catch(() => false)
       }
     },
   })
