@@ -58,8 +58,8 @@ import { ProvisioningFailedState } from './ProvisioningFailedState'
 
 const failed = {
   status: 'failed',
-  step: 'helm',
-  failed_step: 'helm',
+  step: 'step-3',
+  failed_step: 'step-3',
   phase: 'services',
   error: 'The services did not become ready in time.',
   attempts: 1,

@@ -97,7 +97,7 @@ describe('ProjectHome surfaces', () => {
       ref: 'abc',
       name: 'demo',
       status: 'INIT_FAILED',
-      provisioning: { ...running, status: 'failed', failed_step: 'helm', retryable: true },
+      provisioning: { ...running, status: 'failed', failed_step: 'step-3', retryable: true },
     }
     const { rerender } = render(<ProjectHome />)
     expect(screen.getByTestId('provisioning-failed-state')).toBeInTheDocument()

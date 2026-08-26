@@ -16,7 +16,7 @@ const gated503 = {
   status: 'COMING_UP',
   provisioning: {
     status: 'running',
-    step: 'helm',
+    step: 'step-3',
     failed_step: null,
     phase: 'services',
     error: null,

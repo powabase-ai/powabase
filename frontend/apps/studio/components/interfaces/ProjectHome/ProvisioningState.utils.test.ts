@@ -10,7 +10,7 @@ import {
 
 const running: ProjectProvisioning = {
   status: 'running',
-  step: 'helm',
+  step: 'step-3',
   failed_step: null,
   phase: 'services',
   error: null,
@@ -21,8 +21,8 @@ const running: ProjectProvisioning = {
 const failed: ProjectProvisioning = {
   ...running,
   status: 'failed',
-  failed_step: 'helm',
-  error: 'helm release failed',
+  failed_step: 'step-3',
+  error: 'The services did not become ready in time.',
   retryable: true,
 }
 const succeeded: ProjectProvisioning = { ...running, status: 'succeeded', phase: 'verifying' }
