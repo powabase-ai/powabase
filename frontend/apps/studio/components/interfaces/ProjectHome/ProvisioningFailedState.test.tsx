@@ -123,6 +123,16 @@ describe('ProvisioningFailedState', () => {
     expect(mockToastError).toHaveBeenCalledTimes(1)
   })
 
+  it('shows the title alone when the platform reports no error string', () => {
+    mockProject.current = {
+      ...mockProject.current,
+      provisioning: { ...failed, error: null },
+    }
+    render(<ProvisioningFailedState />)
+    expect(screen.queryByTestId('provisioning-error')).toBeNull()
+    expect(screen.getByText('Setup failed while starting services')).toBeInTheDocument()
+  })
+
   it('offers the permission-gated delete button', () => {
     render(<ProvisioningFailedState />)
     expect(screen.getByTestId('delete-project-button')).toHaveAttribute('data-type', 'default')
