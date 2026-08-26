@@ -25,7 +25,10 @@ import { useProjectResumeMutation } from '@/data/projects/project-resume-mutatio
 import { useIsBillingUiEnabled } from '@/hooks/misc/useIsBillingUiEnabled'
 import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
+import { useProvisioningStatusSync } from '@/hooks/misc/useProvisioningStatusSync'
 import { OverviewStats } from './OverviewStats'
+import { ProvisioningState } from './ProvisioningState'
+import { getProvisioningSurface } from './ProvisioningState.utils'
 
 export const ProjectHome = () => {
   const { data: project } = useSelectedProjectQuery()
@@ -43,6 +46,27 @@ export const ProjectHome = () => {
 
   const ref = project?.ref
   const basePath = ref ? `/project/${ref}` : ''
+
+  // While the platform is still building (or tearing down) the project there
+  // is nothing to show but progress — and nothing to query: the data plane
+  // answers 503 until the project is active. All hooks stay mounted; only
+  // the rendering changes. The sync hook owns every cache hand-off.
+  const surface = getProvisioningSurface(project)
+  const { isPollError } = useProvisioningStatusSync(
+    ref,
+    project?.status,
+    surface !== 'normal',
+    surface !== 'normal' || project?.provisioning != null
+  )
+  if (surface === 'building') {
+    return (
+      <ScaffoldContainer size="large">
+        <ScaffoldSection isFullWidth>
+          <ProvisioningState degraded={isPollError} />
+        </ScaffoldSection>
+      </ScaffoldContainer>
+    )
+  }
 
   const quickLinks = [
     {
