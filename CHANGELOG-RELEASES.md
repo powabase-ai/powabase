@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/powabase-ai/powabase/compare/v0.5.0...v0.6.0) (2026-08-26)
+
+
+### Features
+
+* show provisioning progress and failures on the project home ([#38](https://github.com/powabase-ai/powabase/issues/38)) ([67180f9](https://github.com/powabase-ai/powabase/commit/67180f9e3c459977ec5a76aea39458de22592f36))
+
 ## [0.5.0](https://github.com/powabase-ai/powabase/compare/v0.4.1...v0.5.0) (2026-08-13)
 
 
