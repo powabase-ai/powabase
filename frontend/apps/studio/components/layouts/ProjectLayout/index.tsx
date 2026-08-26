@@ -166,6 +166,18 @@ export const ProjectLayout = forwardRef<HTMLDivElement, PropsWithChildren<Projec
 
     const isPaused = selectedProject?.status === PROJECT_STATUS.INACTIVE
 
+    // A project whose stack is not serving has no product to show a menu for.
+    // The route-supplied menu would mount its data queries (the editor's
+    // entity list, for one) before ContentWrapper's redirect fires, so it is
+    // neither rendered nor registered for the mobile sheet in those states.
+    const isStackServing = !(
+      selectedProject?.status === PROJECT_STATUS.COMING_UP ||
+      selectedProject?.status === PROJECT_STATUS.UNKNOWN ||
+      selectedProject?.status === PROJECT_STATUS.INIT_FAILED ||
+      selectedProject?.status === PROJECT_STATUS.GOING_DOWN
+    )
+    const routeProductMenu = isStackServing ? productMenu : undefined
+
     const ignorePausedState =
       router.pathname === '/project/[ref]' ||
       router.pathname.includes('/project/[ref]/settings') ||
@@ -198,7 +210,7 @@ export const ProjectLayout = forwardRef<HTMLDivElement, PropsWithChildren<Projec
       const unregister = registerOpenMenu(() => {
         setMobileSheetContent(
           <MobileMenuContent
-            currentProductMenu={productMenu ?? null}
+            currentProductMenu={routeProductMenu ?? null}
             currentProduct={product}
             currentSectionKey={currentSectionKey}
             onCloseSheet={() => setMobileSheetContent(null)}
@@ -206,7 +218,7 @@ export const ProjectLayout = forwardRef<HTMLDivElement, PropsWithChildren<Projec
         )
       })
       return unregister
-    }, [registerOpenMenu, productMenu, product, currentSectionKey, setMobileSheetContent])
+    }, [registerOpenMenu, routeProductMenu, product, currentSectionKey, setMobileSheetContent])
 
     return (
       <>
@@ -216,7 +228,7 @@ export const ProjectLayout = forwardRef<HTMLDivElement, PropsWithChildren<Projec
         </Head>
         <div className="flex flex-row h-full w-full">
           <ResizablePanelGroup orientation="horizontal">
-            {productMenu && sideBarIsOpen && (
+            {routeProductMenu && sideBarIsOpen && (
               <ResizablePanel
                 panelRef={panelRef}
                 minSize={256}
@@ -246,7 +258,7 @@ export const ProjectLayout = forwardRef<HTMLDivElement, PropsWithChildren<Projec
                 </AnimatePresence>
               </ResizablePanel>
             )}
-            {productMenu && sideBarIsOpen && (
+            {routeProductMenu && sideBarIsOpen && (
               <ResizableHandle
                 withHandle
                 disabled={resizableSidebar ? false : true}
@@ -352,11 +364,18 @@ const ContentWrapper = ({ isLoading, isBlocking = true, children }: ContentWrapp
   const isProjectBuilding =
     selectedProject?.status === PROJECT_STATUS.COMING_UP ||
     selectedProject?.status === PROJECT_STATUS.UNKNOWN
+  const isProjectInitFailed = selectedProject?.status === PROJECT_STATUS.INIT_FAILED
+  const isProjectGoingDown = selectedProject?.status === PROJECT_STATUS.GOING_DOWN
   const isProjectPausing = selectedProject?.status === PROJECT_STATUS.PAUSING
   const isProjectPauseFailed = selectedProject?.status === PROJECT_STATUS.PAUSE_FAILED
   const isProjectOffline = selectedProject?.postgrestStatus === 'OFFLINE'
 
-  const shouldRedirectToHomeForBuilding = isProjectBuilding && requiresDbConnection && !isHomePage
+  // A project whose stack is not serving — still being set up, failed set-up,
+  // or being deleted — has exactly one usable page: its home, which owns those
+  // states (progress, retry, delete). Every other route goes there, including
+  // the routes that stay open for a paused database.
+  const shouldRedirectToHomeForBuilding =
+    (isProjectBuilding || isProjectInitFailed || isProjectGoingDown) && !isHomePage
 
   // Don't show building state on the home page — it handles building state inline
   const shouldShowBuildingState = isProjectBuilding && requiresDbConnection && !isHomePage

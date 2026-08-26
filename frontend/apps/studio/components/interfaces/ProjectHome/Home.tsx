@@ -27,6 +27,8 @@ import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganizati
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
 import { useProvisioningStatusSync } from '@/hooks/misc/useProvisioningStatusSync'
 import { OverviewStats } from './OverviewStats'
+import { ProvisioningDeletingState } from './ProvisioningDeletingState'
+import { ProvisioningFailedState } from './ProvisioningFailedState'
 import { ProvisioningState } from './ProvisioningState'
 import { getProvisioningSurface } from './ProvisioningState.utils'
 
@@ -58,11 +60,17 @@ export const ProjectHome = () => {
     surface !== 'normal',
     surface !== 'normal' || project?.provisioning != null
   )
-  if (surface === 'building') {
+  if (surface !== 'normal') {
     return (
       <ScaffoldContainer size="large">
         <ScaffoldSection isFullWidth>
-          <ProvisioningState degraded={isPollError} />
+          {surface === 'building' ? (
+            <ProvisioningState degraded={isPollError} />
+          ) : surface === 'failed' ? (
+            <ProvisioningFailedState degraded={isPollError} />
+          ) : (
+            <ProvisioningDeletingState />
+          )}
         </ScaffoldSection>
       </ScaffoldContainer>
     )

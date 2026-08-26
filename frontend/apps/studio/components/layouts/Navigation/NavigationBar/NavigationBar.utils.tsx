@@ -34,7 +34,11 @@ function getRouteContext(ref?: string, project?: Project): RouteContext {
   return {
     ref,
     isProjectActive: project?.status === PROJECT_STATUS.ACTIVE_HEALTHY,
-    isProjectBuilding: project?.status === PROJECT_STATUS.COMING_UP,
+    isProjectBuilding:
+      project?.status === PROJECT_STATUS.COMING_UP ||
+      project?.status === PROJECT_STATUS.UNKNOWN ||
+      project?.status === PROJECT_STATUS.INIT_FAILED ||
+      project?.status === PROJECT_STATUS.GOING_DOWN,
     buildingUrl: `/project/${ref}`,
   }
 }

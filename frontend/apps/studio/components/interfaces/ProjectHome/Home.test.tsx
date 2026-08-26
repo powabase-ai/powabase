@@ -37,6 +37,12 @@ vi.mock('./OverviewStats', () => ({
 vi.mock('./ProvisioningState', () => ({
   ProvisioningState: () => <div data-testid="provisioning-state" />,
 }))
+vi.mock('./ProvisioningFailedState', () => ({
+  ProvisioningFailedState: () => <div data-testid="provisioning-failed-state" />,
+}))
+vi.mock('./ProvisioningDeletingState', () => ({
+  ProvisioningDeletingState: () => <div data-testid="provisioning-deleting-state" />,
+}))
 
 import { ProjectHome } from './Home'
 
@@ -84,5 +90,44 @@ describe('ProjectHome surfaces', () => {
     mockProject.current = { ref: 'abc', name: 'demo', status: 'ACTIVE_HEALTHY', provisioning: null }
     render(<ProjectHome />)
     expect(mockSync).toHaveBeenLastCalledWith('abc', 'ACTIVE_HEALTHY', false, false)
+  })
+
+  it('renders the failed surface while INIT_FAILED and the deleting surface while GOING_DOWN', () => {
+    mockProject.current = {
+      ref: 'abc',
+      name: 'demo',
+      status: 'INIT_FAILED',
+      provisioning: { ...running, status: 'failed', failed_step: 'helm', retryable: true },
+    }
+    const { rerender } = render(<ProjectHome />)
+    expect(screen.getByTestId('provisioning-failed-state')).toBeInTheDocument()
+    expect(screen.queryByTestId('overview-stats')).toBeNull()
+
+    mockProject.current = { ref: 'abc', name: 'demo', status: 'GOING_DOWN', provisioning: running }
+    rerender(<ProjectHome />)
+    expect(screen.getByTestId('provisioning-deleting-state')).toBeInTheDocument()
+  })
+
+  it('moves building → failed → building → normal as the status changes, without remounting', () => {
+    mockProject.current = { ref: 'abc', name: 'demo', status: 'COMING_UP', provisioning: running }
+    const { rerender } = render(<ProjectHome />)
+    expect(screen.getByTestId('provisioning-state')).toBeInTheDocument()
+
+    mockProject.current = {
+      ...mockProject.current,
+      status: 'INIT_FAILED',
+      provisioning: { ...running, status: 'failed', retryable: true },
+    }
+    rerender(<ProjectHome />)
+    expect(screen.getByTestId('provisioning-failed-state')).toBeInTheDocument()
+
+    mockProject.current = { ...mockProject.current, status: 'COMING_UP', provisioning: running }
+    rerender(<ProjectHome />)
+    expect(screen.getByTestId('provisioning-state')).toBeInTheDocument()
+
+    mockProject.current = { ...mockProject.current, status: 'ACTIVE_HEALTHY', provisioning: null }
+    rerender(<ProjectHome />)
+    expect(screen.getByTestId('overview-stats')).toBeInTheDocument()
+    expect(screen.queryByTestId('provisioning-state')).toBeNull()
   })
 })

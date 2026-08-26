@@ -81,14 +81,19 @@ export const DeleteProjectModal = ({
         }
       }
 
-      toast.success(`Successfully deleted ${project?.name}`)
+      // A completed delete (200) and an accepted one (202 — the platform
+      // finishes it in the background) both leave the project unusable and
+      // out of every list: one message, one destination.
+      toast.success(`${project?.name} has been removed`)
 
-      // Only redirect if still viewing the deleted project
+      // Only redirect if still viewing the deleted project — and finish the
+      // navigation before the mutation clears this project's detail cache,
+      // which a still-mounted project page would otherwise re-read.
       if (router.asPath.startsWith(`/project/${projectRef}`)) {
         if (lastVisitedOrganization) {
-          router.push(`/org/${lastVisitedOrganization}`)
+          await router.push(`/org/${lastVisitedOrganization}`)
         } else {
-          router.push('/organizations')
+          await router.push('/organizations')
         }
       }
     },

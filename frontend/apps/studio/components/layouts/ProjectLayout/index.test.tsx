@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -344,5 +344,87 @@ describe('FREE_MICRO_UPGRADE banner', () => {
       expect(mockDismissBanner).toHaveBeenCalledWith('free-micro-upgrade-banner')
     })
     expect(mockAddBanner).not.toHaveBeenCalled()
+  })
+})
+
+const renderLayoutWithPage = () =>
+  render(
+    <MobileSheetProvider>
+      <ProjectLayout product="Database" isBlocking={false}>
+        <div data-testid="page-child" />
+      </ProjectLayout>
+    </MobileSheetProvider>
+  )
+
+describe('not-active bounce', () => {
+  afterEach(() => {
+    mockProjectState.current.status = 'ACTIVE_HEALTHY'
+    mockRouter.pathname = '/project/[ref]/observability/query-performance'
+    mockRouter.asPath = '/project/default/observability/query-performance'
+    vi.clearAllMocks()
+  })
+
+  it.each(['COMING_UP', 'UNKNOWN', 'INIT_FAILED', 'GOING_DOWN'])(
+    'sends a database page home while %s, without ever mounting the page',
+    async (status) => {
+      mockProjectState.current.status = status
+      renderLayoutWithPage()
+      await waitFor(() => expect(mockRouter.replace).toHaveBeenCalledWith('/project/default'))
+      expect(screen.queryByTestId('page-child')).toBeNull()
+    }
+  )
+
+  it('sends a settings page home too while INIT_FAILED — no route is usable without a stack', async () => {
+    mockRouter.pathname = '/project/[ref]/settings/general'
+    mockRouter.asPath = '/project/default/settings/general'
+    mockProjectState.current.status = 'INIT_FAILED'
+    renderLayoutWithPage()
+    await waitFor(() => expect(mockRouter.replace).toHaveBeenCalledWith('/project/default'))
+    expect(screen.queryByTestId('page-child')).toBeNull()
+  })
+
+  it('leaves an ACTIVE_HEALTHY project where it is and renders the page', async () => {
+    mockProjectState.current.status = 'ACTIVE_HEALTHY'
+    renderLayoutWithPage()
+    await waitFor(() => expect(screen.getByTestId('page-child')).toBeInTheDocument())
+    expect(mockRouter.replace).not.toHaveBeenCalledWith('/project/default')
+  })
+})
+
+const renderLayoutWithMenu = () =>
+  render(
+    <MobileSheetProvider>
+      <ProjectLayout
+        product="Database"
+        isBlocking={false}
+        productMenu={<div data-testid="product-menu" />}
+      >
+        <div data-testid="page-child" />
+      </ProjectLayout>
+    </MobileSheetProvider>
+  )
+
+describe('route-supplied product menu while not active', () => {
+  afterEach(() => {
+    mockProjectState.current.status = 'ACTIVE_HEALTHY'
+    vi.clearAllMocks()
+  })
+
+  it.each(['COMING_UP', 'INIT_FAILED', 'GOING_DOWN'])(
+    'is withheld while %s — it would mount its data queries before the bounce',
+    async (status) => {
+      mockProjectState.current.status = status
+      renderLayoutWithMenu()
+      await waitFor(() => expect(mockRouter.replace).toHaveBeenCalledWith('/project/default'))
+      expect(screen.queryByTestId('product-menu')).toBeNull()
+    }
+  )
+
+  it('renders once ACTIVE_HEALTHY', async () => {
+    // This file's mocks open the sidebar: useEditorType() → undefined makes
+    // forceShowProductMenu true, and useIsMobile() → false.
+    mockProjectState.current.status = 'ACTIVE_HEALTHY'
+    renderLayoutWithMenu()
+    await waitFor(() => expect(screen.getByTestId('product-menu')).toBeInTheDocument())
   })
 })
