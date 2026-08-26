@@ -34,6 +34,7 @@ const {
       postgrestStatus: 'ONLINE',
       infra_compute_size: undefined as string | undefined,
     },
+    loading: false,
   },
   mockResourceWarningsState: { current: undefined as any[] | undefined },
   mockBannerDismissedState: { current: false },
@@ -174,7 +175,10 @@ vi.mock('@/hooks/misc/useSelectedOrganization', () => ({
 }))
 
 vi.mock('@/hooks/misc/useSelectedProject', () => ({
-  useSelectedProjectQuery: () => ({ data: mockProjectState.current }),
+  useSelectedProjectQuery: () => ({
+    data: mockProjectState.loading ? undefined : mockProjectState.current,
+    isLoading: mockProjectState.loading,
+  }),
 }))
 
 vi.mock('@/hooks/misc/withAuth', () => ({
@@ -391,6 +395,34 @@ describe('not-active bounce', () => {
   })
 })
 
+describe('deep link before the project detail has landed', () => {
+  afterEach(() => {
+    mockProjectState.loading = false
+    mockProjectState.current = {
+      ref: 'default',
+      name: 'Project 1',
+      status: 'ACTIVE_HEALTHY',
+      postgrestStatus: 'ONLINE',
+      infra_compute_size: undefined,
+    }
+    vi.clearAllMocks()
+  })
+
+  it('holds a non-home page while the detail is loading, and does not bounce it', async () => {
+    mockProjectState.loading = true
+    renderLayoutWithPage()
+    await waitFor(() => expect(screen.getByTestId('logo-loader')).toBeInTheDocument())
+    expect(screen.queryByTestId('page-child')).toBeNull()
+    expect(mockRouter.replace).not.toHaveBeenCalled()
+  })
+
+  it('lets the page through when the detail settled without data — a failed or skipped request', async () => {
+    mockProjectState.current = undefined as any
+    renderLayoutWithPage()
+    await waitFor(() => expect(screen.getByTestId('page-child')).toBeInTheDocument())
+  })
+})
+
 const renderLayoutWithMenu = () =>
   render(
     <MobileSheetProvider>
@@ -410,7 +442,7 @@ describe('route-supplied product menu while not active', () => {
     vi.clearAllMocks()
   })
 
-  it.each(['COMING_UP', 'INIT_FAILED', 'GOING_DOWN'])(
+  it.each(['COMING_UP', 'UNKNOWN', 'INIT_FAILED', 'GOING_DOWN'])(
     'is withheld while %s — it would mount its data queries before the bounce',
     async (status) => {
       mockProjectState.current.status = status

@@ -348,7 +348,12 @@ const ContentWrapper = ({ isLoading, isBlocking = true, children }: ContentWrapp
   const router = useRouter()
   const { ref } = useParams()
   const state = useDatabaseSelectorStateSnapshot()
-  const { data: selectedProject, isError, error } = useSelectedProjectQuery()
+  const {
+    data: selectedProject,
+    isError,
+    error,
+    isLoading: isProjectDetailLoading,
+  } = useSelectedProjectQuery()
   const isBackupsPage = router.pathname.includes('/project/[ref]/database/backups')
   const isHomePage = router.pathname === '/project/[ref]'
 
@@ -399,6 +404,14 @@ const ContentWrapper = ({ isLoading, isBlocking = true, children }: ContentWrapp
   if (isBlocking && (isLoading || (requiresProjectDetails && selectedProject === undefined))) {
     return router.pathname.endsWith('[ref]') ? <LoadingState /> : <LogoLoader />
   }
+
+  // A deep link or reload mounts a page under a non-blocking layout before
+  // the project detail has landed, so the not-active redirect above cannot
+  // fire yet and the page would start its data-plane queries against a
+  // project that may still be being set up. Hold the page for that one round
+  // trip. `isLoading` is "no data yet AND fetching": a detail that has failed,
+  // or a route that skips the detail request, still falls through as before.
+  if (!isHomePage && isProjectDetailLoading) return <LogoLoader />
 
   if (isRestarting && !isBackupsPage) {
     return <RestartingState />
