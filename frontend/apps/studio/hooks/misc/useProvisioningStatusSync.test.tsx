@@ -68,7 +68,7 @@ describe('useProvisioningStatusSync', () => {
     expect(mockInvalidateList).toHaveBeenCalledTimes(1)
     rerender()
     expect(mockInvalidateList).toHaveBeenCalledTimes(1)
-    expect(mockUseProjectStatusQuery.mock.calls.at(-1)?.[1].enabled).toBe(false)
+    expect((mockUseProjectStatusQuery.mock.calls.at(-1) as any)?.[1].enabled).toBe(false)
   })
 
   it('does nothing for an active project without provisioning history — flag-off and legacy rows', () => {
