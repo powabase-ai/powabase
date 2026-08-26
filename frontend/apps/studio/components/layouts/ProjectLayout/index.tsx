@@ -248,10 +248,10 @@ export const ProjectLayout = forwardRef<HTMLDivElement, PropsWithChildren<Projec
                     <MenuBarWrapper
                       isLoading={isLoading}
                       isBlocking={isBlocking}
-                      productMenu={productMenu}
+                      productMenu={routeProductMenu}
                     >
                       <ProductMenuBar title={product} className={productMenuClassName}>
-                        {productMenu}
+                        {routeProductMenu}
                       </ProductMenuBar>
                     </MenuBarWrapper>
                   </motion.div>

@@ -6,7 +6,7 @@ import { useProjectStatusQuery } from '@/data/projects/project-status-query'
 import { PROJECT_STATUS } from '@/lib/constants'
 
 /** Statuses on which the /status poll has nothing more to learn. */
-const SETTLED = [PROJECT_STATUS.ACTIVE_HEALTHY, PROJECT_STATUS.INIT_FAILED]
+const SETTLED: readonly string[] = [PROJECT_STATUS.ACTIVE_HEALTHY, PROJECT_STATUS.INIT_FAILED]
 const POLL_INTERVAL = 4_000
 /** Slower cadence while the platform cannot be reached — still retrying, as the surfaces say. */
 const TRANSIENT_ERROR_INTERVAL = 15_000
@@ -52,7 +52,7 @@ export function useProvisioningStatusSync(
           return query.state.error?.code === 404 ? false : TRANSIENT_ERROR_INTERVAL
         }
         const status = query.state.data?.status
-        return status && (SETTLED as string[]).includes(status) ? false : POLL_INTERVAL
+        return status && SETTLED.includes(status) ? false : POLL_INTERVAL
       },
     }
   )

@@ -138,11 +138,11 @@ export const ProjectCardStatus = ({
 
     const badgeVariant = isCritical
       ? 'destructive'
-        : activeWarnings.length > 0 ||
-            projectStatus === 'isPauseFailed' ||
-            projectStatus === 'isRestoreFailed' ||
-            projectStatus === 'isInitFailed'
-          ? 'warning'
+      : activeWarnings.length > 0 ||
+          projectStatus === 'isPauseFailed' ||
+          projectStatus === 'isRestoreFailed' ||
+          projectStatus === 'isInitFailed'
+        ? 'warning'
         : projectStatus === 'isHealthy'
           ? 'success'
           : 'default'

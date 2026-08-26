@@ -112,5 +112,6 @@ describe('useProjectCreateMutation intent key', () => {
     }
     expect(sentKey(1)).not.toBe(sentKey(0))
     expect(sentKey(2)).not.toBe(sentKey(0))
+    expect(sentKey(2)).not.toBe(sentKey(1))
   })
 })
