@@ -4,6 +4,8 @@ import { QueryClient, queryOptions, useQuery } from '@tanstack/react-query'
 import { tableEditorKeys } from './keys'
 import { Entity } from './table-editor-types'
 import { executeSql, ExecuteSqlError } from '@/data/sql/execute-sql-query'
+import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
+import { PROJECT_STATUS } from '@/lib/constants'
 import { UseCustomQueryOptions } from '@/types'
 
 type TableEditorArgs = {
@@ -46,16 +48,24 @@ export const useTableEditorQuery = <TData = TableEditorData>(
     enabled = true,
     ...options
   }: UseCustomQueryOptions<TableEditorData, TableEditorError, TData> = {}
-) =>
-  useQuery<TableEditorData, TableEditorError, TData>({
+) => {
+  const { data: project } = useSelectedProjectQuery()
+  const isActive = project?.status === PROJECT_STATUS.ACTIVE_HEALTHY
+
+  return useQuery<TableEditorData, TableEditorError, TData>({
     ...tableEditorQueryOptions({ projectRef, connectionString, id }),
     enabled:
-      enabled && typeof projectRef !== 'undefined' && typeof id !== 'undefined' && !isNaN(id),
+      enabled &&
+      typeof projectRef !== 'undefined' &&
+      typeof id !== 'undefined' &&
+      !isNaN(id) &&
+      isActive,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     staleTime: 5 * 60 * 1000,
     ...options,
   })
+}
 
 export function prefetchTableEditor(
   client: QueryClient,

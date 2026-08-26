@@ -4,6 +4,8 @@ import { InfiniteData, QueryClient, useInfiniteQuery } from '@tanstack/react-que
 import { ENTITY_TYPE } from './entity-type-constants'
 import { entityTypeKeys } from './keys'
 import { executeSql, ExecuteSqlVariables } from '@/data/sql/execute-sql-query'
+import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
+import { PROJECT_STATUS } from '@/lib/constants'
 import type { ResponseError, UseCustomInfiniteQueryOptions } from '@/types'
 
 export type EntityTypesVariables = {
@@ -84,6 +86,10 @@ export const useEntityTypesQuery = <TData = EntityTypesData>(
     number | undefined
   > = {}
 ) => {
+  // The editor's product menu mounts this before the layout's bounce fires.
+  const { data: project } = useSelectedProjectQuery()
+  const isActive = project?.status === PROJECT_STATUS.ACTIVE_HEALTHY
+
   return useInfiniteQuery({
     queryKey: entityTypeKeys.list(projectRef, { schemas, search, sort, limit, filterTypes }),
     queryFn: ({ signal, pageParam }) =>
@@ -100,7 +106,7 @@ export const useEntityTypesQuery = <TData = EntityTypesData>(
         },
         signal
       ),
-    enabled: enabled && typeof projectRef !== 'undefined',
+    enabled: enabled && typeof projectRef !== 'undefined' && isActive,
     initialPageParam: undefined,
     getNextPageParam(lastPage, pages) {
       const page = pages.length

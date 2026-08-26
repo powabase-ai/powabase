@@ -139,6 +139,7 @@ export const useBucketNumberEstimateQuery = (
 ) => {
   const { data: project } = useSelectedProjectQuery()
   const connectionString = project?.connectionString
+  const isActive = project?.status === PROJECT_STATUS.ACTIVE_HEALTHY
 
   return useQuery<number | undefined, ResponseError>({
     // Query remains functionally the same even if connectionString changes
@@ -149,7 +150,7 @@ export const useBucketNumberEstimateQuery = (
         projectRef,
         connectionString,
       }),
-    enabled: enabled && !!projectRef,
+    enabled: enabled && !!projectRef && isActive,
     ...options,
   })
 }

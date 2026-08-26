@@ -6,6 +6,8 @@ import { useCallback } from 'react'
 
 import { tableKeys } from './keys'
 import { get, handleError } from '@/data/fetchers'
+import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
+import { PROJECT_STATUS } from '@/lib/constants'
 import type { ResponseError, UseCustomQueryOptions } from '@/types'
 
 export type TablesVariables = {
@@ -74,11 +76,14 @@ export const useTablesQuery = <TData = TablesData>(
   { projectRef, connectionString, schema, includeColumns }: TablesVariables,
   { enabled = true, ...options }: UseCustomQueryOptions<TablesData, TablesError, TData> = {}
 ) => {
+  const { data: project } = useSelectedProjectQuery()
+  const isActive = project?.status === PROJECT_STATUS.ACTIVE_HEALTHY
+
   return useQuery<TablesData, TablesError, TData>({
     queryKey: tableKeys.list(projectRef, schema, includeColumns),
     queryFn: ({ signal }) =>
       getTables({ projectRef, connectionString, schema, includeColumns }, signal),
-    enabled: enabled && typeof projectRef !== 'undefined',
+    enabled: enabled && typeof projectRef !== 'undefined' && isActive,
     ...options,
   })
 }
@@ -110,15 +115,20 @@ export function usePrefetchTables({
   connectionString,
 }: Pick<TablesVariables, 'projectRef' | 'connectionString'>) {
   const queryClient = useQueryClient()
+  const { data: project } = useSelectedProjectQuery()
+  const isActive = project?.status === PROJECT_STATUS.ACTIVE_HEALTHY
 
   return useCallback(
     (schema?: TablesVariables['schema'], includeColumns?: TablesVariables['includeColumns']) => {
+      // The command menu calls this on every open. A project whose stack is
+      // not serving has nothing to prefetch — the platform would answer 503.
+      if (!isActive) return Promise.resolve()
       return queryClient.prefetchQuery({
         queryKey: tableKeys.list(projectRef, schema, includeColumns),
         queryFn: ({ signal }) =>
           getTables({ projectRef, connectionString, schema, includeColumns }, signal),
       })
     },
-    [connectionString, projectRef, queryClient]
+    [connectionString, isActive, projectRef, queryClient]
   )
 }

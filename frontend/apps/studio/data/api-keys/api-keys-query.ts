@@ -2,6 +2,8 @@ import { useQuery } from '@tanstack/react-query'
 
 import { apiKeysKeys } from './keys'
 import { get, handleError } from '@/data/fetchers'
+import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
+import { PROJECT_STATUS } from '@/lib/constants'
 import type { ResponseError, UseCustomQueryOptions } from '@/types'
 
 type LegacyKeys = {
@@ -70,10 +72,15 @@ export const useAPIKeysQuery = <TData = APIKeysData>(
   { projectRef, reveal = false }: APIKeysVariables,
   { enabled = true, ...options }: UseCustomQueryOptions<APIKeysData, ResponseError, TData> = {}
 ) => {
+  // Mounted on every page by the command menu (behind a permission check, not
+  // a status one): hold it until the project's stack is serving.
+  const { data: project } = useSelectedProjectQuery()
+  const isActive = project?.status === PROJECT_STATUS.ACTIVE_HEALTHY
+
   return useQuery<APIKeysData, ResponseError, TData>({
     queryKey: apiKeysKeys.list(projectRef, reveal),
     queryFn: ({ signal }) => getAPIKeys({ projectRef, reveal }, signal),
-    enabled: enabled && typeof projectRef !== 'undefined',
+    enabled: enabled && typeof projectRef !== 'undefined' && isActive,
     ...options,
   })
 }
