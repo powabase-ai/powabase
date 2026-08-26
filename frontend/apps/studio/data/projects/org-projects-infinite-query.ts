@@ -70,6 +70,21 @@ export async function getOrganizationProjects(
 export type OrgProjectsInfiniteData = Awaited<ReturnType<typeof getOrganizationProjects>>
 export type OrgProjectsInfiniteError = ResponseError
 
+/**
+ * A project being set up changes state on its own; nothing else refetches the
+ * list (it is fresh for 30 minutes). Poll while any listed project is still
+ * COMING_UP (or upstream's UNKNOWN, which the card also shows as "Setting
+ * up"); a failed set-up is terminal until the user acts on the project.
+ */
+export function orgProjectsRefetchInterval(
+  data: { pages: Array<{ projects: Array<{ status: string }> }> } | undefined
+): number | false {
+  const building = data?.pages.some((page) =>
+    page.projects.some((project) => project.status === 'COMING_UP' || project.status === 'UNKNOWN')
+  )
+  return building ? 10_000 : false
+}
+
 export const useOrgProjectsInfiniteQuery = <TData = OrgProjectsInfiniteData>(
   {
     slug,
@@ -96,6 +111,7 @@ export const useOrgProjectsInfiniteQuery = <TData = OrgProjectsInfiniteData>(
       getOrganizationProjects({ slug, limit, page: pageParam, sort, search, statuses }, signal),
     enabled: enabled && profile !== undefined && typeof slug !== 'undefined',
     staleTime: 30 * 60 * 1000, // 30 minutes
+    refetchInterval: (query) => orgProjectsRefetchInterval(query.state.data),
     initialPageParam: 0,
     getNextPageParam(lastPage, pages) {
       const page = pages.length

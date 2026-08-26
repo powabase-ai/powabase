@@ -31,6 +31,9 @@ export const inferProjectStatus = (projectStatus: string) => {
     case PROJECT_STATUS.UPGRADING:
       status = 'isUpgrading'
       break
+    case PROJECT_STATUS.INIT_FAILED:
+      status = 'isInitFailed'
+      break
     case PROJECT_STATUS.UNKNOWN:
     case PROJECT_STATUS.COMING_UP:
       status = 'isComingUp'
@@ -50,4 +53,5 @@ export type InferredProjectStatus =
   | 'isRestoreFailed'
   | 'isComingUp'
   | 'isUpgrading'
+  | 'isInitFailed'
   | undefined
