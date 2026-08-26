@@ -42,6 +42,17 @@ export function getQueryClient() {
               return false
             }
 
+            // A project that is still being set up answers every data-plane
+            // call with 503 project_provisioning + Retry-After. The project
+            // status poll is what moves it on; retrying here only adds load.
+            if (
+              error instanceof ResponseError &&
+              error.code === 503 &&
+              error.message === 'project_provisioning'
+            ) {
+              return false
+            }
+
             // Skip retries for specific pathnames to avoid unnecessary load
             // CRITICAL: We must still retry 429 (rate limit) errors even on these pathnames.
             // Without this exception, queries fail immediately on rate limits, causing the
