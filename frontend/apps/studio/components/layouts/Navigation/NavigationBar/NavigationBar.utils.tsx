@@ -232,7 +232,11 @@ export const generateSettingsRoutes = (ref?: string, project?: Project, features
       icon: <Settings size={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} />,
       link:
         ref &&
-        (isPlatform ? `/project/${ref}/settings/general` : `/project/${ref}/settings/log-drains`),
+        (isProjectBuilding
+          ? buildingUrl
+          : isPlatform
+            ? `/project/${ref}/settings/general`
+            : `/project/${ref}/settings/log-drains`),
       disabled: false,
     },
     {
