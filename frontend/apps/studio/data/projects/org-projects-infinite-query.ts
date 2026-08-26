@@ -3,6 +3,7 @@ import { components } from 'api-types'
 import { useCallback } from 'react'
 
 import { INFINITE_PROJECTS_KEY_PREFIX, projectKeys } from './keys'
+import type { ProjectProvisioning } from './provisioning'
 import { get, handleError } from '@/data/fetchers'
 import { useProfile } from '@/lib/profile'
 import type { ResponseError, UseCustomInfiniteQueryOptions } from '@/types'
@@ -31,7 +32,12 @@ export type OrgProjectsResponse = components['schemas']['OrganizationProjectsRes
 // InvalidTextRepresentation if given a ref/slug; see PR #233 review B7)
 // can read it after a null check, while existing consumers that only use
 // the OpenAPI fields keep typechecking.
-export type OrgProject = OrgProjectsResponse['projects'][number] & { id?: string }
+export type OrgProject = OrgProjectsResponse['projects'][number] & {
+  id?: string
+  // Control-plane lifecycle fields (async provisioning); absent upstream.
+  state?: string
+  provisioning?: ProjectProvisioning | null
+}
 
 export async function getOrganizationProjects(
   {
