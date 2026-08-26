@@ -1,13 +1,16 @@
 import { useMutation } from '@tanstack/react-query'
 import { hasConsented } from 'common'
+import { useRef } from 'react'
 import { toast } from 'sonner'
 
+import { type CreateIntentKey, createIntentFingerprint, resolveCreateIntentKey } from './create-intent-key'
 import { DesiredInstanceSize, PostgresEngine, ReleaseChannel } from './new-project.constants'
 import { useInvalidateProjectsInfiniteQuery } from './org-projects-infinite-query'
 import type { components } from '@/data/api'
 import { handleError, post } from '@/data/fetchers'
 import { PROVIDERS } from '@/lib/constants'
 import { captureCriticalError } from '@/lib/error-reporting'
+import { uuidv4 } from '@/lib/helpers'
 import type { ResponseError, UseCustomMutationOptions } from '@/types'
 
 type CreateProjectBody = components['schemas']['CreateProjectBody']
@@ -55,25 +58,28 @@ export type ProjectCreateVariables = {
   computeSizeId?: string
 }
 
-export async function createProject({
-  name,
-  organizationSlug,
-  dbPass,
-  dbRegion,
-  regionSelection,
-  dbSql,
-  cloudProvider = PROVIDERS.AWS.id,
-  authSiteUrl,
-  customSupabaseRequest,
-  dbInstanceSize,
-  dataApiExposedSchemas,
-  dataApiUseApiSchema,
-  postgresEngine,
-  releaseChannel,
-  highAvailability,
-  aiProviderKeys = {},
-  computeSizeId,
-}: ProjectCreateVariables) {
+export async function createProject(
+  {
+    name,
+    organizationSlug,
+    dbPass,
+    dbRegion,
+    regionSelection,
+    dbSql,
+    cloudProvider = PROVIDERS.AWS.id,
+    authSiteUrl,
+    customSupabaseRequest,
+    dbInstanceSize,
+    dataApiExposedSchemas,
+    dataApiUseApiSchema,
+    postgresEngine,
+    releaseChannel,
+    highAvailability,
+    aiProviderKeys = {},
+    computeSizeId,
+  }: ProjectCreateVariables,
+  idempotencyKey: string
+) {
   const body: CreateProjectBodyWithKeys = {
     cloud_provider: cloudProvider as CloudProvider,
     organization_slug: organizationSlug,
@@ -103,6 +109,7 @@ export async function createProject({
 
   const { data, error } = await post(`/platform/projects`, {
     body,
+    headers: { 'Idempotency-Key': idempotencyKey },
   })
 
   if (error) handleError(error)
@@ -121,8 +128,21 @@ export const useProjectCreateMutation = ({
 > = {}) => {
   const { invalidateProjectsQuery } = useInvalidateProjectsInfiniteQuery()
 
+  // One idempotency key per mounted form per distinct request: a resubmit of
+  // the same contents replays the original project on the platform instead
+  // of creating a second one; edited contents are a new intent. A reload is
+  // a new intent too — nothing is persisted, the fingerprint holds secrets.
+  const intentKey = useRef<CreateIntentKey | null>(null)
+
   return useMutation<ProjectCreateData, ResponseError, ProjectCreateVariables>({
-    mutationFn: (vars) => createProject(vars),
+    mutationFn: (vars) => {
+      intentKey.current = resolveCreateIntentKey(
+        intentKey.current,
+        createIntentFingerprint(vars),
+        uuidv4
+      )
+      return createProject(vars, intentKey.current.key)
+    },
     async onSuccess(data, variables, context) {
       await invalidateProjectsQuery()
       // Gate on current consent — once pixel.js has loaded, removing the
