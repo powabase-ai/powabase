@@ -5,6 +5,10 @@ import {
   type JsonSchemaField,
 } from "@/components/interfaces/AI/KnowledgeBases/JsonSchemaEditor";
 import { KBModelSelect } from "@/components/interfaces/AI/KnowledgeBases/KBModelSelect";
+import {
+  GRAPH_EXPANSION_DEFAULTS,
+  type GraphExpansionFormState,
+} from "@/components/interfaces/AI/KnowledgeBases/graphExpansionConfig";
 import { ONBOARDING_ANCHORS } from "@/components/interfaces/AI/GuideBubbles/onboarding-anchors";
 
 export function isValidInt(s: string, min: number): boolean {
@@ -45,6 +49,8 @@ export interface KBConfigFieldsProps {
   onMinPerSourceChange?: (v: string) => void;
   maxPerSource?: string;
   onMaxPerSourceChange?: (v: string) => void;
+  graphExpansion?: GraphExpansionFormState;
+  onGraphExpansionChange?: (v: GraphExpansionFormState) => void;
   queryEnrichmentModel: string;
   onQueryEnrichmentModelChange: (v: string) => void;
   queryEnrichmentReasoningEffort?: string;
@@ -120,6 +126,8 @@ export function KBConfigFields({
   onMinPerSourceChange,
   maxPerSource = "0",
   onMaxPerSourceChange,
+  graphExpansion = GRAPH_EXPANSION_DEFAULTS,
+  onGraphExpansionChange,
   queryEnrichmentModel,
   onQueryEnrichmentModelChange,
   queryEnrichmentReasoningEffort,
@@ -442,6 +450,78 @@ export function KBConfigFields({
           if its best chunk clears the similarity threshold (not every source
           unconditionally), capped at the 50 most relevant sources per search.
         </p>
+        {indexingStrategy === "graph_index" && (
+          <div className="mt-4 pt-3 border-t border-default">
+            <label className="block text-sm text-foreground-light mb-1.5">Graph expansion</label>
+            <p className="text-xs text-foreground-muted mb-2">
+              A match also pulls in the sections it explicitly references. What comes with
+              those referenced sections is up to you.
+            </p>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={graphExpansion.includeDocToc}
+                onChange={(e) =>
+                  onGraphExpansionChange?.({
+                    ...graphExpansion,
+                    includeDocToc: e.target.checked,
+                  })
+                }
+                className="w-4 h-4 rounded border-default text-brand-600 focus:ring-brand-400 bg-surface-200"
+              />
+              <span className="text-sm text-foreground-light">Include document outline</span>
+            </label>
+            <p className="text-xs text-foreground-muted mt-1">
+              Adds a titles-only outline of each document a reference was followed into, so
+              the model can see what a section contains and ask for it by name.
+            </p>
+            <label className="flex items-center gap-2 cursor-pointer mt-3">
+              <input
+                type="checkbox"
+                checked={graphExpansion.includeChildren}
+                onChange={(e) =>
+                  onGraphExpansionChange?.({
+                    ...graphExpansion,
+                    includeChildren: e.target.checked,
+                  })
+                }
+                className="w-4 h-4 rounded border-default text-brand-600 focus:ring-brand-400 bg-surface-200"
+              />
+              <span className="text-sm text-foreground-light">
+                Include child sections in full
+              </span>
+            </label>
+            <p className="text-xs text-foreground-muted mt-1">
+              Off by default. Pulls each referenced section&apos;s subsections in whole,
+              which can add a lot of context per match.
+            </p>
+            {graphExpansion.includeChildren && (
+              <div className="mt-3">
+                <label className="block text-xs text-foreground-lighter mb-1">
+                  Max children per referenced section
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  value={graphExpansion.maxChildrenPerParent}
+                  onChange={(e) =>
+                    onGraphExpansionChange?.({
+                      ...graphExpansion,
+                      maxChildrenPerParent: e.target.value,
+                    })
+                  }
+                  className="w-full px-3 py-2 bg-surface-200 border border-default rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-brand-400"
+                />
+                {!isValidInt(graphExpansion.maxChildrenPerParent, 0) && (
+                  <p className="text-xs text-red-400 mt-1">Must be a non-negative integer</p>
+                )}
+                <p className="text-xs text-foreground-muted mt-1">
+                  Kept in document order. The outline still names the ones left out.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
         {retrievalMethod === "hybrid" && (
           <div className="mt-3">
             <label className="block text-xs text-foreground-lighter mb-1">

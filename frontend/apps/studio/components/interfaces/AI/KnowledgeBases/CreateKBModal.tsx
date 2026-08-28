@@ -11,6 +11,10 @@ import {
   type JsonSchemaField,
   schemaFieldsToBackendFormat,
 } from "@/components/interfaces/AI/KnowledgeBases/JsonSchemaEditor";
+import {
+  GRAPH_EXPANSION_DEFAULTS,
+  buildGraphExpansionConfig,
+} from "@/components/interfaces/AI/KnowledgeBases/graphExpansionConfig";
 
 export interface CreateKBModalProps {
   open: boolean;
@@ -49,6 +53,7 @@ export function CreateKBModal({ open, onOpenChange, onSuccess }: CreateKBModalPr
   );
   const [createMinPerSource, setCreateMinPerSource] = useState("0");
   const [createMaxPerSource, setCreateMaxPerSource] = useState("0");
+  const [createGraphExpansion, setCreateGraphExpansion] = useState(GRAPH_EXPANSION_DEFAULTS);
   const [createContextMode, setCreateContextMode] = useState("text");
   const [createVectorWeight, setCreateVectorWeight] = useState(defaults.hybrid_vector_weight);
   const [createQueryEnrichmentModel, setCreateQueryEnrichmentModel] = useState(
@@ -217,6 +222,9 @@ export function CreateKBModal({ open, onOpenChange, onSuccess }: CreateKBModalPr
       (createRerankerEnabled && !isValidInt(createRerankerCandidateCount, 1)) ||
       !isValidInt(createMinPerSource, 0) ||
       !isValidInt(createMaxPerSource, 0) ||
+      (createIndexingStrategy === "graph_index" &&
+        createGraphExpansion.includeChildren &&
+        !isValidInt(createGraphExpansion.maxChildrenPerParent, 0)) ||
       (Number(createMaxPerSource) > 0 &&
         Number(createMinPerSource) > Number(createMaxPerSource))
     ) {
@@ -300,6 +308,11 @@ export function CreateKBModal({ open, onOpenChange, onSuccess }: CreateKBModalPr
         }),
       };
 
+      const graphExpansion = buildGraphExpansionConfig(
+        createIndexingStrategy,
+        createGraphExpansion
+      );
+
       const retrieval_config =
         createRetrievalMethod === "tree_search"
           ? {
@@ -317,6 +330,7 @@ export function CreateKBModal({ open, onOpenChange, onSuccess }: CreateKBModalPr
               top_k: Number(createTopK),
               context_mode: createContextMode,
               ...perSourceLimits,
+              ...graphExpansion,
               ...(createRetrievalMethod === "hybrid" && { vector_weight: createVectorWeight }),
               ...(createRerankerEnabled && {
                 reranker: {
@@ -433,6 +447,8 @@ export function CreateKBModal({ open, onOpenChange, onSuccess }: CreateKBModalPr
               onMinPerSourceChange={setCreateMinPerSource}
               maxPerSource={createMaxPerSource}
               onMaxPerSourceChange={setCreateMaxPerSource}
+              graphExpansion={createGraphExpansion}
+              onGraphExpansionChange={setCreateGraphExpansion}
               queryEnrichmentModel={createQueryEnrichmentModel}
               onQueryEnrichmentModelChange={setCreateQueryEnrichmentModel}
               queryEnrichmentReasoningEffort={createQueryEnrichmentReasoningEffort}

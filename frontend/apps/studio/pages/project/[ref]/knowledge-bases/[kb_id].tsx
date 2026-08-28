@@ -9,6 +9,11 @@ import { cn } from "@/lib/utils";
 import { useProjectSupabaseClient, KnowledgeBase, Source, IndexedSource } from "@/hooks/ai/useProjectSupabaseClient";
 import { useKBDefaults } from "@/hooks/useKBDefaults";
 import { KBConfigFields, isValidInt } from "@/components/interfaces/AI/KnowledgeBases/KBConfigFields";
+import {
+  GRAPH_EXPANSION_DEFAULTS,
+  buildGraphExpansionConfig,
+  readGraphExpansionConfig,
+} from "@/components/interfaces/AI/KnowledgeBases/graphExpansionConfig";
 import { BM25IndexCard } from "@/components/interfaces/AI/KnowledgeBases/BM25IndexCard";
 import {
   type JsonSchemaField,
@@ -223,6 +228,7 @@ const KnowledgeBaseDetailPage: NextPageWithLayout = () => {
   );
   const [updateMinPerSource, setUpdateMinPerSource] = useState("0");
   const [updateMaxPerSource, setUpdateMaxPerSource] = useState("0");
+  const [updateGraphExpansion, setUpdateGraphExpansion] = useState(GRAPH_EXPANSION_DEFAULTS);
   const [updateContextMode, setUpdateContextMode] = useState("text");
   const [updateVectorWeight, setUpdateVectorWeight] = useState(defaults.hybrid_vector_weight);
   const [updateQueryEnrichmentModel, setUpdateQueryEnrichmentModel] = useState(defaults.query_enrichment.model);
@@ -326,7 +332,7 @@ const KnowledgeBaseDetailPage: NextPageWithLayout = () => {
       setUpdateName(kbData.name);
       setUpdateDescription(kbData.description || "");
       const idxConfig = kbData.indexing_config as { strategy?: string; chunk_size?: number; overlap?: number; model?: string; summary_model?: string; embedding_model?: string; enrichment_model?: string; reasoning_effort?: string; enrichment_reasoning_effort?: string };
-      const retConfig = kbData.retrieval_config as { method?: string; top_k?: number; retrieval_model?: string; retrieval_reasoning_effort?: string; context_mode?: string; vector_weight?: number; reranker?: { model?: string; candidate_count?: number }; query_enrichment?: { enabled?: boolean; model?: string; reasoning_effort?: string }; min_per_source?: number; max_per_source?: number };
+      const retConfig = kbData.retrieval_config as { method?: string; top_k?: number; retrieval_model?: string; retrieval_reasoning_effort?: string; context_mode?: string; vector_weight?: number; reranker?: { model?: string; candidate_count?: number }; query_enrichment?: { enabled?: boolean; model?: string; reasoning_effort?: string }; min_per_source?: number; max_per_source?: number; graph_expansion?: { include_children?: boolean; max_children_per_parent?: number; include_doc_toc?: boolean } };
       const strategy = idxConfig?.strategy ?? "chunk_embed";
       const stratDef = defaults.strategies[strategy];
       setUpdateIndexingStrategy(strategy);
@@ -378,6 +384,7 @@ const KnowledgeBaseDetailPage: NextPageWithLayout = () => {
       setUpdateRerankerCandidateCount(String(retConfig?.reranker?.candidate_count ?? defaults.reranker.candidate_count));
       setUpdateMinPerSource(String(typeof retConfig?.min_per_source === "number" ? retConfig.min_per_source : 0));
       setUpdateMaxPerSource(String(typeof retConfig?.max_per_source === "number" ? retConfig.max_per_source : 0));
+      setUpdateGraphExpansion(readGraphExpansionConfig(retConfig));
       setUpdateContextMode(retConfig?.context_mode ?? "text");
       setUpdateVectorWeight(retConfig?.vector_weight ?? defaults.hybrid_vector_weight);
       setUpdateQueryEnrichmentModel(retConfig?.query_enrichment?.model ?? defaults.query_enrichment.model);
@@ -891,6 +898,9 @@ const KnowledgeBaseDetailPage: NextPageWithLayout = () => {
       (updateRerankerEnabled && !isValidInt(updateRerankerCandidateCount, 1)) ||
       !isValidInt(updateMinPerSource, 0) ||
       !isValidInt(updateMaxPerSource, 0) ||
+      (updateIndexingStrategy === "graph_index" &&
+        updateGraphExpansion.includeChildren &&
+        !isValidInt(updateGraphExpansion.maxChildrenPerParent, 0)) ||
       (Number(updateMaxPerSource) > 0 &&
         Number(updateMinPerSource) > Number(updateMaxPerSource))
     ) {
@@ -981,6 +991,7 @@ const KnowledgeBaseDetailPage: NextPageWithLayout = () => {
               top_k: Number(updateTopK),
               context_mode: updateContextMode,
               ...perSourceLimits,
+              ...buildGraphExpansionConfig(updateIndexingStrategy, updateGraphExpansion),
               ...(updateRetrievalMethod === "hybrid" && { vector_weight: updateVectorWeight }),
               ...(updateRerankerEnabled && {
                 reranker: {
@@ -2532,6 +2543,8 @@ const KnowledgeBaseDetailPage: NextPageWithLayout = () => {
                   onMinPerSourceChange={setUpdateMinPerSource}
                   maxPerSource={updateMaxPerSource}
                   onMaxPerSourceChange={setUpdateMaxPerSource}
+                  graphExpansion={updateGraphExpansion}
+                  onGraphExpansionChange={setUpdateGraphExpansion}
                   queryEnrichmentModel={updateQueryEnrichmentModel}
                   onQueryEnrichmentModelChange={setUpdateQueryEnrichmentModel}
                   queryEnrichmentReasoningEffort={updateQueryEnrichmentReasoningEffort}
