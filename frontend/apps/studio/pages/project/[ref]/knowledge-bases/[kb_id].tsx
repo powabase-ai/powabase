@@ -10,9 +10,10 @@ import { useProjectSupabaseClient, KnowledgeBase, Source, IndexedSource } from "
 import { useKBDefaults } from "@/hooks/useKBDefaults";
 import { KBConfigFields, isValidInt } from "@/components/interfaces/AI/KnowledgeBases/KBConfigFields";
 import {
-  GRAPH_EXPANSION_DEFAULTS,
   buildGraphExpansionConfig,
+  isGraphExpansionValid,
   readGraphExpansionConfig,
+  serverGraphExpansionDefaults,
 } from "@/components/interfaces/AI/KnowledgeBases/graphExpansionConfig";
 import { BM25IndexCard } from "@/components/interfaces/AI/KnowledgeBases/BM25IndexCard";
 import {
@@ -228,7 +229,8 @@ const KnowledgeBaseDetailPage: NextPageWithLayout = () => {
   );
   const [updateMinPerSource, setUpdateMinPerSource] = useState("0");
   const [updateMaxPerSource, setUpdateMaxPerSource] = useState("0");
-  const [updateGraphExpansion, setUpdateGraphExpansion] = useState(GRAPH_EXPANSION_DEFAULTS);
+  const graphExpansionDefaults = serverGraphExpansionDefaults(defaults.strategies);
+  const [updateGraphExpansion, setUpdateGraphExpansion] = useState(graphExpansionDefaults);
   const [updateContextMode, setUpdateContextMode] = useState("text");
   const [updateVectorWeight, setUpdateVectorWeight] = useState(defaults.hybrid_vector_weight);
   const [updateQueryEnrichmentModel, setUpdateQueryEnrichmentModel] = useState(defaults.query_enrichment.model);
@@ -301,6 +303,17 @@ const KnowledgeBaseDetailPage: NextPageWithLayout = () => {
       }
     }
     setUpdateTopK(strategy === "full_document" ? "3" : "5");
+    // Without this, switching away from graph_index and back re-emits the
+    // previous values in-session while a reload emits defaults — the same
+    // user action producing two different saves.
+    setUpdateGraphExpansion(
+      strategy === "graph_index"
+        ? readGraphExpansionConfig(
+            kb?.retrieval_config as Record<string, unknown>,
+            graphExpansionDefaults
+          )
+        : graphExpansionDefaults
+    );
   };
 
   const currentStrategy = (kb?.indexing_config as { strategy?: string })?.strategy ?? "chunk_embed";
@@ -384,7 +397,7 @@ const KnowledgeBaseDetailPage: NextPageWithLayout = () => {
       setUpdateRerankerCandidateCount(String(retConfig?.reranker?.candidate_count ?? defaults.reranker.candidate_count));
       setUpdateMinPerSource(String(typeof retConfig?.min_per_source === "number" ? retConfig.min_per_source : 0));
       setUpdateMaxPerSource(String(typeof retConfig?.max_per_source === "number" ? retConfig.max_per_source : 0));
-      setUpdateGraphExpansion(readGraphExpansionConfig(retConfig));
+      setUpdateGraphExpansion(readGraphExpansionConfig(retConfig, graphExpansionDefaults));
       setUpdateContextMode(retConfig?.context_mode ?? "text");
       setUpdateVectorWeight(retConfig?.vector_weight ?? defaults.hybrid_vector_weight);
       setUpdateQueryEnrichmentModel(retConfig?.query_enrichment?.model ?? defaults.query_enrichment.model);
@@ -898,9 +911,7 @@ const KnowledgeBaseDetailPage: NextPageWithLayout = () => {
       (updateRerankerEnabled && !isValidInt(updateRerankerCandidateCount, 1)) ||
       !isValidInt(updateMinPerSource, 0) ||
       !isValidInt(updateMaxPerSource, 0) ||
-      (updateIndexingStrategy === "graph_index" &&
-        updateGraphExpansion.includeChildren &&
-        !isValidInt(updateGraphExpansion.maxChildrenPerParent, 0)) ||
+      !isGraphExpansionValid(updateIndexingStrategy, updateGraphExpansion, graphExpansionDefaults) ||
       (Number(updateMaxPerSource) > 0 &&
         Number(updateMinPerSource) > Number(updateMaxPerSource))
     ) {
@@ -991,7 +1002,11 @@ const KnowledgeBaseDetailPage: NextPageWithLayout = () => {
               top_k: Number(updateTopK),
               context_mode: updateContextMode,
               ...perSourceLimits,
-              ...buildGraphExpansionConfig(updateIndexingStrategy, updateGraphExpansion),
+              ...buildGraphExpansionConfig(
+                updateIndexingStrategy,
+                updateGraphExpansion,
+                graphExpansionDefaults
+              ),
               ...(updateRetrievalMethod === "hybrid" && { vector_weight: updateVectorWeight }),
               ...(updateRerankerEnabled && {
                 reranker: {

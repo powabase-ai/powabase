@@ -7,6 +7,7 @@ import {
 import { KBModelSelect } from "@/components/interfaces/AI/KnowledgeBases/KBModelSelect";
 import {
   GRAPH_EXPANSION_DEFAULTS,
+  GRAPH_MAX_CHILDREN_CEILING,
   type GraphExpansionFormState,
 } from "@/components/interfaces/AI/KnowledgeBases/graphExpansionConfig";
 import { ONBOARDING_ANCHORS } from "@/components/interfaces/AI/GuideBubbles/onboarding-anchors";
@@ -452,7 +453,7 @@ export function KBConfigFields({
         </p>
         {indexingStrategy === "graph_index" && (
           <div className="mt-4 pt-3 border-t border-default">
-            <label className="block text-sm text-foreground-light mb-1.5">Graph expansion</label>
+            <h4 className="text-sm text-foreground-light mb-1.5">Graph expansion</h4>
             <p className="text-xs text-foreground-muted mb-2">
               A match also pulls in the sections it explicitly references. What comes with
               those referenced sections is up to you.
@@ -497,12 +498,17 @@ export function KBConfigFields({
             </p>
             {graphExpansion.includeChildren && (
               <div className="mt-3">
-                <label className="block text-xs text-foreground-lighter mb-1">
+                <label
+                  className="block text-xs text-foreground-lighter mb-1"
+                  htmlFor="graph-max-children"
+                >
                   Max children per referenced section
                 </label>
                 <input
+                  id="graph-max-children"
                   type="number"
                   min={0}
+                  max={GRAPH_MAX_CHILDREN_CEILING}
                   value={graphExpansion.maxChildrenPerParent}
                   onChange={(e) =>
                     onGraphExpansionChange?.({
@@ -512,8 +518,11 @@ export function KBConfigFields({
                   }
                   className="w-full px-3 py-2 bg-surface-200 border border-default rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-brand-400"
                 />
-                {!isValidInt(graphExpansion.maxChildrenPerParent, 0) && (
-                  <p className="text-xs text-red-400 mt-1">Must be a non-negative integer</p>
+                {(!isValidInt(graphExpansion.maxChildrenPerParent, 0) ||
+                  Number(graphExpansion.maxChildrenPerParent) > GRAPH_MAX_CHILDREN_CEILING) && (
+                  <p className="text-xs text-red-400 mt-1">
+                    Must be a whole number between 0 and {GRAPH_MAX_CHILDREN_CEILING}
+                  </p>
                 )}
                 <p className="text-xs text-foreground-muted mt-1">
                   Kept in document order. The outline still names the ones left out.

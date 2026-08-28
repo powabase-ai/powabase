@@ -12,8 +12,9 @@ import {
   schemaFieldsToBackendFormat,
 } from "@/components/interfaces/AI/KnowledgeBases/JsonSchemaEditor";
 import {
-  GRAPH_EXPANSION_DEFAULTS,
   buildGraphExpansionConfig,
+  isGraphExpansionValid,
+  serverGraphExpansionDefaults,
 } from "@/components/interfaces/AI/KnowledgeBases/graphExpansionConfig";
 
 export interface CreateKBModalProps {
@@ -53,7 +54,8 @@ export function CreateKBModal({ open, onOpenChange, onSuccess }: CreateKBModalPr
   );
   const [createMinPerSource, setCreateMinPerSource] = useState("0");
   const [createMaxPerSource, setCreateMaxPerSource] = useState("0");
-  const [createGraphExpansion, setCreateGraphExpansion] = useState(GRAPH_EXPANSION_DEFAULTS);
+  const graphExpansionDefaults = serverGraphExpansionDefaults(defaults.strategies);
+  const [createGraphExpansion, setCreateGraphExpansion] = useState(graphExpansionDefaults);
   const [createContextMode, setCreateContextMode] = useState("text");
   const [createVectorWeight, setCreateVectorWeight] = useState(defaults.hybrid_vector_weight);
   const [createQueryEnrichmentModel, setCreateQueryEnrichmentModel] = useState(
@@ -130,6 +132,7 @@ export function CreateKBModal({ open, onOpenChange, onSuccess }: CreateKBModalPr
     setCreateRerankerCandidateCount(String(defaults.reranker.candidate_count));
     setCreateMinPerSource("0");
     setCreateMaxPerSource("0");
+    setCreateGraphExpansion(graphExpansionDefaults);
     setCreateContextMode("text");
     setCreateVectorWeight(defaults.hybrid_vector_weight);
     setCreateQueryEnrichmentModel(defaults.query_enrichment.model);
@@ -222,9 +225,7 @@ export function CreateKBModal({ open, onOpenChange, onSuccess }: CreateKBModalPr
       (createRerankerEnabled && !isValidInt(createRerankerCandidateCount, 1)) ||
       !isValidInt(createMinPerSource, 0) ||
       !isValidInt(createMaxPerSource, 0) ||
-      (createIndexingStrategy === "graph_index" &&
-        createGraphExpansion.includeChildren &&
-        !isValidInt(createGraphExpansion.maxChildrenPerParent, 0)) ||
+      !isGraphExpansionValid(createIndexingStrategy, createGraphExpansion, graphExpansionDefaults) ||
       (Number(createMaxPerSource) > 0 &&
         Number(createMinPerSource) > Number(createMaxPerSource))
     ) {
@@ -308,9 +309,13 @@ export function CreateKBModal({ open, onOpenChange, onSuccess }: CreateKBModalPr
         }),
       };
 
+      // Only reaches the non-tree_search branch below. graph_index's
+      // compatible_retrievers exclude tree_search, so the two never meet —
+      // if that ever changes, this block has to move into both branches.
       const graphExpansion = buildGraphExpansionConfig(
         createIndexingStrategy,
-        createGraphExpansion
+        createGraphExpansion,
+        graphExpansionDefaults
       );
 
       const retrieval_config =
