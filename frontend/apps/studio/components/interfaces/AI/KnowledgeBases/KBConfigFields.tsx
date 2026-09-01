@@ -8,6 +8,7 @@ import { KBModelSelect } from "@/components/interfaces/AI/KnowledgeBases/KBModel
 import {
   GRAPH_EXPANSION_DEFAULTS,
   GRAPH_MAX_CHILDREN_CEILING,
+  isGraphExpansionValid,
   type GraphExpansionFormState,
 } from "@/components/interfaces/AI/KnowledgeBases/graphExpansionConfig";
 import { ONBOARDING_ANCHORS } from "@/components/interfaces/AI/GuideBubbles/onboarding-anchors";
@@ -52,6 +53,9 @@ export interface KBConfigFieldsProps {
   onMaxPerSourceChange?: (v: string) => void;
   graphExpansion?: GraphExpansionFormState;
   onGraphExpansionChange?: (v: GraphExpansionFormState) => void;
+  /** Server-published defaults, so the field validates against the same
+   * baseline the submit gate and the payload builder use. */
+  graphExpansionDefaults?: GraphExpansionFormState;
   queryEnrichmentModel: string;
   onQueryEnrichmentModelChange: (v: string) => void;
   queryEnrichmentReasoningEffort?: string;
@@ -129,6 +133,7 @@ export function KBConfigFields({
   onMaxPerSourceChange,
   graphExpansion = GRAPH_EXPANSION_DEFAULTS,
   onGraphExpansionChange,
+  graphExpansionDefaults = GRAPH_EXPANSION_DEFAULTS,
   queryEnrichmentModel,
   onQueryEnrichmentModelChange,
   queryEnrichmentReasoningEffort,
@@ -176,6 +181,13 @@ export function KBConfigFields({
         label: strategyEntry.retriever_labels[r] ?? r,
       }))
     : [];
+  // The same predicate the submit gates use, so what the form shows and what
+  // it refuses to save cannot disagree.
+  const capIsValid = isGraphExpansionValid(
+    "graph_index",
+    graphExpansion,
+    graphExpansionDefaults
+  );
 
   return (
     <>
@@ -496,7 +508,11 @@ export function KBConfigFields({
               Off by default. Pulls each referenced section&apos;s subsections in whole,
               which can add a lot of context per match.
             </p>
-            {graphExpansion.includeChildren && (
+            {/* Shown whenever children are on OR the stored cap is invalid.
+                Hiding an invalid value with the toggle would block every save
+                on this KB with nothing on the page to correct — reachable on
+                first load from a config written through the API. */}
+            {(graphExpansion.includeChildren || !capIsValid) && (
               <div className="mt-3">
                 <label
                   className="block text-xs text-foreground-lighter mb-1"
@@ -518,8 +534,7 @@ export function KBConfigFields({
                   }
                   className="w-full px-3 py-2 bg-surface-200 border border-default rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-brand-400"
                 />
-                {(!isValidInt(graphExpansion.maxChildrenPerParent, 0) ||
-                  Number(graphExpansion.maxChildrenPerParent) > GRAPH_MAX_CHILDREN_CEILING) && (
+                {!capIsValid && (
                   <p className="text-xs text-red-400 mt-1">
                     Must be a whole number between 0 and {GRAPH_MAX_CHILDREN_CEILING}
                   </p>

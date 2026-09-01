@@ -14,6 +14,7 @@ import {
   isGraphExpansionValid,
   readGraphExpansionConfig,
   serverGraphExpansionDefaults,
+  type GraphExpansionFormState,
 } from "@/components/interfaces/AI/KnowledgeBases/graphExpansionConfig";
 import { BM25IndexCard } from "@/components/interfaces/AI/KnowledgeBases/BM25IndexCard";
 import {
@@ -230,7 +231,12 @@ const KnowledgeBaseDetailPage: NextPageWithLayout = () => {
   const [updateMinPerSource, setUpdateMinPerSource] = useState("0");
   const [updateMaxPerSource, setUpdateMaxPerSource] = useState("0");
   const graphExpansionDefaults = serverGraphExpansionDefaults(defaults.strategies);
-  const [updateGraphExpansion, setUpdateGraphExpansion] = useState(graphExpansionDefaults);
+  // null = not edited in this session. The effective value is derived from the
+  // stored config below rather than seeded once, because both the KB response
+  // and the defaults response can land after the first render — seeding would
+  // freeze whichever arrived first.
+  const [updateGraphExpansion, setUpdateGraphExpansion] =
+    useState<GraphExpansionFormState | null>(null);
   const [updateContextMode, setUpdateContextMode] = useState("text");
   const [updateVectorWeight, setUpdateVectorWeight] = useState(defaults.hybrid_vector_weight);
   const [updateQueryEnrichmentModel, setUpdateQueryEnrichmentModel] = useState(defaults.query_enrichment.model);
@@ -303,18 +309,22 @@ const KnowledgeBaseDetailPage: NextPageWithLayout = () => {
       }
     }
     setUpdateTopK(strategy === "full_document" ? "3" : "5");
-    // Without this, switching away from graph_index and back re-emits the
-    // previous values in-session while a reload emits defaults — the same
-    // user action producing two different saves.
-    setUpdateGraphExpansion(
-      strategy === "graph_index"
-        ? readGraphExpansionConfig(
-            kb?.retrieval_config as Record<string, unknown>,
-            graphExpansionDefaults
-          )
-        : graphExpansionDefaults
-    );
+    // Back to "not edited", which the derived value resolves from the stored
+    // config. Without this, switching away from graph_index and back re-emits
+    // the previous edits in-session while a reload shows the saved ones — the
+    // same user action producing two different saves.
+    setUpdateGraphExpansion(null);
   };
+
+  /** What the form shows: the operator's edits if any, otherwise the stored
+   * config read against the current defaults. Derived rather than seeded so a
+   * late defaults response cannot leave the form on stale values. */
+  const effectiveGraphExpansion =
+    updateGraphExpansion ??
+    readGraphExpansionConfig(
+      kb?.retrieval_config as Record<string, unknown> | undefined,
+      graphExpansionDefaults
+    );
 
   const currentStrategy = (kb?.indexing_config as { strategy?: string })?.strategy ?? "chunk_embed";
   const useImages = (kb?.indexing_config as { use_images?: boolean })?.use_images ?? false;
@@ -397,7 +407,6 @@ const KnowledgeBaseDetailPage: NextPageWithLayout = () => {
       setUpdateRerankerCandidateCount(String(retConfig?.reranker?.candidate_count ?? defaults.reranker.candidate_count));
       setUpdateMinPerSource(String(typeof retConfig?.min_per_source === "number" ? retConfig.min_per_source : 0));
       setUpdateMaxPerSource(String(typeof retConfig?.max_per_source === "number" ? retConfig.max_per_source : 0));
-      setUpdateGraphExpansion(readGraphExpansionConfig(retConfig, graphExpansionDefaults));
       setUpdateContextMode(retConfig?.context_mode ?? "text");
       setUpdateVectorWeight(retConfig?.vector_weight ?? defaults.hybrid_vector_weight);
       setUpdateQueryEnrichmentModel(retConfig?.query_enrichment?.model ?? defaults.query_enrichment.model);
@@ -911,7 +920,11 @@ const KnowledgeBaseDetailPage: NextPageWithLayout = () => {
       (updateRerankerEnabled && !isValidInt(updateRerankerCandidateCount, 1)) ||
       !isValidInt(updateMinPerSource, 0) ||
       !isValidInt(updateMaxPerSource, 0) ||
-      !isGraphExpansionValid(updateIndexingStrategy, updateGraphExpansion, graphExpansionDefaults) ||
+      !isGraphExpansionValid(
+        updateIndexingStrategy,
+        effectiveGraphExpansion,
+        graphExpansionDefaults
+      ) ||
       (Number(updateMaxPerSource) > 0 &&
         Number(updateMinPerSource) > Number(updateMaxPerSource))
     ) {
@@ -1004,7 +1017,7 @@ const KnowledgeBaseDetailPage: NextPageWithLayout = () => {
               ...perSourceLimits,
               ...buildGraphExpansionConfig(
                 updateIndexingStrategy,
-                updateGraphExpansion,
+                effectiveGraphExpansion,
                 graphExpansionDefaults
               ),
               ...(updateRetrievalMethod === "hybrid" && { vector_weight: updateVectorWeight }),
@@ -2558,7 +2571,7 @@ const KnowledgeBaseDetailPage: NextPageWithLayout = () => {
                   onMinPerSourceChange={setUpdateMinPerSource}
                   maxPerSource={updateMaxPerSource}
                   onMaxPerSourceChange={setUpdateMaxPerSource}
-                  graphExpansion={updateGraphExpansion}
+                  graphExpansion={effectiveGraphExpansion}
                   onGraphExpansionChange={setUpdateGraphExpansion}
                   queryEnrichmentModel={updateQueryEnrichmentModel}
                   onQueryEnrichmentModelChange={setUpdateQueryEnrichmentModel}

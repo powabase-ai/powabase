@@ -46,10 +46,17 @@ function coerceBool(value: unknown, fallback: boolean): boolean {
   return typeof value === "boolean" ? value : fallback
 }
 
+/**
+ * Read a stored cap the way the server does: clamp a real integer into
+ * `[0, GRAPH_MAX_CHILDREN_CEILING]`, fall back only for values it would
+ * ignore. Falling back on an out-of-range value instead would display a
+ * number the KB does not actually use — `-5` means 0 on the server, and
+ * `50` means 20. `Number.isInteger` is true for `1e21`, which Python reads
+ * as a float and ignores, so the range check carries that case too.
+ */
 function coerceCap(value: unknown, fallback: string): string {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0
-    ? String(value)
-    : fallback
+  if (typeof value !== "number" || !Number.isInteger(value)) return fallback
+  return String(Math.min(Math.max(0, value), GRAPH_MAX_CHILDREN_CEILING))
 }
 
 /**
@@ -102,10 +109,10 @@ export function readGraphExpansionConfig(
  */
 export function isGraphExpansionValid(
   indexingStrategy: string,
-  state: GraphExpansionFormState,
+  state: GraphExpansionFormState | null,
   defaults: GraphExpansionFormState = GRAPH_EXPANSION_DEFAULTS
 ): boolean {
-  if (indexingStrategy !== "graph_index") return true
+  if (indexingStrategy !== "graph_index" || state === null) return true
   if (state.maxChildrenPerParent === defaults.maxChildrenPerParent) return true
 
   const cap = Number(state.maxChildrenPerParent)
@@ -128,10 +135,15 @@ export function isGraphExpansionValid(
  */
 export function buildGraphExpansionConfig(
   indexingStrategy: string,
-  state: GraphExpansionFormState,
+  state: GraphExpansionFormState | null,
   defaults: GraphExpansionFormState = GRAPH_EXPANSION_DEFAULTS
 ): { graph_expansion?: Partial<GraphExpansionConfig> } {
   if (indexingStrategy !== "graph_index") return {}
+  // `null` means the operator never touched the section. Inferring that from
+  // a state-vs-defaults diff instead would write all three keys whenever the
+  // defaults moved after mount, which is exactly what happens: the server's
+  // values arrive a render after the local fallback.
+  if (state === null) return {}
 
   const block: Partial<GraphExpansionConfig> = {}
 

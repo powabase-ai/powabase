@@ -15,6 +15,7 @@ import {
   buildGraphExpansionConfig,
   isGraphExpansionValid,
   serverGraphExpansionDefaults,
+  type GraphExpansionFormState,
 } from "@/components/interfaces/AI/KnowledgeBases/graphExpansionConfig";
 
 export interface CreateKBModalProps {
@@ -55,7 +56,11 @@ export function CreateKBModal({ open, onOpenChange, onSuccess }: CreateKBModalPr
   const [createMinPerSource, setCreateMinPerSource] = useState("0");
   const [createMaxPerSource, setCreateMaxPerSource] = useState("0");
   const graphExpansionDefaults = serverGraphExpansionDefaults(defaults.strategies);
-  const [createGraphExpansion, setCreateGraphExpansion] = useState(graphExpansionDefaults);
+  // null = the operator never opened this section. Held rather than seeded so
+  // the defaults can still change underneath it: useKBDefaults returns its
+  // local fallback first and the server payload a render later.
+  const [createGraphExpansion, setCreateGraphExpansion] =
+    useState<GraphExpansionFormState | null>(null);
   const [createContextMode, setCreateContextMode] = useState("text");
   const [createVectorWeight, setCreateVectorWeight] = useState(defaults.hybrid_vector_weight);
   const [createQueryEnrichmentModel, setCreateQueryEnrichmentModel] = useState(
@@ -132,7 +137,7 @@ export function CreateKBModal({ open, onOpenChange, onSuccess }: CreateKBModalPr
     setCreateRerankerCandidateCount(String(defaults.reranker.candidate_count));
     setCreateMinPerSource("0");
     setCreateMaxPerSource("0");
-    setCreateGraphExpansion(graphExpansionDefaults);
+    setCreateGraphExpansion(null);
     setCreateContextMode("text");
     setCreateVectorWeight(defaults.hybrid_vector_weight);
     setCreateQueryEnrichmentModel(defaults.query_enrichment.model);
@@ -452,8 +457,9 @@ export function CreateKBModal({ open, onOpenChange, onSuccess }: CreateKBModalPr
               onMinPerSourceChange={setCreateMinPerSource}
               maxPerSource={createMaxPerSource}
               onMaxPerSourceChange={setCreateMaxPerSource}
-              graphExpansion={createGraphExpansion}
+              graphExpansion={createGraphExpansion ?? graphExpansionDefaults}
               onGraphExpansionChange={setCreateGraphExpansion}
+              graphExpansionDefaults={graphExpansionDefaults}
               queryEnrichmentModel={createQueryEnrichmentModel}
               onQueryEnrichmentModelChange={setCreateQueryEnrichmentModel}
               queryEnrichmentReasoningEffort={createQueryEnrichmentReasoningEffort}
