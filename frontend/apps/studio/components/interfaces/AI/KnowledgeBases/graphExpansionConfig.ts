@@ -10,12 +10,14 @@
 export interface GraphExpansionFormState {
   includeChildren: boolean
   maxChildrenPerParent: string
+  maxReferencedNodes: string
   includeDocToc: boolean
 }
 
 export interface GraphExpansionConfig {
   include_children: boolean
   max_children_per_parent: number
+  max_referenced_nodes: number
   include_doc_toc: boolean
 }
 
@@ -27,6 +29,7 @@ export interface GraphExpansionConfig {
 export const GRAPH_EXPANSION_DEFAULTS: GraphExpansionFormState = {
   includeChildren: false,
   maxChildrenPerParent: "3",
+  maxReferencedNodes: "10",
   includeDocToc: true,
 }
 
@@ -35,6 +38,11 @@ export const GRAPH_EXPANSION_DEFAULTS: GraphExpansionFormState = {
  * a cap of a million restores the unbounded fan-out the feature removes.
  */
 export const GRAPH_MAX_CHILDREN_CEILING = 20
+
+/** Ceiling on how many referenced sections one search pulls in. References
+ * are expansion's largest cost — a single densely-referencing section can
+ * pull more than the whole context budget. */
+export const GRAPH_MAX_REFERENCED_CEILING = 100
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -47,16 +55,40 @@ function coerceBool(value: unknown, fallback: boolean): boolean {
 }
 
 /**
- * Read a stored cap the way the server does: clamp a real integer into
- * `[0, GRAPH_MAX_CHILDREN_CEILING]`, fall back only for values it would
- * ignore. Falling back on an out-of-range value instead would display a
- * number the KB does not actually use — `-5` means 0 on the server, and
- * `50` means 20. `Number.isInteger` is true for `1e21`, which Python reads
- * as a float and ignores, so the range check carries that case too.
+ * The two numeric fields, each with its own bound. They are deliberately
+ * different: 50 referenced sections is a plausible setting for a large
+ * corpus, 50 children per referenced section is not.
  */
-function coerceCap(value: unknown, fallback: string): string {
+const NUMERIC_FIELDS = [
+  {
+    form: "maxChildrenPerParent",
+    api: "max_children_per_parent",
+    ceiling: GRAPH_MAX_CHILDREN_CEILING,
+  },
+  {
+    form: "maxReferencedNodes",
+    api: "max_referenced_nodes",
+    ceiling: GRAPH_MAX_REFERENCED_CEILING,
+  },
+] as const
+
+/**
+ * Read a stored cap the way the server does: clamp a real integer into
+ * `[0, ceiling]`, fall back only for values it would ignore. Falling back on
+ * an out-of-range value instead would display a number the KB does not
+ * actually use — `-5` means 0 on the server, and `50` means 20 for children.
+ * `Number.isInteger` is true for `1e21`, which Python reads as a float and
+ * ignores, so the range check carries that case too.
+ */
+function coerceCap(value: unknown, fallback: string, ceiling: number): string {
   if (typeof value !== "number" || !Number.isInteger(value)) return fallback
-  return String(Math.min(Math.max(0, value), GRAPH_MAX_CHILDREN_CEILING))
+  return String(Math.min(Math.max(0, value), ceiling))
+}
+
+/** A form value is savable when it is a whole number within `[0, ceiling]`. */
+function capIsInRange(raw: string, ceiling: number): boolean {
+  const n = Number(raw)
+  return raw.trim() !== "" && Number.isInteger(n) && n >= 0 && n <= ceiling
 }
 
 /**
@@ -76,7 +108,13 @@ export function serverGraphExpansionDefaults(
     ),
     maxChildrenPerParent: coerceCap(
       block.max_children_per_parent,
-      GRAPH_EXPANSION_DEFAULTS.maxChildrenPerParent
+      GRAPH_EXPANSION_DEFAULTS.maxChildrenPerParent,
+      GRAPH_MAX_CHILDREN_CEILING
+    ),
+    maxReferencedNodes: coerceCap(
+      block.max_referenced_nodes,
+      GRAPH_EXPANSION_DEFAULTS.maxReferencedNodes,
+      GRAPH_MAX_REFERENCED_CEILING
     ),
     includeDocToc: coerceBool(block.include_doc_toc, GRAPH_EXPANSION_DEFAULTS.includeDocToc),
   }
@@ -97,7 +135,16 @@ export function readGraphExpansionConfig(
 
   return {
     includeChildren: coerceBool(cfg.include_children, defaults.includeChildren),
-    maxChildrenPerParent: coerceCap(cfg.max_children_per_parent, defaults.maxChildrenPerParent),
+    maxChildrenPerParent: coerceCap(
+      cfg.max_children_per_parent,
+      defaults.maxChildrenPerParent,
+      GRAPH_MAX_CHILDREN_CEILING
+    ),
+    maxReferencedNodes: coerceCap(
+      cfg.max_referenced_nodes,
+      defaults.maxReferencedNodes,
+      GRAPH_MAX_REFERENCED_CEILING
+    ),
     includeDocToc: coerceBool(cfg.include_doc_toc, defaults.includeDocToc),
   }
 }
@@ -113,14 +160,12 @@ export function isGraphExpansionValid(
   defaults: GraphExpansionFormState = GRAPH_EXPANSION_DEFAULTS
 ): boolean {
   if (indexingStrategy !== "graph_index" || state === null) return true
-  if (state.maxChildrenPerParent === defaults.maxChildrenPerParent) return true
 
-  const cap = Number(state.maxChildrenPerParent)
-  return (
-    state.maxChildrenPerParent.trim() !== "" &&
-    Number.isInteger(cap) &&
-    cap >= 0 &&
-    cap <= GRAPH_MAX_CHILDREN_CEILING
+  // Each field is checked only when it differs from its default, because that
+  // is the same condition `build` writes it under.
+  return NUMERIC_FIELDS.every(
+    ({ form, ceiling }) =>
+      state[form] === defaults[form] || capIsInRange(state[form], ceiling)
   )
 }
 
@@ -153,11 +198,10 @@ export function buildGraphExpansionConfig(
   if (state.includeDocToc !== defaults.includeDocToc) {
     block.include_doc_toc = state.includeDocToc
   }
-  if (
-    state.maxChildrenPerParent !== defaults.maxChildrenPerParent &&
-    isGraphExpansionValid(indexingStrategy, state, defaults)
-  ) {
-    block.max_children_per_parent = Number(state.maxChildrenPerParent)
+  for (const { form, api, ceiling } of NUMERIC_FIELDS) {
+    if (state[form] !== defaults[form] && capIsInRange(state[form], ceiling)) {
+      block[api] = Number(state[form])
+    }
   }
 
   return Object.keys(block).length > 0 ? { graph_expansion: block } : {}

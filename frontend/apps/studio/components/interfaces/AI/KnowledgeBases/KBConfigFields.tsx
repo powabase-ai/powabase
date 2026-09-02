@@ -8,6 +8,7 @@ import { KBModelSelect } from "@/components/interfaces/AI/KnowledgeBases/KBModel
 import {
   GRAPH_EXPANSION_DEFAULTS,
   GRAPH_MAX_CHILDREN_CEILING,
+  GRAPH_MAX_REFERENCED_CEILING,
   isGraphExpansionValid,
   type GraphExpansionFormState,
 } from "@/components/interfaces/AI/KnowledgeBases/graphExpansionConfig";
@@ -182,10 +183,16 @@ export function KBConfigFields({
       }))
     : [];
   // The same predicate the submit gates use, so what the form shows and what
-  // it refuses to save cannot disagree.
+  // it refuses to save cannot disagree. Checked per field so one invalid value
+  // does not flag the other.
   const capIsValid = isGraphExpansionValid(
     "graph_index",
-    graphExpansion,
+    { ...graphExpansion, maxReferencedNodes: graphExpansionDefaults.maxReferencedNodes },
+    graphExpansionDefaults
+  );
+  const refCapIsValid = isGraphExpansionValid(
+    "graph_index",
+    { ...graphExpansion, maxChildrenPerParent: graphExpansionDefaults.maxChildrenPerParent },
     graphExpansionDefaults
   );
 
@@ -488,6 +495,37 @@ export function KBConfigFields({
               Adds a titles-only outline of each document a reference was followed into, so
               the model can see what a section contains and ask for it by name.
             </p>
+            <div className="mt-3">
+              <label
+                className="block text-xs text-foreground-lighter mb-1"
+                htmlFor="graph-max-referenced"
+              >
+                Max referenced sections per search
+              </label>
+              <input
+                id="graph-max-referenced"
+                type="number"
+                min={0}
+                max={GRAPH_MAX_REFERENCED_CEILING}
+                value={graphExpansion.maxReferencedNodes}
+                onChange={(e) =>
+                  onGraphExpansionChange?.({
+                    ...graphExpansion,
+                    maxReferencedNodes: e.target.value,
+                  })
+                }
+                className="w-full px-3 py-2 bg-surface-200 border border-default rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-brand-400"
+              />
+              {!refCapIsValid && (
+                <p className="text-xs text-red-400 mt-1">
+                  Must be a whole number between 0 and {GRAPH_MAX_REFERENCED_CEILING}
+                </p>
+              )}
+              <p className="text-xs text-foreground-muted mt-1">
+                The largest cost here: each referenced section arrives in full. When more
+                are referenced than this, the ones most hits agree on are kept.
+              </p>
+            </div>
             <label className="flex items-center gap-2 cursor-pointer mt-3">
               <input
                 type="checkbox"

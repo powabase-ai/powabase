@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest"
 import {
   GRAPH_EXPANSION_DEFAULTS,
+  GRAPH_MAX_REFERENCED_CEILING,
   buildGraphExpansionConfig,
   isGraphExpansionValid,
   readGraphExpansionConfig,
@@ -24,6 +25,7 @@ describe("readGraphExpansionConfig", () => {
       graph_expansion: {
         include_children: true,
         max_children_per_parent: 5,
+        max_referenced_nodes: 25,
         include_doc_toc: false,
       },
     })
@@ -31,8 +33,26 @@ describe("readGraphExpansionConfig", () => {
     expect(state).toEqual({
       includeChildren: true,
       maxChildrenPerParent: "5",
+      maxReferencedNodes: "25",
       includeDocToc: false,
     })
+  })
+
+  it("defaults the reference cap to 10", () => {
+    expect(GRAPH_EXPANSION_DEFAULTS.maxReferencedNodes).toBe("10")
+  })
+
+  it("clamps the reference cap to its own, larger ceiling", () => {
+    // The two numeric fields do not share a bound: 25 references is fine,
+    // 25 children per referenced section is not.
+    expect(
+      readGraphExpansionConfig({ graph_expansion: { max_referenced_nodes: 500 } })
+        .maxReferencedNodes
+    ).toBe(String(GRAPH_MAX_REFERENCED_CEILING))
+    expect(
+      readGraphExpansionConfig({ graph_expansion: { max_referenced_nodes: 25 } })
+        .maxReferencedNodes
+    ).toBe("25")
   })
 
   it.each([["a truthy string", "false"], ["a number", 1], ["zero", 0], ["an array", []]])(
@@ -97,9 +117,9 @@ describe("buildGraphExpansionConfig", () => {
   it("emits nothing for strategies without a graph", () => {
     expect(
       buildGraphExpansionConfig("chunk_embed", {
+        ...GRAPH_EXPANSION_DEFAULTS,
         includeChildren: true,
         maxChildrenPerParent: "2",
-        includeDocToc: true,
       })
     ).toEqual({})
   })
@@ -109,15 +129,26 @@ describe("buildGraphExpansionConfig", () => {
       buildGraphExpansionConfig("graph_index", {
         includeChildren: true,
         maxChildrenPerParent: "2",
+        maxReferencedNodes: "4",
         includeDocToc: false,
       })
     ).toEqual({
       graph_expansion: {
         include_children: true,
         max_children_per_parent: 2,
+        max_referenced_nodes: 4,
         include_doc_toc: false,
       },
     })
+  })
+
+  it("omits an unchanged reference cap", () => {
+    expect(
+      buildGraphExpansionConfig("graph_index", {
+        ...GRAPH_EXPANSION_DEFAULTS,
+        includeDocToc: false,
+      })
+    ).toEqual({ graph_expansion: { include_doc_toc: false } })
   })
 
   it("omits the block entirely when nothing was changed", () => {
@@ -137,9 +168,9 @@ describe("buildGraphExpansionConfig", () => {
 
   it("falls back to the default cap rather than writing NaN", () => {
     const built = buildGraphExpansionConfig("graph_index", {
+      ...GRAPH_EXPANSION_DEFAULTS,
       includeChildren: true,
       maxChildrenPerParent: "",
-      includeDocToc: true,
     })
 
     expect(built.graph_expansion?.max_children_per_parent).toBeUndefined()
@@ -155,9 +186,9 @@ describe("isGraphExpansionValid", () => {
   it("accepts a cap of zero, which disables children explicitly", () => {
     expect(
       isGraphExpansionValid("graph_index", {
+        ...GRAPH_EXPANSION_DEFAULTS,
         includeChildren: true,
         maxChildrenPerParent: "0",
-        includeDocToc: true,
       })
     ).toBe(true)
   })
@@ -165,9 +196,9 @@ describe("isGraphExpansionValid", () => {
   it("accepts a valid in-range cap", () => {
     expect(
       isGraphExpansionValid("graph_index", {
+        ...GRAPH_EXPANSION_DEFAULTS,
         includeChildren: true,
         maxChildrenPerParent: "7",
-        includeDocToc: true,
       })
     ).toBe(true)
   })
@@ -175,9 +206,26 @@ describe("isGraphExpansionValid", () => {
   it("passes any state for a strategy without a graph", () => {
     expect(
       isGraphExpansionValid("chunk_embed", {
-        includeChildren: true,
+        ...GRAPH_EXPANSION_DEFAULTS,
         maxChildrenPerParent: "-5",
-        includeDocToc: true,
+      })
+    ).toBe(true)
+  })
+
+  it.each(["", "-5", "2.5", "abc", "101"])("rejects a reference cap of %o", (cap) => {
+    expect(
+      isGraphExpansionValid("graph_index", {
+        ...GRAPH_EXPANSION_DEFAULTS,
+        maxReferencedNodes: cap,
+      })
+    ).toBe(false)
+  })
+
+  it("accepts a reference cap the children cap would reject", () => {
+    expect(
+      isGraphExpansionValid("graph_index", {
+        ...GRAPH_EXPANSION_DEFAULTS,
+        maxReferencedNodes: "50",
       })
     ).toBe(true)
   })
@@ -185,9 +233,8 @@ describe("isGraphExpansionValid", () => {
   it.each(["", "-5", "2.5", "abc"])("rejects a cap of %o", (cap) => {
     expect(
       isGraphExpansionValid("graph_index", {
-        includeChildren: true,
+        ...GRAPH_EXPANSION_DEFAULTS,
         maxChildrenPerParent: cap,
-        includeDocToc: true,
       })
     ).toBe(false)
   })
@@ -195,9 +242,8 @@ describe("isGraphExpansionValid", () => {
   it("rejects a cap above the ceiling the server enforces", () => {
     expect(
       isGraphExpansionValid("graph_index", {
-        includeChildren: true,
+        ...GRAPH_EXPANSION_DEFAULTS,
         maxChildrenPerParent: "1000000",
-        includeDocToc: true,
       })
     ).toBe(false)
   })
@@ -207,9 +253,9 @@ describe("isGraphExpansionValid", () => {
     // check on includeChildren would let an invalid value through to the API.
     expect(
       isGraphExpansionValid("graph_index", {
+        ...GRAPH_EXPANSION_DEFAULTS,
         includeChildren: false,
         maxChildrenPerParent: "-5",
-        includeDocToc: true,
       })
     ).toBe(false)
   })
@@ -223,6 +269,7 @@ describe("serverGraphExpansionDefaults", () => {
           graph_expansion: {
             include_children: true,
             max_children_per_parent: 7,
+            max_referenced_nodes: 30,
             include_doc_toc: false,
           },
         },
@@ -232,6 +279,7 @@ describe("serverGraphExpansionDefaults", () => {
     expect(defaults).toEqual({
       includeChildren: true,
       maxChildrenPerParent: "7",
+      maxReferencedNodes: "30",
       includeDocToc: false,
     })
   })
@@ -254,7 +302,12 @@ describe("round trip", () => {
     [" 4 ", "4"],
     ["+5", "5"],
   ])("read(build(%o)) yields %o", (cap, expected) => {
-    const state = { includeChildren: true, maxChildrenPerParent: cap, includeDocToc: false }
+    const state = {
+      ...GRAPH_EXPANSION_DEFAULTS,
+      includeChildren: true,
+      maxChildrenPerParent: cap,
+      includeDocToc: false,
+    }
     const built = buildGraphExpansionConfig("graph_index", state)
 
     expect(readGraphExpansionConfig(built).maxChildrenPerParent).toBe(expected)
