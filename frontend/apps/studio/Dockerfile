@@ -96,6 +96,12 @@ ARG NEXT_PUBLIC_GOOGLE_ADS_PAID_LABEL=
 # powabase-studio image is built IS_PLATFORM=false, so this value is what
 # getProfile() merges into disabled_features there.
 ARG NEXT_PUBLIC_DISABLED_FEATURES=ai:project_copilot
+# Per-project subdomain base: each project is served at `<ref>.${PROJECT_DOMAIN_BASE}`.
+# csp.js reads this while `next build` evaluates next.config.js headers(), so the
+# CSP allow-list for the per-project hosts (Storage uploads, Realtime WS) is fixed
+# at image-build time. Override it for a deployment whose projects live under a
+# different domain; setting the same variable at runtime cannot change the CSP.
+ARG PROJECT_DOMAIN_BASE=p.powabase.ai
 
 ENV NEXT_PUBLIC_IS_PLATFORM=$NEXT_PUBLIC_IS_PLATFORM
 ENV NEXT_PUBLIC_ENVIRONMENT=$NEXT_PUBLIC_ENVIRONMENT
@@ -115,6 +121,7 @@ ENV NEXT_PUBLIC_CLARITY_ID=$NEXT_PUBLIC_CLARITY_ID
 ENV NEXT_PUBLIC_GOOGLE_ADS_SIGNUP_LABEL=$NEXT_PUBLIC_GOOGLE_ADS_SIGNUP_LABEL
 ENV NEXT_PUBLIC_GOOGLE_ADS_PAID_LABEL=$NEXT_PUBLIC_GOOGLE_ADS_PAID_LABEL
 ENV NEXT_PUBLIC_DISABLED_FEATURES=$NEXT_PUBLIC_DISABLED_FEATURES
+ENV PROJECT_DOMAIN_BASE=$PROJECT_DOMAIN_BASE
 ENV SENTRY_IGNORE_API_RESOLUTION_ERROR=1
 ENV SKIP_ASSET_UPLOAD=1
 ENV NEXT_TELEMETRY_DISABLED=1
