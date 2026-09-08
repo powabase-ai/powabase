@@ -256,3 +256,23 @@ const readEntriesPromise = async (directoryReader: FileSystemDirectoryReader) =>
     console.error('readEntriesPromise error:', err)
   }
 }
+
+/**
+ * Headers that authenticate a direct-to-storage request.
+ *
+ * storage-api authenticates from `Authorization` only — it ignores `apikey`, so a
+ * request carrying the key there and nothing else is indistinguishable from an
+ * unauthenticated one and fails with "Invalid Compact JWS". Upstream sends
+ * `Authorization` only off-platform, assuming a gateway that turns `apikey` into the
+ * auth context; the gateway leaves `/storage/v1` alone in both modes (for self-host see
+ * `volumes/api/kong.yml`, where `storage-v1` carries only the `cors` plugin), so both
+ * headers are always required. supabase-js sets both itself, which is why every
+ * non-tus storage call in the explorer already works.
+ *
+ * The tus handler that consumes this sits inside `createStorageExplorerState`, which is
+ * not exported, so the assertions in this module's test file are what keep an upstream
+ * merge from quietly restoring the platform gate.
+ */
+export function tusAuthHeaders(apiKey: string): Record<string, string> {
+  return { apikey: apiKey, Authorization: `Bearer ${apiKey}` }
+}
