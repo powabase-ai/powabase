@@ -10,6 +10,7 @@ import {
   getPathAlongFoldersToIndex,
   getPathAlongOpenedFolders,
   sanitizeNameForDuplicateInColumn,
+  tusAuthHeaders,
   validateFolderName,
 } from '@/components/interfaces/Storage/StorageExplorer/StorageExplorer.utils'
 
@@ -274,5 +275,30 @@ describe('sanitizeNameForDuplicateInColumn', () => {
         ' (1).myfile'
       )
     })
+  })
+})
+
+describe('tusAuthHeaders', () => {
+  // Regression pin. The resumable-upload handler that consumes this lives inside
+  // createStorageExplorerState, which is not exported and cannot be reached without
+  // standing up React context, so these assertions are the only thing that fails CI
+  // if the headers drift back.
+  it('sends the key in both apikey and Authorization', () => {
+    expect(tusAuthHeaders('key-123')).toEqual({
+      apikey: 'key-123',
+      Authorization: 'Bearer key-123',
+    })
+  })
+
+  it('always sends Authorization, on every deployment mode', () => {
+    // storage-api authenticates from Authorization only. Sending apikey alone is
+    // indistinguishable from sending no credential: it fails "Invalid Compact JWS".
+    // Upstream gates this header on !IS_PLATFORM; that gate must not come back.
+    expect(tusAuthHeaders('anything')).toHaveProperty('Authorization')
+    expect(tusAuthHeaders('anything').Authorization).toBe('Bearer anything')
+  })
+
+  it('prefixes the token with Bearer exactly once', () => {
+    expect(tusAuthHeaders('a.b.c').Authorization).toBe('Bearer a.b.c')
   })
 })

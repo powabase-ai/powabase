@@ -26,6 +26,7 @@ import {
   getFilesDataTransferItems,
   getPathAlongFoldersToIndex,
   sanitizeNameForDuplicateInColumn,
+  tusAuthHeaders,
   validateFolderName,
 } from '@/components/interfaces/Storage/StorageExplorer/StorageExplorer.utils'
 import { fetchFileUrl } from '@/components/interfaces/Storage/StorageExplorer/useFetchFileUrlQuery'
@@ -1177,16 +1178,14 @@ function createStorageExplorerState({
                   // Use the shared temporary key for batch uploads
                   // This checks if the key is still valid and refreshes if needed
                   const { apiKey } = await getOrRefreshTemporaryApiKey(state.projectRef)
-                  req.setHeader('apikey', apiKey)
-                  // storage-api authenticates from Authorization ONLY; it ignores
-                  // `apikey`, so sending the key there alone is indistinguishable from
-                  // sending no credential and every create fails "Invalid Compact JWS".
-                  // Upstream sets this off-platform only, assuming a gateway that turns
-                  // `apikey` into the auth context; Kong passes the storage route
-                  // through untouched in both modes, so the header is always required
-                  // here. supabase-js sets both headers itself, which is why the
-                  // non-tus storage calls in this same explorer already work.
-                  req.setHeader('Authorization', `Bearer ${apiKey}`)
+                  // Both headers, always. storage-api authenticates from Authorization
+                  // and ignores `apikey`, and Kong leaves /storage/v1 alone in both
+                  // modes (self-host: volumes/api/kong.yml, where storage-v1 carries
+                  // only the cors plugin). tusAuthHeaders carries the full rationale and
+                  // its test file is what pins this against an upstream merge.
+                  for (const [name, value] of Object.entries(tusAuthHeaders(apiKey))) {
+                    req.setHeader(name, value)
+                  }
                 } catch (error) {
                   throw error
                 }
