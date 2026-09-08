@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/powabase-ai/powabase/compare/v0.6.0...v0.6.1) (2026-09-08)
+
+
+### Bug Fixes
+
+* **studio:** expose PROJECT_DOMAIN_BASE as a build-arg so the CSP matches the deployment ([#41](https://github.com/powabase-ai/powabase/issues/41)) ([849865c](https://github.com/powabase-ai/powabase/commit/849865c121a28b836ff6065f2658ec3ba6d8c448))
+
 ## [0.6.0](https://github.com/powabase-ai/powabase/compare/v0.5.0...v0.6.0) (2026-08-26)
 
 
