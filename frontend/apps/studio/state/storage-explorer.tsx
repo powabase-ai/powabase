@@ -1,5 +1,4 @@
 import { BlobReader, BlobWriter, ZipWriter } from '@zip.js/zip.js'
-import { IS_PLATFORM } from 'common'
 import { capitalize, chunk, compact, find, findIndex, has, isObject, uniq, uniqBy } from 'lodash'
 import { createContext, PropsWithChildren, useContext, useEffect, useState } from 'react'
 import { useLatest } from 'react-use'
@@ -1179,9 +1178,15 @@ function createStorageExplorerState({
                   // This checks if the key is still valid and refreshes if needed
                   const { apiKey } = await getOrRefreshTemporaryApiKey(state.projectRef)
                   req.setHeader('apikey', apiKey)
-                  if (!IS_PLATFORM) {
-                    req.setHeader('Authorization', `Bearer ${apiKey}`)
-                  }
+                  // storage-api authenticates from Authorization ONLY; it ignores
+                  // `apikey`, so sending the key there alone is indistinguishable from
+                  // sending no credential and every create fails "Invalid Compact JWS".
+                  // Upstream sets this off-platform only, assuming a gateway that turns
+                  // `apikey` into the auth context; Kong passes the storage route
+                  // through untouched in both modes, so the header is always required
+                  // here. supabase-js sets both headers itself, which is why the
+                  // non-tus storage calls in this same explorer already work.
+                  req.setHeader('Authorization', `Bearer ${apiKey}`)
                 } catch (error) {
                   throw error
                 }
