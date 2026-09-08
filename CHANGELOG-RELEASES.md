@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.2](https://github.com/powabase-ai/powabase/compare/v0.6.1...v0.6.2) (2026-09-08)
+
+
+### Bug Fixes
+
+* **studio:** send Authorization on resumable uploads so storage-api can authenticate ([#43](https://github.com/powabase-ai/powabase/issues/43)) ([7b89407](https://github.com/powabase-ai/powabase/commit/7b894076de33ffb56039dd43fc31b902abd61969))
+
 ## [0.6.1](https://github.com/powabase-ai/powabase/compare/v0.6.0...v0.6.1) (2026-09-08)
 
 
