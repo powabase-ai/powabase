@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/powabase-ai/powabase/compare/v0.6.2...v0.7.0) (2026-09-09)
+
+
+### Features
+
+* **kb:** expose GraphIndex expansion settings in Studio ([#40](https://github.com/powabase-ai/powabase/issues/40)) ([50ccde3](https://github.com/powabase-ai/powabase/commit/50ccde3b269932a126693d57a8c4f4990d82705a))
+
 ## [0.6.2](https://github.com/powabase-ai/powabase/compare/v0.6.1...v0.6.2) (2026-09-08)
 
 
