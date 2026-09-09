@@ -9,6 +9,13 @@ import { cn } from "@/lib/utils";
 import { useProjectSupabaseClient, KnowledgeBase, Source, IndexedSource } from "@/hooks/ai/useProjectSupabaseClient";
 import { useKBDefaults } from "@/hooks/useKBDefaults";
 import { KBConfigFields, isValidInt } from "@/components/interfaces/AI/KnowledgeBases/KBConfigFields";
+import {
+  buildGraphExpansionConfig,
+  isGraphExpansionValid,
+  readGraphExpansionConfig,
+  serverGraphExpansionDefaults,
+  type GraphExpansionFormState,
+} from "@/components/interfaces/AI/KnowledgeBases/graphExpansionConfig";
 import { BM25IndexCard } from "@/components/interfaces/AI/KnowledgeBases/BM25IndexCard";
 import {
   type JsonSchemaField,
@@ -223,6 +230,13 @@ const KnowledgeBaseDetailPage: NextPageWithLayout = () => {
   );
   const [updateMinPerSource, setUpdateMinPerSource] = useState("0");
   const [updateMaxPerSource, setUpdateMaxPerSource] = useState("0");
+  const graphExpansionDefaults = serverGraphExpansionDefaults(defaults.strategies);
+  // null = not edited in this session. The effective value is derived from the
+  // stored config below rather than seeded once, because both the KB response
+  // and the defaults response can land after the first render — seeding would
+  // freeze whichever arrived first.
+  const [updateGraphExpansion, setUpdateGraphExpansion] =
+    useState<GraphExpansionFormState | null>(null);
   const [updateContextMode, setUpdateContextMode] = useState("text");
   const [updateVectorWeight, setUpdateVectorWeight] = useState(defaults.hybrid_vector_weight);
   const [updateQueryEnrichmentModel, setUpdateQueryEnrichmentModel] = useState(defaults.query_enrichment.model);
@@ -295,7 +309,22 @@ const KnowledgeBaseDetailPage: NextPageWithLayout = () => {
       }
     }
     setUpdateTopK(strategy === "full_document" ? "3" : "5");
+    // Back to "not edited", which the derived value resolves from the stored
+    // config. Without this, switching away from graph_index and back re-emits
+    // the previous edits in-session while a reload shows the saved ones — the
+    // same user action producing two different saves.
+    setUpdateGraphExpansion(null);
   };
+
+  /** What the form shows: the operator's edits if any, otherwise the stored
+   * config read against the current defaults. Derived rather than seeded so a
+   * late defaults response cannot leave the form on stale values. */
+  const effectiveGraphExpansion =
+    updateGraphExpansion ??
+    readGraphExpansionConfig(
+      kb?.retrieval_config as Record<string, unknown> | undefined,
+      graphExpansionDefaults
+    );
 
   const currentStrategy = (kb?.indexing_config as { strategy?: string })?.strategy ?? "chunk_embed";
   const useImages = (kb?.indexing_config as { use_images?: boolean })?.use_images ?? false;
@@ -326,7 +355,7 @@ const KnowledgeBaseDetailPage: NextPageWithLayout = () => {
       setUpdateName(kbData.name);
       setUpdateDescription(kbData.description || "");
       const idxConfig = kbData.indexing_config as { strategy?: string; chunk_size?: number; overlap?: number; model?: string; summary_model?: string; embedding_model?: string; enrichment_model?: string; reasoning_effort?: string; enrichment_reasoning_effort?: string };
-      const retConfig = kbData.retrieval_config as { method?: string; top_k?: number; retrieval_model?: string; retrieval_reasoning_effort?: string; context_mode?: string; vector_weight?: number; reranker?: { model?: string; candidate_count?: number }; query_enrichment?: { enabled?: boolean; model?: string; reasoning_effort?: string }; min_per_source?: number; max_per_source?: number };
+      const retConfig = kbData.retrieval_config as { method?: string; top_k?: number; retrieval_model?: string; retrieval_reasoning_effort?: string; context_mode?: string; vector_weight?: number; reranker?: { model?: string; candidate_count?: number }; query_enrichment?: { enabled?: boolean; model?: string; reasoning_effort?: string }; min_per_source?: number; max_per_source?: number; graph_expansion?: { include_children?: boolean; max_children_per_parent?: number; include_doc_toc?: boolean } };
       const strategy = idxConfig?.strategy ?? "chunk_embed";
       const stratDef = defaults.strategies[strategy];
       setUpdateIndexingStrategy(strategy);
@@ -891,6 +920,11 @@ const KnowledgeBaseDetailPage: NextPageWithLayout = () => {
       (updateRerankerEnabled && !isValidInt(updateRerankerCandidateCount, 1)) ||
       !isValidInt(updateMinPerSource, 0) ||
       !isValidInt(updateMaxPerSource, 0) ||
+      !isGraphExpansionValid(
+        updateIndexingStrategy,
+        effectiveGraphExpansion,
+        graphExpansionDefaults
+      ) ||
       (Number(updateMaxPerSource) > 0 &&
         Number(updateMinPerSource) > Number(updateMaxPerSource))
     ) {
@@ -981,6 +1015,11 @@ const KnowledgeBaseDetailPage: NextPageWithLayout = () => {
               top_k: Number(updateTopK),
               context_mode: updateContextMode,
               ...perSourceLimits,
+              ...buildGraphExpansionConfig(
+                updateIndexingStrategy,
+                effectiveGraphExpansion,
+                graphExpansionDefaults
+              ),
               ...(updateRetrievalMethod === "hybrid" && { vector_weight: updateVectorWeight }),
               ...(updateRerankerEnabled && {
                 reranker: {
@@ -2532,6 +2571,8 @@ const KnowledgeBaseDetailPage: NextPageWithLayout = () => {
                   onMinPerSourceChange={setUpdateMinPerSource}
                   maxPerSource={updateMaxPerSource}
                   onMaxPerSourceChange={setUpdateMaxPerSource}
+                  graphExpansion={effectiveGraphExpansion}
+                  onGraphExpansionChange={setUpdateGraphExpansion}
                   queryEnrichmentModel={updateQueryEnrichmentModel}
                   onQueryEnrichmentModelChange={setUpdateQueryEnrichmentModel}
                   queryEnrichmentReasoningEffort={updateQueryEnrichmentReasoningEffort}
