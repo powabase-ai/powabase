@@ -1,6 +1,12 @@
-# Powabase OSS — single-project stack
+# Powabase
 
-A self-hostable, single-project AI backend: Postgres + Auth + Storage + REST (Supabase data plane) plus
+**The AI-Native Supabase Alternative — RAG and Agents built-in**
+
+Powabase is the Postgres backend for AI apps. Every project gets its own database, auth, storage, and dedicated compute, with documents that index on upload and agents that call tools over HTTP or MCP — all behind one REST API.
+
+[Website](https://powabase.ai) · [Docs](https://docs.powabase.ai) · [MCP server](https://mcp.powabase.ai/mcp) · [Compare with Supabase](https://powabase.ai/supabase-alternative/)
+
+This repo is the **self-hostable OSS edition** — a single-project AI backend: Postgres + Auth + Storage + REST (Supabase data plane) plus
 the Powabase AI service (sources, knowledge bases, agents). One `docker compose up`, no control plane.
 
 ## Architecture
