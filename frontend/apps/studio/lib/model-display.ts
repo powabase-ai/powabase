@@ -16,10 +16,17 @@
  */
 const MODEL_DISPLAY: Record<string, string> = {
   // Anthropic
+  'claude-fable-5-1': 'Claude Fable 5.1',
+  'claude-opus-5-5': 'Claude Opus 5.5',
+  'claude-sonnet-5-5': 'Claude Sonnet 5.5',
   'claude-sonnet-4-6': 'Claude Sonnet 4.6',
   'claude-opus-4-7': 'Claude Opus 4.7',
   'claude-haiku-4-5': 'Claude Haiku 4.5',
   // OpenAI
+  'gpt-6-astra': 'GPT-6 Astra',
+  'gpt-6.1-sol': 'GPT-6.1 Sol',
+  'gpt-6-luna': 'GPT-6 Luna',
+  'gpt-5.6': 'GPT-5.6',
   'gpt-5': 'GPT-5',
   'gpt-5-mini': 'GPT-5 Mini',
   // Gemini — IDs mirror the project-service's `_LLM_MODEL_CHOICES` registry
@@ -28,6 +35,10 @@ const MODEL_DISPLAY: Record<string, string> = {
   'gemini-2.5-flash': 'Gemini 2.5 Flash',
   'gemini-3-flash-preview': 'Gemini 3 Flash (preview)',
   'gemini-3.1-pro-preview': 'Gemini 3.1 Pro (preview)',
+  'gemini-3.8-flash': 'Gemini 3.8 Flash',
+  // OpenRouter — only the `openrouter/` prefix is stripped, so the vendor
+  // segment stays in the logged id.
+  'moonshotai/kimi-k3': 'Kimi K3',
 }
 
 export const displayModelName = (m: string | undefined | null): string =>
