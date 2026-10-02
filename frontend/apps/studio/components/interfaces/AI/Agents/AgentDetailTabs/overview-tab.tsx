@@ -105,7 +105,7 @@ export function OverviewTab({ agent, stats, onAgentUpdate }: OverviewTabProps) {
               infoTitle="Reasoning effort"
               infoContent={
                 <>
-                  <p><strong>Default (model decides):</strong> No effort is sent, so the provider&apos;s default applies. Many models still reason by default (e.g., Claude Opus/Sonnet 5.5, GPT-5 and later).</p>
+                  <p><strong>Default (model decides):</strong> No effort is sent, so the provider&apos;s default applies. Some models reason regardless (e.g., Claude Opus/Sonnet 5.5, Claude Fable, Kimi K3).</p>
                   <p><strong>Minimal/Low/Medium/High:</strong> Increasing budgets, offered per model. LiteLLM translates per provider — Anthropic thinking budget, OpenAI reasoning effort, Gemini thinking level.</p>
                   <p>Hidden for models that don&apos;t reason. For a custom model the full list is shown; a level it doesn&apos;t support is ignored at runtime (logged for debugging).</p>
                 </>
