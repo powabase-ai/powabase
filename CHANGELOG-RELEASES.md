@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/powabase-ai/powabase/compare/v0.7.0...v0.8.0) (2026-10-02)
+
+
+### Features
+
+* **studio:** offer each model's own reasoning-effort levels ([#47](https://github.com/powabase-ai/powabase/issues/47)) ([1852c6b](https://github.com/powabase-ai/powabase/commit/1852c6b580b07098a989ba0ea214a6ef1db257bb))
+
 ## [0.7.0](https://github.com/powabase-ai/powabase/compare/v0.6.2...v0.7.0) (2026-09-09)
 
 
