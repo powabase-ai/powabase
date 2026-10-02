@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { useLLMModels } from "@/hooks/ai/useLLMModels";
+import { effortLabel } from "@/hooks/ai/useModelReasoningEfforts";
 import type { ModelInfo } from "@/lib/ai-api/models-api";
 
 const TIERS = ["flagship", "balanced", "fast", "reasoning"] as const;
@@ -9,10 +10,6 @@ const INPUT_CLASS =
 
 function tierLabel(tier: string): string {
   return tier.charAt(0).toUpperCase() + tier.slice(1);
-}
-
-function effortLabel(effort: string): string {
-  return effort.charAt(0).toUpperCase() + effort.slice(1);
 }
 
 export interface KBModelSelectProps {

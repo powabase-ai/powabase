@@ -5,6 +5,7 @@ import { useRouter } from "next/router";
 import { useProjectSupabaseClient } from "@/hooks/ai/useProjectSupabaseClient";
 import { hasAiAuth, orchestrationsApi, type Orchestration } from "@/lib/ai-api";
 import { ModelSelector } from "@/components/interfaces/AI/Agents/ModelSelector";
+import { effortLabel, useModelReasoningEfforts } from "@/hooks/ai/useModelReasoningEfforts";
 import { FieldLabel } from "@/components/interfaces/AI/Shared/InfoTooltip";
 import { ModelSelectionInfoBody } from "@/components/interfaces/AI/Shared/ModelSelectionInfo";
 
@@ -25,6 +26,7 @@ export function SettingsTab({ orchestration, onUpdate }: SettingsTabProps) {
   const [reasoningEffort, setReasoningEffort] = useState<string>(
     String(orchConfig.reasoning_effort ?? "")
   );
+  const reasoning = useModelReasoningEfforts(model, reasoningEffort, setReasoningEffort);
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -115,32 +117,37 @@ export function SettingsTab({ orchestration, onUpdate }: SettingsTabProps) {
             <ModelSelector value={model} onChange={setModel} />
           </div>
 
-          <div className="ml-5 border-l border-default pl-4">
-            <FieldLabel
-              label="Reasoning effort"
-              description="How much the orchestrator thinks before deciding which agents to delegate to. Helps with complex routing decisions."
-              infoTitle="Orchestrator reasoning effort"
-              infoContent={
-                <>
-                  <p>Affects only the orchestrator&apos;s own ReAct loop (delegation decisions). Worker agents have their own reasoning_effort settings.</p>
-                  <p><strong>None:</strong> No reasoning requested (default).</p>
-                  <p><strong>Minimal/Low/Medium/High:</strong> Increasing budgets — translated per-provider by LiteLLM.</p>
-                  <p>If the orchestrator&apos;s model doesn&apos;t support reasoning, this setting is silently ignored at runtime.</p>
-                </>
-              }
-            />
-            <select
-              value={reasoningEffort}
-              onChange={(e) => setReasoningEffort(e.target.value)}
-              className="w-full max-w-xs px-3 py-2 bg-surface-200 border border-default rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-brand-400 text-sm"
-            >
-              <option value="">None</option>
-              <option value="minimal">Minimal</option>
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-            </select>
-          </div>
+          {reasoning.show && (
+            <div className="ml-5 border-l border-default pl-4">
+              <FieldLabel
+                htmlFor="orchestrator-reasoning-effort"
+                label="Reasoning effort"
+                description="How much the orchestrator thinks before deciding which agents to delegate to. Helps with complex routing decisions. Only the levels the selected model supports are listed."
+                infoTitle="Orchestrator reasoning effort"
+                infoContent={
+                  <>
+                    <p>Affects only the orchestrator&apos;s own ReAct loop (delegation decisions). Worker agents have their own reasoning_effort settings.</p>
+                    <p><strong>Default (model decides):</strong> No effort is sent, so the provider&apos;s default applies. Many models still reason by default.</p>
+                    <p><strong>Minimal/Low/Medium/High:</strong> Increasing budgets, offered per model — translated per-provider by LiteLLM.</p>
+                    <p>Hidden for models that don&apos;t reason. For a custom model the full list is shown; a level it doesn&apos;t support is ignored at runtime.</p>
+                  </>
+                }
+              />
+              <select
+                id="orchestrator-reasoning-effort"
+                value={reasoningEffort}
+                onChange={(e) => setReasoningEffort(e.target.value)}
+                className="w-full max-w-xs px-3 py-2 bg-surface-200 border border-default rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-brand-400 text-sm"
+              >
+                <option value="">Default (model decides)</option>
+                {reasoning.efforts.map((effort) => (
+                  <option key={effort} value={effort}>
+                    {effortLabel(effort)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         <div>

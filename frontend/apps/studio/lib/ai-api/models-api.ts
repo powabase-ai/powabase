@@ -17,6 +17,13 @@ export interface ModelInfo {
    * models). gpt-5 family additionally supports "minimal".
    */
   reasoning_efforts: string[]
+  /**
+   * Set when the catalog source carries no reasoning metadata (the self-host
+   * settings-derived list), so `supports_reasoning: false` means "unknown",
+   * not "can't reason". Pickers that would otherwise hide a reasoning control
+   * treat such a model as off-catalog.
+   */
+  reasoning_unknown?: boolean
 }
 
 export interface ProviderInfo {
@@ -47,6 +54,8 @@ function inferProvider(id: string): string {
  * (tier, reasoning support, AI-on-us availability) is a platform-billing concern
  * that does not exist off-platform, so it degrades to neutral defaults: every
  * model lands in one selectable "balanced" group with no reasoning sub-dropdown.
+ * Entries are marked `reasoning_unknown` so pickers that must keep a reasoning
+ * control usable (agent / orchestrator) can offer the generic ladder instead.
  */
 function modelsFromSettings(settings: SettingsResponse): ModelInfo[] {
   const ids = new Set<string>()
@@ -70,6 +79,7 @@ function modelsFromSettings(settings: SettingsResponse): ModelInfo[] {
       unavailable_reason: null,
       supports_reasoning: false,
       reasoning_efforts: [],
+      reasoning_unknown: true,
     }))
 }
 

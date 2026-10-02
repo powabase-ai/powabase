@@ -12,13 +12,18 @@ const REASONING_MODEL_PATTERNS: RegExp[] = [
   /\bo3(?:-|$)/i,
   /\bo4(?:-|$)/i,
   /\bgpt-5(?:\b|-|$)/i, // gpt-5, gpt-5.4, gpt-5-mini, gpt-5-pro
+  /\bgpt-6(?:\b|-|$)/i, // gpt-6-astra, gpt-6.1-sol, gpt-6-luna
   // Anthropic extended-thinking variants
   /claude-3-7-sonnet/i,
   /claude-3\.7-sonnet/i,
   /claude-(?:opus|sonnet)-4/i,
+  /claude-(?:opus|sonnet|fable)-5/i, // claude-opus-5-5, claude-fable-5-1
   // Google Gemini "thinking" models
   /gemini-2\.5/i,
   /gemini-2-5/i,
+  /gemini-3(?:[.-]|$)/i, // gemini-3-flash-preview, gemini-3.1-pro, gemini-3.8-flash
+  // Moonshot Kimi K3 (always reasons)
+  /\bkimi-k3(?:\b|-|$)/i,
   // DeepSeek reasoner
   /deepseek-(?:r1|reasoner)/i,
   // xAI reasoning preview

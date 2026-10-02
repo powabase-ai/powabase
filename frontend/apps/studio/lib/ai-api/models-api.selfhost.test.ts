@@ -91,6 +91,9 @@ describe('modelsApi.list — self-host (IS_PLATFORM=false)', () => {
     ])
     // every synthesised model must land in a picker-rendered tier so it appears
     expect(res.models.every((m) => m.tier === 'balanced')).toBe(true)
+    // the settings-derived list carries no reasoning metadata: entries are
+    // flagged so pickers treat reasoning support as unknown, not "none"
+    expect(res.models.every((m) => m.reasoning_unknown === true)).toBe(true)
     // provider inference (drives badges only; must be best-effort, never crash)
     const byId = Object.fromEntries(res.models.map((m) => [m.id, m.provider]))
     expect(byId['claude-sonnet-4-6']).toBe('anthropic')

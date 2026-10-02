@@ -48,6 +48,22 @@ describe('displayModelName — stripped-key lookup (PR 416 C5)', () => {
     expect(displayModelName('gemini-3.1-pro-preview')).toBe('Gemini 3.1 Pro (preview)')
   })
 
+  // Newer catalog models, keyed by the stripped form LiteLLM logs.
+  // OpenRouter ids keep their vendor segment once `openrouter/` is stripped.
+  it.each([
+    ['gpt-6-astra', 'GPT-6 Astra'],
+    ['gpt-6.1-sol', 'GPT-6.1 Sol'],
+    ['gpt-6-luna', 'GPT-6 Luna'],
+    ['gpt-5.6', 'GPT-5.6'],
+    ['claude-fable-5-1', 'Claude Fable 5.1'],
+    ['claude-opus-5-5', 'Claude Opus 5.5'],
+    ['claude-sonnet-5-5', 'Claude Sonnet 5.5'],
+    ['gemini-3.8-flash', 'Gemini 3.8 Flash'],
+    ['moonshotai/kimi-k3', 'Kimi K3'],
+  ])('returns the display name for "%s"', (id, name) => {
+    expect(displayModelName(id)).toBe(name)
+  })
+
   it('falls through to raw string for unknown identifiers', () => {
     expect(displayModelName('claude-some-future-model')).toBe('claude-some-future-model')
   })
