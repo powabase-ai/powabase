@@ -59,7 +59,12 @@ const schema = z.object({
 
 const formId = 'sign-up-form'
 
-export const SignUpForm = () => {
+type SignUpFormProps = {
+  /** Invite code accepted earlier on the page; sent along with the sign-up when set. */
+  inviteCode?: string
+}
+
+export const SignUpForm = ({ inviteCode }: SignUpFormProps = {}) => {
   const captchaRef = useRef<HCaptcha>(null)
   const [showConditions, setShowConditions] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
@@ -121,6 +126,7 @@ export const SignUpForm = () => {
       password,
       hcaptchaToken: token ?? null,
       redirectTo,
+      inviteCode,
     })
   }
 

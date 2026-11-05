@@ -10,15 +10,26 @@ export type SignUpVariables = {
   password: string
   hcaptchaToken: string | null
   redirectTo?: string
+  /** Accepted invite code, only when the platform requires one for sign-up. */
+  inviteCode?: string
 }
 
-export async function signup({ email, password, hcaptchaToken, redirectTo }: SignUpVariables) {
+export async function signup({
+  email,
+  password,
+  hcaptchaToken,
+  redirectTo,
+  inviteCode,
+}: SignUpVariables) {
+  const trimmedInviteCode = inviteCode?.trim()
+
   const { data, error } = await auth.signUp({
     email,
     password,
     options: {
       captchaToken: hcaptchaToken ?? undefined,
       emailRedirectTo: redirectTo,
+      ...(trimmedInviteCode ? { data: { invite_code: trimmedInviteCode } } : {}),
     },
   })
 

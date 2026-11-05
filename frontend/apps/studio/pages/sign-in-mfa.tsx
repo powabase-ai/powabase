@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/nextjs'
+import { isAuthImplicitGrantRedirectError } from '@supabase/auth-js'
 import { useQueryClient } from '@tanstack/react-query'
 import { getAccessToken, useParams } from 'common'
 import { useRouter } from 'next/router'
@@ -38,9 +39,27 @@ const SignInMfaPage: NextPageWithLayout = () => {
           // A failed provider sign-in lands here with an error in the URL. Surface it
           // and go back — otherwise this renders an MFA code prompt to someone who is
           // not signed in, with nothing on screen explaining why.
-          toast.error(`Failed to sign in: ${error.message}`)
+          // A provider sign-in the server refused (e.g. a new account it won't create
+          // yet) comes back as `access_denied`; offer the way to sign-up as well.
+          const isAccessDenied =
+            isAuthImplicitGrantRedirectError(error) && error.details?.error === 'access_denied'
+          toast.error(
+            `Failed to sign in: ${error.message}`,
+            isAccessDenied
+              ? { action: { label: 'Go to sign up', onClick: () => router.push('/sign-up') } }
+              : undefined
+          )
           setLoading(false)
-          return router.push({ pathname: '/sign-in', query: router.query })
+          // Drop the provider's error params: the sign-in buttons carry the current query
+          // string into their redirect, so leaving them here would make the next,
+          // successful attempt fail with this same stale error.
+          const {
+            error: _error,
+            error_code: _code,
+            error_description: _description,
+            ...query
+          } = router.query
+          return router.push({ pathname: '/sign-in', query })
         }
 
         const token = await getAccessToken()
