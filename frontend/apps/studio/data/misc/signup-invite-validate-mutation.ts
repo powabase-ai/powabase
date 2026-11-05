@@ -26,8 +26,8 @@ export async function validateSignUpInvite({
   const result = await fetchPost<SignUpInviteValidateResponse>(
     `${API_URL}/platform/signup/invite/validate`,
     { code: code.trim() },
-    // An accepted code also clears this browser for a provider (e.g. Google) sign-up
-    // shortly afterwards, so let the browser keep whatever the response sets for that.
+    // An accepted code also lets a provider (e.g. Google) sign-up from this browser
+    // through for a short while; the server decides that, nothing is stored here.
     // Same credentials mode as the shared platform API client.
     { credentials: 'include' }
   )
