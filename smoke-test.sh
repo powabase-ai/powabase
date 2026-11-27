@@ -83,4 +83,4 @@ case "$SNIP_CODE" in
   *)   echo "   snippets API reachable (non-5xx: $SNIP_CODE)" ;;
 esac
 
-echo "PASS: OSS single-project stack is up and healthy."
+echo "PASS: self-host single-project stack is up and healthy."

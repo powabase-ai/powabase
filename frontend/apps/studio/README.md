@@ -1,6 +1,6 @@
 # Powabase Studio
 
-The dashboard for the [Powabase](https://github.com/powabase-ai/powabase) OSS edition — a fork of [Supabase Studio](https://github.com/supabase/supabase/tree/master/apps/studio), adapted for single-project self-hosting.
+The dashboard for the [Powabase](https://github.com/powabase-ai/powabase) self-host edition — a fork of [Supabase Studio](https://github.com/supabase/supabase/tree/master/apps/studio), adapted for single-project self-hosting.
 
 Built with [Next.js](https://nextjs.org/) and [Tailwind](https://tailwindcss.com/).
 
@@ -16,4 +16,4 @@ To use the dashboard, run the full stack — one `docker compose up` in the [Pow
 
 ## Upstream & attribution
 
-Powabase Studio is derived from [Supabase Studio](https://github.com/supabase/supabase), used under the [Apache-2.0 license](../../../LICENSE) (see [`NOTICE`](NOTICE) for attribution). Powabase is an independent project, **not affiliated with or endorsed by Supabase, Inc.** — "Supabase" is a trademark of Supabase, Inc.
+Powabase Studio is derived from [Supabase Studio](https://github.com/supabase/supabase), used under the [Apache-2.0 license](../../LICENSE) (see [`NOTICE`](NOTICE) for attribution). This dashboard remains under Apache-2.0; the rest of the Powabase stack repo is source-available under a different license (see [`LICENSING.md`](../../../LICENSING.md)). Powabase is an independent project, **not affiliated with or endorsed by Supabase, Inc.** — "Supabase" is a trademark of Supabase, Inc.

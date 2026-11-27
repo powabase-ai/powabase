@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate per-deployment secrets for the OSS single-project stack.
+"""Generate per-deployment secrets for the self-host single-project stack.
 
 Mirrors the control plane's generate_project_secrets() KEY SHAPES, with one
 intentional divergence: the anon/service-role JWT iat/exp are a fresh 5-year

@@ -1,11 +1,18 @@
-# Powabase OSS — single-project stack
+# Powabase self-host — single-project stack
 
-A self-hostable, single-project AI backend: Postgres + Auth + Storage + REST (Supabase data plane) plus
+[![License: PolyForm Noncommercial 1.0.0](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-blue)](LICENSING.md)
+
+A source-available, self-hostable, single-project AI backend: Postgres + Auth + Storage + REST (Supabase data plane) plus
 the Powabase AI service (sources, knowledge bases, agents). One `docker compose up`, no control plane.
+
+**Licensing:** free for government, research, education, charitable and other noncommercial use under the
+[PolyForm Noncommercial License 1.0.0](LICENSE). Commercial use requires a Powabase enterprise agreement.
+See [`LICENSING.md`](LICENSING.md) for who qualifies and how to get a commercial license. The Studio dashboard
+in [`frontend/`](frontend/) is a Supabase Studio fork and stays under Apache-2.0.
 
 ## Architecture
 
-Powabase's OSS edition is **one self-contained stack** you run with Docker
+Powabase's self-host edition is **one self-contained stack** you run with Docker
 Compose. It spans three repositories:
 
 | Repo | What it is | How you use it |
@@ -55,9 +62,9 @@ flowchart TD
 
 ## Built on Supabase
 
-Powabase's data plane **is** the upstream [Supabase](https://supabase.com) self-hosted stack — GoTrue, PostgREST, Storage, Realtime, postgres-meta, and Postgres — running the official images unchanged. We didn't reinvent the backend: we added a single-project deployment model and the Powabase AI service (knowledge bases, agents, workflows) on top, and forked Studio only to surface those AI features. That's the whole point of open-sourcing this — you can verify exactly what we changed and what we didn't.
+Powabase's data plane **is** the upstream [Supabase](https://supabase.com) self-hosted stack — GoTrue, PostgREST, Storage, Realtime, postgres-meta, and Postgres — running the official images unchanged. We didn't reinvent the backend: we added a single-project deployment model and the Powabase AI service (knowledge bases, agents, workflows) on top, and forked Studio only to surface those AI features. That's the whole point of making the source available — you can verify exactly what we changed and what we didn't.
 
-Supabase is a trademark of Supabase, Inc. Powabase is an independent project, **not affiliated with or endorsed by Supabase**. Supabase components are used under their respective open-source licenses (Apache-2.0); attribution for the forked Studio is in [`frontend/apps/studio/NOTICE`](frontend/apps/studio/NOTICE).
+Supabase is a trademark of Supabase, Inc. Powabase is an independent project, **not affiliated with or endorsed by Supabase**. Supabase components are used under their respective open-source licenses (Apache-2.0); the forked Studio in `frontend/` remains under Apache-2.0 ([`frontend/LICENSE`](frontend/LICENSE)), with attribution in [`frontend/apps/studio/NOTICE`](frontend/apps/studio/NOTICE).
 
 ## Prerequisites
 - Docker + Docker Compose

@@ -1,0 +1,1 @@
+- [ ] I agree to the [contribution licensing terms](https://github.com/powabase-ai/powabase/blob/main/CONTRIBUTING.md#licensing-of-contributions).

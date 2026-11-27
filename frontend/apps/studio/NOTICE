@@ -7,5 +7,6 @@ Version 2.0. Powabase Studio is a fork of Supabase Studio with modifications,
 including a self-hosted single-project build (NEXT_PUBLIC_IS_PLATFORM=false)
 and removal of hosted-platform-only surfaces.
 
-The Apache License, Version 2.0 text is in the LICENSE file at the repository
-root.
+The Apache License, Version 2.0 text is in frontend/LICENSE. This directory
+(frontend/) remains under the Apache License, Version 2.0; the rest of the
+repository is licensed separately (see LICENSING.md at the repository root).
