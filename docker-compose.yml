@@ -1,4 +1,4 @@
-# Powabase OSS — single-project data-plane stack. This is the final artifact
+# Powabase self-host — single-project data-plane stack. This is the final artifact
 # (docker compose up), NOT a template to copy or render.
 # Quickstart: cp .env.example .env && python gen-keys.py && docker compose up -d
 # Secrets come from gen-keys.py; bring your own LLM key(s) in .env. See README.md.
@@ -53,13 +53,13 @@ services:
       API_KEY_ENCRYPTION_KEY: ${API_KEY_ENCRYPTION_KEY}
       # Fixed identity for this single-project stack.
       PROJECT_ID: default
-      # Inert in the OSS edition (no billing); kept as empty passthroughs.
+      # Inert in the self-host edition (no billing); kept as empty passthroughs.
       BILLING_ORG_ID: ${BILLING_ORG_ID:-}
       BILLING_PLAN_TIER: ${BILLING_PLAN_TIER:-free}
       BILLING_SERVICE_URL: ${BILLING_SERVICE_URL:-http://host.docker.internal:5100}
       BILLING_JWT_PRIVATE_KEY_PEM: ${BILLING_JWT_PRIVATE_KEY_PEM:-}
       BILLING_JWT_KID: ${BILLING_JWT_KID:-}
-      # Inert in the OSS edition (no billing); kept as empty passthroughs.
+      # Inert in the self-host edition (no billing); kept as empty passthroughs.
       BILLING_LLM_MARKUP_MULTIPLIER: ${BILLING_LLM_MARKUP_MULTIPLIER:-}
       BILLING_AI_ON_US_ENABLED: ${BILLING_AI_ON_US_ENABLED:-}
     healthcheck:
@@ -112,13 +112,13 @@ services:
       CELERY_TASK_TIME_LIMIT: ${CELERY_TASK_TIME_LIMIT:-}
       # Fixed identity for this single-project stack.
       PROJECT_ID: default
-      # Inert in the OSS edition (no billing); kept as empty passthroughs.
+      # Inert in the self-host edition (no billing); kept as empty passthroughs.
       BILLING_ORG_ID: ${BILLING_ORG_ID:-}
       BILLING_PLAN_TIER: ${BILLING_PLAN_TIER:-free}
       BILLING_SERVICE_URL: ${BILLING_SERVICE_URL:-http://host.docker.internal:5100}
       BILLING_JWT_PRIVATE_KEY_PEM: ${BILLING_JWT_PRIVATE_KEY_PEM:-}
       BILLING_JWT_KID: ${BILLING_JWT_KID:-}
-      # Inert in the OSS edition (no billing); kept as empty passthroughs.
+      # Inert in the self-host edition (no billing); kept as empty passthroughs.
       BILLING_LLM_MARKUP_MULTIPLIER: ${BILLING_LLM_MARKUP_MULTIPLIER:-}
       BILLING_AI_ON_US_ENABLED: ${BILLING_AI_ON_US_ENABLED:-}
     command: ["celery", "-A", "agentic_project_service.celery:celery_app", "worker", "--loglevel=info", "--pool=threads", "--concurrency=4"]

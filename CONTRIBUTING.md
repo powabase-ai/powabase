@@ -79,3 +79,29 @@ Dependabot is exempt from the title check, since it generates its own titles.
 - Write the title as the release note you would want to read in six months.
 - Put the *why* in the description. The squash body takes the pull request
   description, so it becomes part of the permanent history.
+
+## Licensing of contributions
+
+This project is licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE) and is
+also offered under commercial licenses (see [LICENSING.md](LICENSING.md)). To make that
+possible, by submitting a contribution (code, documentation, or other material) you agree that:
+
+1. you grant Powabase AI and recipients of software it distributes a perpetual, worldwide,
+   non-exclusive, no-charge, royalty-free, irrevocable copyright license to reproduce,
+   prepare derivative works of, publicly display, publicly perform, sublicense, and
+   distribute your contribution and derivative works, **under any license terms, including
+   proprietary and commercial terms**;
+2. you grant Powabase AI and those recipients a perpetual, worldwide, non-exclusive,
+   no-charge, royalty-free, irrevocable patent license to make, have made, use, sell, offer
+   to sell, import, and otherwise transfer your contribution, covering any of your patent
+   claims that your contribution infringes, alone or combined with the project;
+3. you have the right to grant these licenses (if your employer has rights to your work,
+   you have its permission), and your contribution is your original work or you have
+   clearly identified its third-party source and license; and
+4. you keep the copyright in your contribution, and you are not required to provide
+   support for it.
+
+Pull requests include a checkbox confirming you agree to these terms.
+
+Contributions to the Supabase Studio fork under [`frontend/`](frontend/) are licensed under the
+[Apache License 2.0](frontend/LICENSE) *and* under the terms above.

@@ -94,6 +94,10 @@ jobs:
             NEXT_PUBLIC_IS_PLATFORM=false
             NEXT_PUBLIC_SITE_URL=http://localhost:8000
             NEXT_PUBLIC_DISABLED_FEATURES=billing:all,billing:plan_picker,credits:enabled,ai:project_copilot
+          # Studio is a fork of Supabase Studio and stays Apache-2.0 (frontend/LICENSE),
+          # even though the rest of this repo is PolyForm Noncommercial.
+          labels: |
+            org.opencontainers.image.licenses=Apache-2.0
           platforms: ${{ matrix.platform }}
           # No dry-run branch: every `release: published` run is real, and a push
           # an input can skip is a push that can silently not happen.

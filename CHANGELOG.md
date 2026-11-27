@@ -5,7 +5,7 @@
 > `docker compose pull` is enough. Release tooling does not write here — the
 > commit-derived record lives in `CHANGELOG-RELEASES.md`.
 
-All notable changes to the Powabase OSS self-hosted stack.
+All notable changes to the Powabase self-hosted stack.
 
 Changes are grouped by component rather than by change type, and only changes
 that affect a self-hosted deployment are listed here.
